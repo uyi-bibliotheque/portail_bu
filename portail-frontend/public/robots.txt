@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bcu-uyi.cm/sitemap.xml
+
+# Prevent indexing of admin and private areas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /staff/
+Disallow: /aide-biblio/
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /mon-compte

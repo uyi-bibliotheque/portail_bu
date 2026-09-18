@@ -1,0 +1,30 @@
+# ------------------------------------------------------------------------
+# REQUIREMENTS OFFICIELS - PORTAIL WEB BIBLIOTHÈQUE CENTRALE (UY1)
+# ------------------------------------------------------------------------
+
+# Coeur de l'application et API REST
+Django==5.0.4
+djangorestframework==3.15.1
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+
+# Communications HTTP (Passerelle JSON-RPC vers PMB + reCAPTCHA v3)
+requests==2.31.0
+
+# Base de données PostgreSQL (Production)
+psycopg2-binary==2.9.9
+
+# Tâches asynchrones et Planificateur (Celery + Redis)
+celery==5.3.6
+redis==5.0.3
+django-redis==5.4.0
+
+# Moteur de génération de documents (Édition des Quitus en PDF)
+weasyprint==61.2
+
+# Serveur WSGI Production
+gunicorn==22.0.0
+
+# Sécurité et Variables d'environnement
+python-dotenv==1.0.1
+drf-spectacular==0.27.2

@@ -1,0 +1,2915 @@
+// pages/StaticPages.jsx - VERSION COMPLÈTE AVEC DESIGN AMÉLIORÉ ET PHOTOS PLUS GRANDES
+
+import { Link, useLocation } from 'react-router-dom';
+import Layout from '../components/layout/Layout';
+import Seo from '../components/Seo';
+import Reveal from '../components/Reveal';
+import { Helmet } from 'react-helmet-async';
+import { 
+  ArrowRight, Clock, MapPin, Phone, Mail, ExternalLink, 
+  ChevronRight, Users, BookOpen, GraduationCap, Wifi,
+  Award, Sparkles, Building2, Calendar, CheckCircle,
+  Globe, Database, Server, Shield, Zap, Heart, Search,
+  FileText, AlertCircle, Download, FileDown, Share2, Copy,
+  Target, Eye, Menu, X, User, UserCheck, UserCircle,
+  Layers, FolderOpen, Network, Library, Archive, Cloud,
+  LayoutGrid, PenTool, BarChart, Briefcase, CreditCard,
+  Home, Bookmark, Award as AwardIcon, ClipboardList, UserPlus,
+  Maximize2, XCircle, ChevronLeft
+} from 'lucide-react';
+
+import bienvenue from '../assets/images/Bienvenue.jpg';
+import salleLect from '../assets/images/Salle_lecture_N2.jpg';
+import photo14 from '../assets/images/Photo14.jpg';
+import wifiImage2 from '../assets/images/wifi1.png';
+import salleLect1 from '../assets/salle lecture-1.webp';
+import salleLect2 from '../assets/salle lecture-2.webp';
+import salleLect3 from '../assets/salle lecture-3.webp';
+import salleLect4 from '../assets/salle lecture-4.webp';
+import politiquePDF from '../assets/Politique_documentaire_BC-UYI.pdf';
+
+import { useState, useEffect } from 'react';
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── IMPORTS DES IMAGES DES RESPONSABLES ──────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+// COORDINATION
+import imgMarieJoseEssi from '../assets/images/responsable/coordination/PrMarie-JoséEssi.jpg';
+import imgIsaacChristianIlouga from '../assets/images/responsable/coordination/MonsieurIsaacChristianIlouga.jpg';
+import imgPeguyTassapoPouokam from '../assets/images/responsable/coordination/MadamePeguyTassapoPouokam.jpg';
+import imgIgnaceBlaiseOlli from '../assets/images/responsable/coordination/MonsieurIgnaceBlaiseOlli.jpg';
+
+// DRA
+import imgNancyBilooEkoto from '../assets/images/responsable/dra/MadameNancyEkoto.jpg';
+import imgAnneMarieAkamba from '../assets/images/responsable/dra/MadameAnneMarieAkamba.jpg';
+import imgFlammarionNokoEdjeba from '../assets/images/responsable/dra/MonsieurFlammarionNokoEdjeba.jpg';
+import imgDaoudaWusthitengam from '../assets/images/responsable/dra/MonsieurDaoudaWusthitengam.jpg';
+import imgModesteBaaneAssembe from '../assets/images/responsable/dra/MonsieurModesteBaaneAssembe.jpg';
+import imgReneMinko from '../assets/images/responsable/dra/MonsieurReneMinko.jpg';
+import imgCharlesEkoKotto from '../assets/images/responsable/dra/MonsieurCharlesEkoKotto.jpg';
+import imgMarieRoseKohn from '../assets/images/responsable/dra/MadameMarieRoseKohn.jpg';
+import imgNdipMaryArrah from '../assets/images/responsable/dra/MadameNdipMaryArrah.jpg';
+import imgDayangHoulibele from '../assets/images/responsable/dra/MadameDayangHoulibele.jpg';
+import imgZakariahouLitouot from '../assets/images/responsable/dra/MonsieurZakariahouLitouot.jpg';
+import imgAlexanderLyongaNasie from '../assets/images/responsable/dra/MonsieurAlexanderLyongaNasie.jpg';
+import imgBertinNdongoEvezo from '../assets/images/responsable/dra/MonsieurBertinNdongoEvezo.jpg';
+import imgMinetteVouffoAwozang from '../assets/images/responsable/dra/MadameMinetteVouffoAwozang.jpg';
+import imgIBO from '../assets/images/responsable/dra/MonsieurIBO.jpg';
+
+// DACA
+import imgViragoLeonieKenne from '../assets/images/responsable/daca/MadameViragoLéonieKenne.jpg';
+import imgMicheleRosyAnkoumaSob from '../assets/images/responsable/daca/MadameMicheleRosyAnkoumaSob.jpg';
+import imgPierreEmileAbouou from '../assets/images/responsable/daca/MonsieurPierreEmileAbouou.jpg';
+import imgMarcOlivierMindjeme from '../assets/images/responsable/daca/MonsieurMarcOlivierMindjeme.jpg';
+import imgVictorineNgueNgougno from '../assets/images/responsable/daca/MadameVictorineNgueNgougno.jpg';
+import imgOgenPrudenciaMafor from '../assets/images/responsable/daca/MadameOgenPrudenciaMafor.jpg';
+
+// DACN
+import imgNkoloPrudenceNiclaire from '../assets/images/responsable/dacn/MadameNkoloPrudenceNiclaire.jpg';
+import imgEstherFloreMoussi from '../assets/images/responsable/dacn/MadameEstherFloreMoussi.jpg';
+import imgTNL from '../assets/images/responsable/dacn/MonsieurTNL.jpg';
+
+// DRI
+import imgNorbertTangmo from '../assets/images/responsable/dri/MonsieurNorbertTangmo.jpg';
+import imgMauriceKiteng from '../assets/images/responsable/dri/MonsieurMauriceKiteng.jpg';
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── MODAL POUR AGRANDIR LES PHOTOS ───────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+function PhotoModal({ src, name, onClose }) {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [onClose]);
+
+  return (
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.85)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: 20,
+        animation: 'fadeIn 0.3s ease'
+      }}
+      onClick={onClose}
+    >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+      <div 
+        style={{
+          position: 'relative',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          background: 'white',
+          borderRadius: 16,
+          padding: 16,
+          animation: 'scaleIn 0.3s ease',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: -12,
+            right: -12,
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'white',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#1B1464',
+            transition: 'all 0.2s',
+            zIndex: 10
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.background = 'var(--or)';
+            e.currentTarget.style.color = 'white';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.background = 'white';
+            e.currentTarget.style.color = '#1B1464';
+          }}
+        >
+          <XCircle size={24} />
+        </button>
+        <img 
+          src={src} 
+          alt={name}
+          style={{
+            maxWidth: '80vw',
+            maxHeight: '80vh',
+            objectFit: 'contain',
+            borderRadius: 8,
+            display: 'block'
+          }}
+        />
+        <div style={{
+          textAlign: 'center',
+          marginTop: 12,
+          fontSize: 'clamp(14px, 1.1vw, 18px)',
+          fontWeight: 600,
+          color: 'var(--bleu-nuit)'
+        }}>
+          {name}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── COMPOSANT PHOTO AMÉLIORÉ AVEC CLICK POUR AGRANDIR ────────────
+// ═══════════════════════════════════════════════════════════════════
+
+function ResponsablePhoto({ src, name, size = 'clamp(80px, 10vw, 140px)', className = '', showName = true }) {
+  const [imageError, setImageError] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return parts[0][0] + parts[parts.length-1][0];
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const initials = getInitials(name);
+
+  return (
+    <>
+      <div 
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 8,
+          cursor: 'pointer',
+          transition: 'transform 0.3s ease'
+        }}
+        onClick={() => setModalOpen(true)}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        <div style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, var(--bleu-nuit), #2D2178)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '3px solid var(--or)',
+          boxShadow: '0 4px 20px rgba(27,20,100,0.2)',
+          fontSize: `calc(${size} * 0.35)`,
+          fontWeight: 700,
+          color: 'white',
+          textTransform: 'uppercase',
+          transition: 'all 0.3s ease',
+          position: 'relative'
+        }}>
+          {!imageError ? (
+            <img 
+              src={src} 
+              alt={name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <span style={{ fontSize: 'inherit', fontWeight: 700, color: 'white' }}>
+              {initials}
+            </span>
+          )}
+          <div style={{
+            position: 'absolute',
+            bottom: 2,
+            right: 2,
+            background: 'rgba(27,20,100,0.8)',
+            borderRadius: '50%',
+            padding: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Maximize2 size={parseInt(size) * 0.12 || 12} color="var(--or)" />
+          </div>
+        </div>
+        {showName && (
+          <span style={{
+            fontSize: 'clamp(12px, 0.85vw, 14px)',
+            fontWeight: 600,
+            color: 'var(--bleu-nuit)',
+            textAlign: 'center',
+            maxWidth: size,
+            lineHeight: 1.2
+          }}>
+            {name}
+          </span>
+        )}
+      </div>
+      {modalOpen && (
+        <PhotoModal src={src} name={name} onClose={() => setModalOpen(false)} />
+      )}
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── COMPOSANTS CARD AMÉLIORÉS ─────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+function SectionCardWithPhoto({ title, responsable, responsablePhoto, units, color, isResponsable = true }) {
+  return (
+    <div style={{
+      background: 'white',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-sm)',
+      padding: 'clamp(20px, 2.5vw, 32px)',
+      marginBottom: 16,
+      transition: 'all 0.3s ease',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.08)';
+      e.currentTarget.style.borderColor = color || 'var(--or)';
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+      e.currentTarget.style.borderColor = 'var(--border)';
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'clamp(16px, 2vw, 24px)',
+        flexWrap: 'wrap',
+        marginBottom: units && units.length > 0 ? 16 : 0
+      }}>
+        {isResponsable && responsablePhoto && (
+          <ResponsablePhoto 
+            src={responsablePhoto} 
+            name={responsable} 
+            size="clamp(70px, 8vw, 100px)" 
+          />
+        )}
+        <div style={{ flex: 1, minWidth: '180px' }}>
+          <h4 style={{ 
+            fontWeight: 700, 
+            fontSize: 'clamp(16px, 1.2vw, 18px)', 
+            color: 'var(--bleu-nuit)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap'
+          }}>
+            <Users size={20} color={color || 'var(--or)'} />
+            {title}
+          </h4>
+          <div style={{
+            fontSize: 'clamp(14px, 0.95vw, 15px)',
+            color: 'var(--texte-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginTop: 4
+          }}>
+            <User size={16} color={color || 'var(--or)'} />
+            <strong>Responsable :</strong> {responsable}
+          </div>
+        </div>
+      </div>
+      {units && units.length > 0 && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          gap: 10,
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: '1px dashed var(--border)'
+        }}>
+          {units.map((unit, idx) => (
+            <div key={idx} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 14px',
+              background: 'var(--beige)',
+              borderRadius: 8,
+              fontSize: 'clamp(12px, 0.85vw, 13px)',
+              color: 'var(--texte-muted)',
+              flexWrap: 'wrap'
+            }}>
+              <Layers size={14} color={color || 'var(--or)'} />
+              <span><strong>{unit.name}</strong> — {unit.responsable}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DepartmentCardWithPhoto({ title, subtitle, leader, leaderPhoto, description, icon, color }) {
+  return (
+    <div className="card" style={{ 
+      padding: 'clamp(24px, 3vw, 36px)', 
+      minHeight: 'clamp(200px, 22vw, 260px)', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      justifyContent: 'space-between',
+      transition: 'all 0.4s ease',
+      borderLeft: `6px solid ${color || 'var(--or)'}`,
+      cursor: 'default',
+      background: 'white',
+      borderRadius: 'var(--radius-sm)',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
+    }}
+    onMouseEnter={e => {
+      e.currentTarget.style.transform = 'translateX(6px)';
+      e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.12)';
+    }}
+    onMouseLeave={e => {
+      e.currentTarget.style.transform = '';
+      e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)';
+    }}
+    >
+      <div>
+        <div style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(16px, 2vw, 24px)',
+          marginBottom: 14,
+          flexWrap: 'wrap'
+        }}>
+          <ResponsablePhoto 
+            src={leaderPhoto} 
+            name={leader} 
+            size="clamp(80px, 10vw, 120px)" 
+          />
+          <div>
+            <div style={{ 
+              fontSize: 'clamp(11px, 0.8vw, 12px)', 
+              fontWeight: 700, 
+              textTransform: 'uppercase', 
+              color: color || 'var(--or)', 
+              letterSpacing: '0.08em'
+            }}>
+              {subtitle}
+            </div>
+            <h3 style={{ 
+              fontSize: 'clamp(18px, 1.4vw, 22px)', 
+              fontWeight: 700, 
+              color: 'var(--bleu-nuit)',
+              marginTop: 2
+            }}>
+              {title}
+            </h3>
+          </div>
+        </div>
+        <p style={{ 
+          fontSize: 'clamp(14px, 0.95vw, 15px)', 
+          color: 'var(--texte-muted)', 
+          lineHeight: 1.8,
+          marginLeft: 'clamp(16px, 2vw, 24px)'
+        }}>
+          {description}
+        </p>
+      </div>
+      <div style={{ 
+        fontSize: 'clamp(13px, 0.9vw, 14px)', 
+        color: 'var(--texte-muted)',
+        paddingTop: 16,
+        borderTop: '1px solid var(--border-light)',
+        marginTop: 16,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexWrap: 'wrap',
+        marginLeft: 'clamp(16px, 2vw, 24px)'
+      }}>
+        <UserCircle size={18} color={color || 'var(--or)'} />
+        <strong>Responsable :</strong> {leader}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── CAROUSEL ──────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+function ImageCarousel({ images }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div style={{ 
+      position: 'relative', 
+      width: '100%', 
+      height: 'clamp(200px, 40vw, 450px)', 
+      overflow: 'hidden', 
+      borderRadius: 'var(--radius)', 
+      marginTop: 20, 
+      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+      background: '#1B1464'
+    }}>
+      {images.map((img, index) => (
+        <div
+          key={index}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: index === currentIndex ? 1 : 0,
+            transition: 'opacity 1s ease-in-out, transform 6s ease-in-out',
+            transform: index === currentIndex ? 'scale(1.08)' : 'scale(1)',
+            backgroundImage: `url("${img}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      ))}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: 'clamp(12px, 3vw, 30px)', 
+        left: '50%', 
+        transform: 'translateX(-50%)', 
+        display: 'flex', 
+        gap: 'clamp(6px, 1vw, 12px)',
+        zIndex: 10,
+        flexWrap: 'wrap',
+        justifyContent: 'center'
+      }}>
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            style={{
+              width: 'clamp(8px, 1.2vw, 10px)',
+              height: 'clamp(8px, 1.2vw, 10px)',
+              borderRadius: '50%',
+              background: index === currentIndex ? 'var(--or)' : 'rgba(255,255,255,0.4)',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              border: 'none',
+              padding: 0
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── BREADCRUMB ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+function Breadcrumb({ items }) {
+  return (
+    <nav style={{ 
+      display: 'flex', 
+      flexWrap: 'wrap', 
+      gap: 'clamp(4px, 0.6vw, 8px)', 
+      color: 'rgba(255,255,255,0.6)', 
+      marginBottom: 'clamp(12px, 2vw, 20px)', 
+      fontSize: 'clamp(11px, 0.9vw, 13px)',
+      alignItems: 'center'
+    }}>
+      {items.map((item, index) => (
+        <span key={index} style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 0.6vw, 8px)' }}>
+          {index > 0 && <span style={{ color: 'rgba(255,255,255,0.3)' }}>/</span>}
+          {item.href ? (
+            <Link to={item.href} style={{ color: 'rgba(255,255,255,0.7)', transition: 'color 0.2s' }}>
+              {item.label}
+            </Link>
+          ) : (
+            <span style={{ color: 'var(--or)' }}>{item.label}</span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+const responsiveStyles = `
+  @media (max-width: 1200px) {
+    .container { padding: 0 24px !important; }
+  }
+  @media (max-width: 992px) {
+    .container { padding: 0 20px !important; }
+    .section { padding: 48px 0 !important; }
+  }
+  @media (max-width: 768px) {
+    .container { padding: 0 16px !important; }
+    .section { padding: 32px 0 !important; }
+    .hide-mobile { display: none !important; }
+    .show-mobile { display: block !important; }
+    .text-center-mobile { text-align: center !important; }
+    .flex-column-mobile { flex-direction: column !important; align-items: stretch !important; }
+  }
+  @media (max-width: 480px) {
+    .container { padding: 0 12px !important; }
+    .section { padding: 24px 0 !important; }
+    .grid-2-mobile { grid-template-columns: 1fr !important; }
+  }
+  @media (max-width: 360px) {
+    .container { padding: 0 8px !important; }
+  }
+`;
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE PRÉSENTATION ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function PresentationPage() {
+  const location = useLocation();
+  const isDepartments = location.pathname === '/bibliotheque/departements';
+
+  if (isDepartments) {
+    const departments = [
+      {
+        title: 'Département des Ressources Administratives (DRA)',
+        subtitle: 'Département',
+        leader: 'Madame Nancy Bilo\'o Ekoto',
+        leaderPhoto: imgNancyBilooEkoto,
+        color: '#1B1464',
+        icon: <Briefcase size={18} />,
+        description: 'Gère les ressources financières, matérielles et humaines de la bibliothèque, ainsi que la gestion des usagers et le suivi de l\'effectivité au poste.'
+      },
+      {
+        title: 'Département Accès aux Collections Analogiques (DACA)',
+        subtitle: 'Département',
+        leader: 'Madame Virago Léonie Kenne',
+        leaderPhoto: imgViragoLeonieKenne,
+        color: '#7C3AED',
+        icon: <BookOpen size={18} />,
+        description: 'Assure l\'acquisition, la conservation, le traitement intellectuel et la gestion des catalogues des collections physiques.'
+      },
+      {
+        title: 'Département Accès aux Collections Numériques (DACN)',
+        subtitle: 'Département',
+        leader: 'Madame Anne-Marie Akamba Ngwba',
+        leaderPhoto: imgAnneMarieAkamba,
+        color: '#059669',
+        icon: <Cloud size={18} />,
+        description: 'Gère les monographies numériques, les connaissances numériques et les périodiques électroniques.'
+      },
+      {
+        title: 'Département des Ressources Informatiques (DRI)',
+        subtitle: 'Département',
+        leader: 'Monsieur Norbert Tangmo',
+        leaderPhoto: imgNorbertTangmo,
+        color: '#6366f1',
+        icon: <Server size={18} />,
+        description: 'Assure la maintenance du système intégré de gestion de bibliothèque, des services documentaires et des sciences ouvertes.'
+      }
+    ];
+
+    return (
+      <Layout>
+        <Helmet>
+          <title>Départements de la BC-UYI | Bibliothèque Centrale Universitaire</title>
+          <meta name="description" content="Découvrez les 4 départements de la Bibliothèque Centrale de l'Université de Yaoundé I." />
+        </Helmet>
+        <style>{responsiveStyles}</style>
+        <div style={{ background: 'var(--bleu-nuit)', padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' }}>
+          <div className="container">
+            <Breadcrumb items={[
+              { label: 'Accueil', href: '/' },
+              { label: 'Bibliothèque', href: '/bibliotheque/presentation' },
+              { label: 'Départements' }
+            ]} />
+            <h1 className="font-serif" style={{ 
+              fontSize: 'clamp(28px, 4vw, 40px)', 
+              color: 'white', 
+              fontWeight: 400, 
+              marginBottom: 8 
+            }}>
+              Les Départements de la <span style={{ color: 'var(--or)' }}>BC-UYI</span>
+            </h1>
+            <p style={{ 
+              color: 'rgba(255,255,255,0.7)', 
+              maxWidth: 760, 
+              fontSize: 'clamp(14px, 1vw, 15px)', 
+              lineHeight: 1.8 
+            }}>
+              La Bibliothèque Centrale de l'Université de Yaoundé I a été réorganisée en quatre (04) Départements 
+              pour mieux structurer les services documentaires et accompagner les usagers selon leurs besoins spécifiques.
+            </p>
+          </div>
+        </div>
+        <div className="container-sm" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+          <div style={{ display: 'grid', gap: 'clamp(16px, 1.8vw, 24px)' }}>
+            {departments.map((dept, index) => (
+              <Reveal key={dept.title} className="reveal-up" delay={index * 80}>
+                <DepartmentCardWithPhoto {...dept} />
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal className="reveal-up" delay={300}>
+            <div style={{ 
+              marginTop: 'clamp(32px, 4vw, 48px)',
+              padding: 'clamp(24px, 3vw, 40px)',
+              background: 'white',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--border)',
+              borderTop: '4px solid var(--or)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'clamp(20px, 2.5vw, 32px)',
+                marginBottom: 16,
+                flexWrap: 'wrap'
+              }}>
+                <ResponsablePhoto 
+                  src={imgMarieJoseEssi} 
+                  name="Pr Marie-José Essi" 
+                  size="clamp(90px, 12vw, 140px)" 
+                />
+                <div>
+                  <div style={{ 
+                    fontSize: 'clamp(11px, 0.8vw, 12px)', 
+                    fontWeight: 700, 
+                    textTransform: 'uppercase', 
+                    color: 'var(--or)', 
+                    letterSpacing: '0.08em'
+                  }}>
+                    Coordination Générale
+                  </div>
+                  <h2 style={{ 
+                    fontSize: 'clamp(22px, 2.8vw, 32px)', 
+                    fontWeight: 700, 
+                    color: 'var(--bleu-nuit)',
+                    marginTop: 2
+                  }}>
+                    La Coordination
+                  </h2>
+                </div>
+              </div>
+              <p style={{ 
+                fontSize: 'clamp(14px, 0.95vw, 15px)', 
+                color: 'var(--texte-muted)', 
+                lineHeight: 1.9,
+                marginBottom: 16
+              }}>
+                La Coordination assure la direction stratégique de la bibliothèque, la planification des projets 
+                et la supervision de l'ensemble des départements. Elle est dirigée par le Conservateur en Chef.
+              </p>
+              <div style={{
+                padding: 'clamp(16px, 1.8vw, 20px)',
+                background: 'var(--beige)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <UserCheck size={20} color="var(--or)" />
+                  <span style={{ fontWeight: 600, fontSize: 'clamp(13px, 0.9vw, 14px)', color: 'var(--bleu-nuit)' }}>
+                    Conservateur en Chef :
+                  </span>
+                </div>
+                <span style={{ fontSize: 'clamp(14px, 0.95vw, 15px)', color: 'var(--texte)' }}>
+                  <strong>Pr Marie-José Essi</strong>
+                </span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Page Présentation par défaut
+  return (
+    <Layout>
+      <Helmet>
+        <title>Présentation de la Bibliothèque Centrale Universitaire - BCU UYI</title>
+        <meta name="description" content="Découvrez l'histoire, la mission et les valeurs de la Bibliothèque Centrale de l'Université de Yaoundé I, fondée en 1962." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Présentation' }
+          ]} />
+          <h1 className="font-serif" style={{ 
+            fontSize: 'clamp(28px, 4vw, 40px)', 
+            color: 'white', 
+            fontWeight: 400, 
+            marginBottom: 8 
+          }}>
+            Présentation <span style={{ color: 'var(--or)' }}>de la BCU</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            Découvrez l'histoire, la mission et les valeurs de la Bibliothèque Centrale Universitaire
+          </p>
+        </div>
+      </div>
+      <div className="container-sm" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: 'clamp(24px, 3vw, 36px)', 
+          alignItems: 'center', 
+          marginBottom: 'clamp(32px, 5vw, 56px)' 
+        }}>
+          <div>
+            <Reveal className="reveal-up">
+              <div style={{ 
+                display: 'inline-block',
+                padding: '4px 16px',
+                background: 'rgba(124,58,237,0.12)',
+                borderRadius: 50,
+                marginBottom: 16
+              }}>
+                <span style={{ fontSize: 'clamp(10px, 0.8vw, 11px)', fontWeight: 700, color: 'var(--or)', letterSpacing: '0.06em' }}>
+                  📖 DEPUIS 1962
+                </span>
+              </div>
+              <h2 className="font-serif" style={{ 
+                fontSize: 'clamp(24px, 3vw, 32px)', 
+                fontWeight: 400, 
+                color: 'var(--bleu-nuit)', 
+                marginBottom: 20 
+              }}>
+                Au service de la connaissance depuis 1962
+              </h2>
+              <p style={{ 
+                fontSize: 'clamp(14px, 0.95vw, 15px)', 
+                lineHeight: 1.9, 
+                color: 'var(--texte-muted)', 
+                marginBottom: 16 
+              }}>
+                La Bibliothèque Centrale Universitaire (BCU) de l'Université de Yaoundé I est la principale 
+                structure documentaire de l'Université. Elle a pour mission de collecter, traiter, conserver 
+                et diffuser l'information scientifique et technique au service de la communauté universitaire.
+              </p>
+              <p style={{ fontSize: 'clamp(14px, 0.95vw, 15px)', lineHeight: 1.9, color: 'var(--texte-muted)' }}>
+                Forte d'un fonds de plus de <strong>85 000 ouvrages</strong>, de <strong>12 400 thèses et mémoires</strong> 
+                numérisés, elle accueille chaque jour des centaines d'étudiants, enseignants et chercheurs 
+                des différentes facultés de l'Université.
+              </p>
+            </Reveal>
+          </div>
+          <Reveal className="reveal-scale">
+            <img 
+              src={bienvenue} 
+              alt="Bibliothèque BCU UYI" 
+              style={{ 
+                borderRadius: 'var(--radius)', 
+                width: '100%', 
+                objectFit: 'cover', 
+                height: 'clamp(200px, 30vw, 340px)',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.12)'
+              }} 
+            />
+          </Reveal>
+        </div>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+          gap: 'clamp(16px, 2vw, 24px)', 
+          marginBottom: 'clamp(32px, 5vw, 56px)' 
+        }}>
+          {[
+            { 
+              title: 'Mission', 
+              icon: '🎯', 
+              color: '#1B1464',
+              desc: 'Collecter, traiter et diffuser l\'information scientifique et technique au profit de la communauté universitaire.',
+              details: ['Préservation du patrimoine', 'Accès à l\'information', 'Soutien à la recherche']
+            },
+            { 
+              title: 'Vision', 
+              icon: '🔭', 
+              color: '#6366f1',
+              desc: 'Devenir une bibliothèque universitaire de référence en Afrique centrale, intégrée aux réseaux mondiaux de l\'information.',
+              details: ['Excellence académique', 'Innovation numérique', 'Rayonnement international']
+            },
+            { 
+              title: 'Valeurs', 
+              icon: '💎', 
+              color: '#7C3AED',
+              desc: 'Excellence, accessibilité, neutralité et service à l\'usager au cœur de toutes nos activités.',
+              details: ['Intégrité', 'Équité', 'Innovation']
+            },
+          ].map(c => (
+            <Reveal key={c.title} className="reveal-up">
+              <div style={{ 
+                background: 'white', 
+                border: '1px solid var(--border)', 
+                borderRadius: 'var(--radius-sm)', 
+                padding: 'clamp(20px, 2.5vw, 28px)',
+                borderTop: `4px solid ${c.color}`,
+                transition: 'all 0.3s ease',
+                height: '100%'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = '';
+                e.currentTarget.style.boxShadow = '';
+              }}
+              >
+                <div style={{ fontSize: 'clamp(28px, 3vw, 36px)', marginBottom: 12 }}>{c.icon}</div>
+                <h3 style={{ fontWeight: 700, fontSize: 'clamp(16px, 1.1vw, 17px)', marginBottom: 10, color: 'var(--bleu-nuit)' }}>
+                  {c.title}
+                </h3>
+                <p style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', color: 'var(--texte-muted)', lineHeight: 1.7, marginBottom: 14 }}>
+                  {c.desc}
+                </p>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {c.details.map(d => (
+                    <span key={d} style={{
+                      fontSize: 'clamp(10px, 0.7vw, 11px)',
+                      padding: '2px 10px',
+                      borderRadius: 50,
+                      background: `${c.color}12`,
+                      color: c.color,
+                      fontWeight: 600
+                    }}>
+                      {d}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal className="reveal-up">
+          <div style={{ 
+            background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
+            borderRadius: 'var(--radius)', 
+            padding: 'clamp(24px, 4vw, 48px) clamp(20px, 3vw, 40px)', 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+            gap: 'clamp(16px, 2vw, 24px)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: -100,
+              right: -100,
+              width: 300,
+              height: 300,
+              borderRadius: '50%',
+              background: 'rgba(124,58,237,0.05)'
+            }} />
+            {[
+              { value: '85 000+', label: 'Ouvrages catalogués', icon: <BookOpen size={24} /> },
+              { value: '12 400+', label: 'Thèses & mémoires', icon: <GraduationCap size={24} /> },
+              { value: '8',       label: 'Facultés desservies', icon: <Building2 size={24} /> },
+              { value: '1962',    label: 'Année de fondation', icon: <Calendar size={24} /> },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{ 
+                  width: 'clamp(40px, 4vw, 50px)', 
+                  height: 'clamp(40px, 4vw, 50px)', 
+                  borderRadius: '50%', 
+                  background: 'rgba(124,58,237,0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 12px',
+                  color: 'var(--or)'
+                }}>
+                  {s.icon}
+                </div>
+                <div style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: 800, color: 'var(--or)', lineHeight: 1 }}>
+                  {s.value}
+                </div>
+                <div style={{ fontSize: 'clamp(11px, 0.8vw, 13px)', color: 'rgba(255,255,255,0.6)', marginTop: 6 }}>
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+        <div style={{ 
+          marginTop: 'clamp(40px, 5vw, 60px)', 
+          padding: 'clamp(24px, 3vw, 36px)', 
+          background: 'white', 
+          borderRadius: 'var(--radius)', 
+          border: '1px solid var(--border)' 
+        }}>
+          <Reveal className="reveal-up">
+            <h3 style={{ 
+              fontSize: 'clamp(20px, 2vw, 24px)', 
+              color: 'var(--bleu-nuit)', 
+              marginBottom: 16, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 10 
+            }}>
+              <Clock size={24} color="var(--or)" />
+              Historique de la Bibliothèque Centrale
+            </h3>
+            <p style={{ lineHeight: 1.8, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)', marginBottom: 16 }}>
+              Créée par décret n° 62/DFD/289 du 26/07/1962, l'Université Fédérale du Cameroun (UFC) trouve son origine 
+              dans le décret n° 61/55 du 25 Avril 1961 qui crée l'Institut National des Etudes Universitaires (INEU) 
+              sur la route d'Akonolinga. Elle emprunte des locaux des Forces Armées et à l'Ecole Camerounaise d'Administration.
+            </p>
+            <p style={{ lineHeight: 1.8, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)', marginBottom: 16 }}>
+              C'est en 1967 que la bibliothèque financée par la Fondation Française de l'Enseignement Supérieur au Cameroun 
+              rejoint effectivement l'enceinte de Ngoa-Ekele avec une superficie de 12 000 m², 360 places assises, 
+              un fonds de 47 000 ouvrages et 819 périodiques.
+            </p>
+            <p style={{ lineHeight: 1.8, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+              Aujourd'hui, la BCUY1 est un pilier de la recherche et de l'enseignement à l'Université de Yaoundé I, 
+              avec un fonds documentaire en constante évolution et des services numériques innovants.
+            </p>
+          </Reveal>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE COORDINATION ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function CoordinationPage() {
+  const coordinationData = {
+    conservateur: 'Pr Marie-José Essi',
+    conservateurPhoto: imgMarieJoseEssi,
+    sections: [
+      {
+        title: 'Planification, M&E et Formation',
+        responsable: 'Pr Marie-José Essi',
+        responsablePhoto: imgMarieJoseEssi,
+        color: '#1B1464'
+      },
+      {
+        title: 'Responsable des Collections Analogiques',
+        responsable: 'Monsieur Isaac Christian Ilouga',
+        responsablePhoto: imgIsaacChristianIlouga,
+        color: '#7C3AED'
+      },
+      {
+        title: 'Suivi du Programme',
+        responsable: 'Madame Péguy Tassapo Pouokam',
+        responsablePhoto: imgPeguyTassapoPouokam,
+        color: '#059669'
+      },
+      {
+        title: 'Suivi des Opérations',
+        responsable: 'Monsieur Ignace Blaise Olli',
+        responsablePhoto: imgIgnaceBlaiseOlli,
+        color: '#6366f1'
+      }
+    ]
+  };
+
+  return (
+    <Layout>
+      <Helmet>
+        <title>Coordination de la Bibliothèque Centrale - BCU UYI</title>
+        <meta name="description" content="Découvrez l'organisation de la Coordination de la Bibliothèque Centrale de l'Université de Yaoundé I, dirigée par le Conservateur en Chef." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Coordination' }
+          ]} />
+          <h1 className="font-serif" style={{ 
+            fontSize: 'clamp(28px, 4vw, 40px)', 
+            color: 'white', 
+            fontWeight: 400, 
+            marginBottom: 8 
+          }}>
+            La <span style={{ color: 'var(--or)' }}>Coordination</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            Organisation et gouvernance de la Bibliothèque Centrale Universitaire
+          </p>
+        </div>
+      </div>
+      <div className="container-sm" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+        <Reveal className="reveal-up">
+          <div style={{ 
+            background: 'white', 
+            borderRadius: 'var(--radius)', 
+            border: '1px solid var(--border)', 
+            padding: 'clamp(28px, 3.5vw, 44px)',
+            borderTop: '4px solid var(--or)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'clamp(24px, 3vw, 40px)',
+              marginBottom: 28,
+              flexWrap: 'wrap'
+            }}>
+              <ResponsablePhoto 
+                src={coordinationData.conservateurPhoto} 
+                name={coordinationData.conservateur} 
+                size="clamp(100px, 14vw, 160px)" 
+              />
+              <div>
+                <div style={{ 
+                  fontSize: 'clamp(11px, 0.8vw, 12px)', 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  color: 'var(--or)', 
+                  letterSpacing: '0.08em'
+                }}>
+                  Conservateur en Chef
+                </div>
+                <h2 style={{ 
+                  fontSize: 'clamp(24px, 2.8vw, 34px)', 
+                  fontWeight: 700, 
+                  color: 'var(--bleu-nuit)',
+                  marginTop: 2
+                }}>
+                  {coordinationData.conservateur}
+                </h2>
+              </div>
+            </div>
+
+            <p style={{ 
+              lineHeight: 1.9, 
+              color: 'var(--texte-muted)', 
+              fontSize: 'clamp(15px, 1vw, 16px)', 
+              marginBottom: 28 
+            }}>
+              La Coordination assure la direction stratégique de la bibliothèque, la planification des projets,
+              le suivi-évaluation et la supervision de l'ensemble des départements. Elle compte quatre (04) sections 
+              principales avec des responsabilités spécifiques.
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 'clamp(16px, 1.8vw, 20px)'
+            }}>
+              {coordinationData.sections.map((section, index) => (
+                <div key={section.title} style={{
+                  padding: 'clamp(18px, 2vw, 24px)',
+                  background: 'var(--beige)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)',
+                  borderLeft: `6px solid ${section.color}`,
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'clamp(16px, 1.8vw, 24px)',
+                  flexWrap: 'wrap'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = '';
+                  e.currentTarget.style.boxShadow = '';
+                }}>
+                  <ResponsablePhoto 
+                    src={section.responsablePhoto} 
+                    name={section.responsable} 
+                    size="clamp(60px, 7vw, 80px)" 
+                    showName={false}
+                  />
+                  <div style={{ flex: 1, minWidth: '150px' }}>
+                    <div style={{ 
+                      fontWeight: 700, 
+                      fontSize: 'clamp(14px, 1vw, 16px)', 
+                      color: 'var(--bleu-nuit)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginBottom: 4
+                    }}>
+                      <Users size={16} color={section.color} />
+                      {section.title}
+                    </div>
+                    <span style={{ 
+                      fontSize: 'clamp(13px, 0.9vw, 14px)', 
+                      color: 'var(--texte-muted)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6
+                    }}>
+                      <User size={14} color={section.color} />
+                      <strong>Responsable :</strong> {section.responsable}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </Layout>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE ORGANISATION (SECTIONS ET UNITÉS) ──────────────────────
+// ═══════════════════════════════════════════════════════════════════
+console.log('✅ SectionsPage montée');
+export function SectionsPage() {
+  console.log("🔍 SectionsPage rendue");
+  console.log("📊 departmentsData:", departmentsData);
+  console.log("📊 departmentsData length:", departmentsData.length);
+  const departmentsData = [
+    {
+      id: 'dra',
+      name: 'Département des Ressources Administratives (DRA)',
+      responsable: 'Madame Nancy Bilo\'o Ekoto',
+      responsablePhoto: imgNancyBilooEkoto,
+      color: '#1B1464',
+      icon: <Briefcase size={20} />,
+      sections: [
+        {
+          title: 'Ressources Financières',
+          responsable: 'Madame Péguy Tassapo Pouokam',
+          responsablePhoto: imgPeguyTassapoPouokam,
+          units: [
+            { name: 'Budget et comptabilité', responsable: 'Pr Marie-José Essi' },
+            { name: 'États et réception', responsable: 'Madame Anne-Marie Akamba' },
+            { name: 'Suivi et reporting', responsable: 'Monsieur Flammarion Noko Edjeba' }
+          ]
+        },
+        {
+          title: 'Ressources Matérielles',
+          responsable: 'Monsieur Daouda Wusthitengam',
+          responsablePhoto: imgDaoudaWusthitengam,
+          units: [
+            { name: 'Gestion des matières', responsable: 'Monsieur Daouda Wusthitengam' },
+            { name: 'Salubrité', responsable: 'Monsieur Modeste Ba\'ane Assembe' },
+            { name: 'Maintenance', responsable: 'Monsieur René Minko' }
+          ]
+        },
+        {
+          title: 'Ressources Humaines',
+          responsable: 'Monsieur Charles Eko Kotto',
+          responsablePhoto: imgCharlesEkoKotto,
+          units: [
+            { name: 'Carrière', responsable: 'Monsieur Charles Eko Kotto' },
+            { name: 'Liaison DAAF', responsable: 'Madame Marie-Rose Kohn' },
+            { name: 'Performance', responsable: 'Pr Marie-José Essi' }
+          ]
+        },
+        {
+          title: 'Gestion des Usagers',
+          responsable: 'Madame Ndip Mary Arrah',
+          responsablePhoto: imgNdipMaryArrah,
+          units: [
+            { name: 'Accueil', responsable: 'Madame Dayang Houlibele' },
+            { name: 'Salles de lecture', responsable: 'Monsieur Zakariahou Litouot' },
+            { name: 'Renseignements', responsable: 'Monsieur Alexander Lyonga Nasie' },
+            { name: 'Cartes d\'accès', responsable: 'Monsieur Ignace Blaise Olli' }
+          ]
+        },
+        {
+          title: 'Gestion de l\'Effectivité au Poste',
+          responsable: 'Monsieur Bertin Ndongo Evezo\'o',
+          responsablePhoto: imgBertinNdongoEvezo,
+          units: [
+            { name: 'Permanence travail spécial', responsable: 'Monsieur Bertin Ndongo Evezo\'o' },
+            { name: 'Suivi de la régularité', responsable: 'Madame Minette Vouffo Awozang' },
+            { name: 'Liaison Secrétariat général', responsable: 'Monsieur IBO' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'daca',
+      name: 'Département Accès aux Collections Analogiques (DACA)',
+      responsable: 'Madame Virago Léonie Kenne',
+      responsablePhoto: imgViragoLeonieKenne,
+      color: '#7C3AED',
+      icon: <BookOpen size={20} />,
+      sections: [
+        {
+          title: 'Acquisition et Conservation',
+          responsable: 'Madame Michele Rosy Ankouma Sob',
+          responsablePhoto: imgMicheleRosyAnkoumaSob,
+          units: [
+            { name: 'Acquisition et enregistrement', responsable: 'Madame Ndip Mary Arrah' },
+            { name: 'Gestion des rayons', responsable: 'Monsieur Zakariahou Litouot et Monsieur Pierre Emile Abou\'ou' },
+            { name: 'Reliure et restauration', responsable: 'Monsieur Bertin Ndongo Evezo\'o' }
+          ]
+        },
+        {
+          title: 'Traitement Intellectuel',
+          responsable: 'Monsieur Marc Olivier Mindjeme',
+          responsablePhoto: imgMarcOlivierMindjeme,
+          units: [
+            { name: 'Indexation', responsable: 'Monsieur Marc Olivier Mindjeme' },
+            { name: 'Classification', responsable: 'Monsieur Maurice Kiteng' },
+            { name: 'Catalogage', responsable: 'Madame Virago Léonie Kenne' }
+          ]
+        },
+        {
+          title: 'Catalogues',
+          responsable: 'Madame Victorine Ngue Ngougno',
+          responsablePhoto: imgVictorineNgueNgougno,
+          units: [
+            { name: 'Conception', responsable: 'Madame Victorine Ngue Ngougno' },
+            { name: 'Fiches normalisées', responsable: 'Monsieur Modeste Ba\'ane Assembe' },
+            { name: 'Saisie', responsable: 'Madame Ogen Prudencia Mafor' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'dacn',
+      name: 'Département Accès aux Collections Numériques (DACN)',
+      responsable: 'Madame Anne-Marie Akamba Ngwba',
+      responsablePhoto: imgAnneMarieAkamba,
+      color: '#059669',
+      icon: <Cloud size={20} />,
+      sections: [
+        {
+          title: 'Monographies Numériques',
+          responsable: 'Docteur Nkolo Prudence Niclaire',
+          responsablePhoto: imgNkoloPrudenceNiclaire,
+          units: [
+            { name: 'Acquisition', responsable: 'Docteur Nkolo Prudence Niclaire' },
+            { name: 'Traitement', responsable: 'Madame Anne-Marie Akamba Ngwba' },
+            { name: 'Valorisation', responsable: 'Monsieur TNL' }
+          ]
+        },
+        {
+          title: 'Connaissances Numériques',
+          responsable: 'Madame Nancy Bilo\'o Ekoto',
+          responsablePhoto: imgNancyBilooEkoto,
+          units: [
+            { name: 'Acquisition', responsable: 'Madame Minette Vouffo Awozang' },
+            { name: 'Traitement', responsable: 'Madame Anne-Marie Akamba Ngwba' },
+            { name: 'Valorisation', responsable: 'Pr Marie-José Essi' }
+          ]
+        },
+        {
+          title: 'Périodiques',
+          responsable: 'Madame Esther Flore Moussi',
+          responsablePhoto: imgEstherFloreMoussi,
+          units: [
+            { name: 'Sélection', responsable: 'Madame Victorine Ngue Ngougno' },
+            { name: 'Abonnement', responsable: 'Pr Marie-José Essi' },
+            { name: 'Promotion', responsable: 'Madame Esther Flore Moussi' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'dri',
+      name: 'Département des Ressources Informatiques (DRI)',
+      responsable: 'Monsieur Norbert Tangmo',
+      responsablePhoto: imgNorbertTangmo,
+      color: '#6366f1',
+      icon: <Server size={20} />,
+      sections: [
+        {
+          title: 'Système Intégré de Gestion de Bibliothèque',
+          responsable: 'Monsieur Norbert Tangmo',
+          responsablePhoto: imgNorbertTangmo,
+          units: [
+            { name: 'Catalogage', responsable: 'Madame Michele Rosy Ankouma Sob' },
+            { name: 'Web, Réseaux et Sécurité', responsable: 'Monsieur Norbert Tangmo' },
+            { name: 'OPAC', responsable: 'Pr Marie-José Essi' }
+          ]
+        },
+        {
+          title: 'Services Documentaires',
+          responsable: 'Monsieur Maurice Kiteng',
+          responsablePhoto: imgMauriceKiteng,
+          units: [
+            { name: 'Bibliothèque numérique', responsable: 'Madame Anne-Marie Akamba Ngwba' },
+            { name: 'Veille informationnelle', responsable: 'Madame Victorine Ngue Ngougno' },
+            { name: 'Accès aux ressources', responsable: 'Monsieur Alexander Lyonga Nasie' }
+          ]
+        },
+        {
+          title: 'Sciences Ouvertes et Formation',
+          responsable: 'Pr Marie-José Essi',
+          responsablePhoto: imgMarieJoseEssi,
+          units: [
+            { name: 'Réseaux documentaires', responsable: 'Madame Nancy Bilo\'o Ekoto' },
+            { name: 'Licences numériques', responsable: 'Madame Virago Léonie Kenne' },
+            { name: 'Transfert de compétences', responsable: 'Monsieur Norbert Tangmo' }
+          ]
+        }
+      ]
+    }
+  ];
+
+  return (
+    <Layout>
+      <Helmet>
+        <title>Organisation de la Bibliothèque Centrale - BCU UYI</title>
+        <meta name="description" content="Découvrez l'organisation de la Bibliothèque Centrale de l'Université de Yaoundé I : 4 départements, 15 sections et plus de 30 unités." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Organisation' }
+          ]} />
+          <h1 className="font-serif" style={{ 
+            fontSize: 'clamp(28px, 4vw, 40px)', 
+            color: 'white', 
+            fontWeight: 400, 
+            marginBottom: 8 
+          }}>
+            Organisation <span style={{ color: 'var(--or)' }}>de la BC-UYI</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            Découvrez les départements, sections et unités qui composent la Bibliothèque Centrale
+          </p>
+        </div>
+      </div>
+      <div className="container" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+        <Reveal className="reveal-up">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 'clamp(16px, 1.8vw, 24px)',
+            marginBottom: 'clamp(32px, 4vw, 48px)'
+          }}>
+            {departmentsData.map(dept => (
+              <div key={dept.id} style={{
+                padding: 'clamp(18px, 2vw, 24px)',
+                background: 'white',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)',
+                borderTop: `6px solid ${dept.color}`,
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 10,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-6px)';
+                e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = '';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+              }}>
+                <ResponsablePhoto 
+                  src={dept.responsablePhoto} 
+                  name={dept.responsable} 
+                  size="clamp(70px, 8vw, 100px)" 
+                />
+                <div style={{ 
+                  fontWeight: 700, 
+                  fontSize: 'clamp(13px, 0.9vw, 15px)', 
+                  color: 'var(--bleu-nuit)',
+                  marginBottom: 2
+                }}>
+                  {dept.name}
+                </div>
+                <div style={{ 
+                  fontSize: 'clamp(11px, 0.8vw, 12px)', 
+                  color: 'var(--texte-muted)' 
+                }}>
+                  {dept.responsable}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+        {departmentsData.map((dept, deptIndex) => (
+          <Reveal key={dept.id} className="reveal-up" delay={deptIndex * 100}>
+            <div style={{
+              marginBottom: 'clamp(28px, 3.5vw, 40px)',
+              background: 'white',
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--border)',
+              overflow: 'hidden',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{
+                padding: 'clamp(18px, 2.2vw, 28px)',
+                background: dept.color,
+                color: 'white',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 12
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(16px, 2vw, 24px)', flexWrap: 'wrap' }}>
+                  <ResponsablePhoto 
+                    src={dept.responsablePhoto} 
+                    name={dept.responsable} 
+                    size="clamp(60px, 7vw, 80px)" 
+                  />
+                  <div>
+                    <h3 style={{ 
+                      fontSize: 'clamp(18px, 1.4vw, 22px)', 
+                      fontWeight: 700, 
+                      marginBottom: 2
+                    }}>
+                      {dept.name}
+                    </h3>
+                    <div style={{ 
+                      fontSize: 'clamp(12px, 0.85vw, 14px)', 
+                      opacity: 0.85,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}>
+                      <User size={16} />
+                      Responsable : {dept.responsable}
+                    </div>
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 'clamp(11px, 0.8vw, 12px)',
+                  background: 'rgba(255,255,255,0.2)',
+                  padding: '6px 16px',
+                  borderRadius: 50,
+                  fontWeight: 600
+                }}>
+                  {dept.sections.length} sections
+                </span>
+              </div>
+              <div style={{ padding: 'clamp(20px, 2.5vw, 32px)' }}>
+                {dept.sections.map((section, secIndex) => (
+                  <SectionCardWithPhoto
+                    key={secIndex}
+                    title={section.title}
+                    responsable={section.responsable}
+                    responsablePhoto={section.responsablePhoto}
+                    units={section.units}
+                    color={dept.color}
+                  />
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        ))}
+
+        <Reveal className="reveal-up" delay={400}>
+          <div style={{
+            padding: 'clamp(24px, 3vw, 36px)',
+            background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
+            borderRadius: 'var(--radius)',
+            textAlign: 'center',
+            color: 'white'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+              gap: 'clamp(16px, 2vw, 24px)'
+            }}>
+              <div>
+                <div style={{ fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 800, color: 'var(--or)' }}>
+                  4
+                </div>
+                <div style={{ fontSize: 'clamp(12px, 0.85vw, 14px)', opacity: 0.8 }}>
+                  Départements
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 800, color: 'var(--or)' }}>
+                  15
+                </div>
+                <div style={{ fontSize: 'clamp(12px, 0.85vw, 14px)', opacity: 0.8 }}>
+                  Sections
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 800, color: 'var(--or)' }}>
+                  30+
+                </div>
+                <div style={{ fontSize: 'clamp(12px, 0.85vw, 14px)', opacity: 0.8 }}>
+                  Unités
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 'clamp(28px, 3vw, 36px)', fontWeight: 800, color: 'var(--or)' }}>
+                  45+
+                </div>
+                <div style={{ fontSize: 'clamp(12px, 0.85vw, 14px)', opacity: 0.8 }}>
+                  Agents
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </Layout>
+  );
+}
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE HORAIRES ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function HorairesPage() {
+  const today = new Date();
+  const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
+
+  return (
+    <Layout>
+      <Helmet>
+        <title>Horaires d'ouverture de la Bibliothèque Centrale - BCU UYI</title>
+        <meta name="description" content="Consultez les horaires d'ouverture de la Bibliothèque Centrale Universitaire de Yaoundé I : du lundi au vendredi 07h30-18h30, samedi 08h00-13h00." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Horaires' }
+          ]} />
+          <h1 className="font-serif" style={{ 
+            fontSize: 'clamp(28px, 4vw, 40px)', 
+            color: 'white', 
+            fontWeight: 400 
+          }}>
+            Horaires <span style={{ color: 'var(--or)' }}>d'ouverture</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            Consultez les horaires d'ouverture de la Bibliothèque Centrale
+          </p>
+        </div>
+      </div>
+      <div className="container-sm" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+        <Reveal className="reveal-up">
+          <div style={{ 
+            background: 'white', 
+            border: '1px solid var(--border)', 
+            borderRadius: 'var(--radius)', 
+            overflow: 'hidden', 
+            marginBottom: 36,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+          }}>
+            <div style={{ 
+              background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+              padding: 'clamp(16px, 2vw, 20px) clamp(20px, 3vw, 28px)', 
+              color: 'var(--or)', 
+              fontWeight: 700, 
+              fontSize: 'clamp(14px, 1vw, 15px)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10
+            }}>
+              <Clock size={20} /> Horaires hebdomadaires
+            </div>
+            {[
+              { jour: 'Lundi',    heures: '07h30 – 18h30', ouvert: true },
+              { jour: 'Mardi',    heures: '07h30 – 18h30', ouvert: true },
+              { jour: 'Mercredi', heures: '07h30 – 18h30', ouvert: true },
+              { jour: 'Jeudi',    heures: '07h30 – 18h30', ouvert: true },
+              { jour: 'Vendredi', heures: '07h30 – 18h30', ouvert: true },
+              { jour: 'Samedi',   heures: '08h00 – 13h00', ouvert: true },
+              { jour: 'Dimanche', heures: 'Fermé',          ouvert: false },
+            ].map((h, index) => {
+              const isToday = index === todayIndex;
+              return (
+                <div 
+                  key={h.jour} 
+                  style={{
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    padding: 'clamp(12px, 1.5vw, 16px) clamp(20px, 3vw, 28px)',
+                    borderBottom: index < 6 ? '1px solid var(--border)' : 'none',
+                    background: isToday ? 'rgba(124,58,237,0.08)' : 'transparent',
+                    transition: 'background 0.2s ease',
+                    flexWrap: 'wrap',
+                    gap: 4
+                  }}
+                >
+                  <span style={{ 
+                    fontWeight: isToday ? 700 : 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'clamp(6px, 0.8vw, 8px)',
+                    fontSize: 'clamp(13px, 0.9vw, 14px)'
+                  }}>
+                    {h.jour}
+                    {isToday && (
+                      <span style={{
+                        fontSize: 'clamp(8px, 0.6vw, 10px)',
+                        background: 'var(--or)',
+                        color: 'white',
+                        padding: '2px 10px',
+                        borderRadius: 50,
+                        fontWeight: 700
+                      }}>
+                        Aujourd'hui
+                      </span>
+                    )}
+                  </span>
+                  <span style={{ 
+                    color: h.ouvert ? 'var(--green)' : 'var(--red)', 
+                    fontWeight: isToday ? 700 : 600,
+                    fontSize: 'clamp(13px, 0.9vw, 14px)'
+                  }}>
+                    {h.heures}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </Reveal>
+        <Reveal className="reveal-up" delay={150}>
+          <div style={{ 
+            background: 'var(--beige)', 
+            borderRadius: 'var(--radius-sm)', 
+            padding: 'clamp(16px, 2vw, 20px) clamp(20px, 3vw, 24px)', 
+            fontSize: 'clamp(13px, 0.9vw, 14px)', 
+            color: 'var(--texte-muted)', 
+            border: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12
+          }}>
+            <AlertCircle size={20} color="var(--or)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <div>
+              <strong>Informations :</strong> Les horaires peuvent être modifiés pendant les périodes d'examens 
+              et les jours fériés. Consultez la section Actualités pour les annonces spéciales.
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </Layout>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE SERVICES ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+const SERVICES_DATA = {
+  consultation: {
+    title: 'Espace consultation',
+    icon: '📖',
+    desc: 'La bibliothèque dispose de plusieurs salles de lecture climatisées offrant plus de 500 places assises réparties sur 3 niveaux.',
+    details: [
+      'Niveau 1 : Accueil, prêt/retour, salle de consultation générale',
+      'Niveau 2 : Sciences exactes, Technologies, Médecine',
+      'Niveau 3 : Sciences humaines, Lettres, Droit, Sciences sociales',
+      'Salle de lecture silencieuse (50 places) — Niveau 2',
+      'Accès PMR (Personnes à Mobilité Réduite)',
+    ],
+    hours: '07h30 – 18h30 (Lun–Ven) | 08h00 – 13h00 (Sam)',
+    content: (
+      <div style={{ marginTop: 20 }}>
+        <h3 style={{ fontSize: 'clamp(18px, 1.5vw, 22px)', color: 'var(--bleu-nuit)', marginBottom: 12 }}>
+          Consultation des ouvrages
+        </h3>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          La Bibliothèque Centrale de l'UYI dispose d'un important fonds documentaire constitué de monographies, 
+          mémoires et thèses, journaux et ressources numériques disponibles dans son catalogue informatisé.
+          <br/>
+          <Link to="/catalogue" style={{ color: 'var(--or)', fontWeight: 600 }}>Consulter notre catalogue</Link>
+        </p>
+        <h4 style={{ fontWeight: 700, marginTop: 20, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Consultation des Mémoires et Thèses
+        </h4>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          La Bibliothèque Centrale de l'UYI reçoit des mémoires et thèses soutenus dans les différents 
+          départements et Écoles de l'Université de Yaoundé I.
+          <br/>
+          <Link to="/theses" style={{ color: 'var(--or)', fontWeight: 600 }}>
+            Consulter les mémoires et thèses disponibles
+          </Link>
+        </p>
+        <h4 style={{ fontWeight: 700, marginTop: 20, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Les Espaces de lecture
+        </h4>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          Après les travaux de rénovation, la capacité d'accueil a été portée à plus de 1 000 places assises.
+        </p>
+        <ImageCarousel images={[salleLect1, salleLect2, salleLect3, salleLect4]} />
+        <h4 style={{ fontWeight: 700, marginTop: 30, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Consignes à observer
+        </h4>
+        <ul style={{ lineHeight: 1.7, paddingLeft: 20, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          <li>Ne pas entrer avec le sac à l'intérieur de la bibliothèque</li>
+          <li>Ne pas entrer avec de la nourriture ou de la boisson</li>
+          <li>Ne pas téléphoner</li>
+          <li>Ne pas faire de bruit</li>
+          <li>Ne pas accéder aux ouvrages sans autorisation</li>
+        </ul>
+      </div>
+    )
+  },
+  wifi: {
+    title: 'Accès WiFi Campus',
+    icon: '📶',
+    desc: "La bibliothèque offre un accès WiFi haut débit de 200 Mbps avec couverture totale sur l'ensemble des 3 niveaux.",
+    details: [
+      'Débit : 200 Mbps symétrique',
+      'Couverture : 100% des espaces intérieurs',
+      'Connexion : Identifiants SIGB ou réseau universitaire',
+      'Accès aux bases de données en ligne inclus',
+      'Filtrage respectueux de la vie privée',
+    ],
+    hours: 'Disponible 24h/24 dans les zones couvertes',
+    content: (
+      <div style={{ marginTop: 20 }}>
+        <h3 style={{ fontSize: 'clamp(20px, 1.8vw, 24px)', color: 'var(--bleu-nuit)', marginBottom: 16, fontWeight: 700 }}>
+          Accès au WIFI
+        </h3>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 30 }}>
+          <img 
+            src={wifiImage2} 
+            alt="WiFi à la Bibliothèque Centrale" 
+            style={{ 
+              width: '100%', 
+              maxWidth: 800,
+              height: 'clamp(200px, 30vw, 400px)', 
+              objectFit: 'cover', 
+              borderRadius: 'var(--radius)', 
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+            }} 
+          />
+        </div>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          La Bibliothèque Centrale de l'Université de Yaoundé I donne un accès gratuit et sécurisé au Web 
+          et à des logiciels adaptés à l'usager.
+        </p>
+        <h4 style={{ fontWeight: 700, marginTop: 20, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Se connecter au réseau Wi-Fi
+        </h4>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          Le réseau sans fil <strong>"NETWORK_UY1"</strong> est disponible à la bibliothèque. 
+          Une authentification est nécessaire sur la base des identifiants SIGB.
+        </p>
+        <h4 style={{ fontWeight: 700, marginTop: 20, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Sécurité informatique
+        </h4>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          La sécurité informatique de votre matériel repose entièrement sur vous. Nous vous conseillons 
+          vivement d'équiper votre ordinateur des protections nécessaires.
+        </p>
+        <div style={{ 
+          marginTop: 20, 
+          padding: 'clamp(14px, 1.5vw, 16px)', 
+          background: 'var(--beige)', 
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border)'
+        }}>
+          <h4 style={{ fontWeight: 700, fontSize: 'clamp(13px, 0.9vw, 14px)', color: 'var(--bleu-nuit)', marginBottom: 8 }}>
+            📋 Charte de l'utilisateur du réseau
+          </h4>
+          <p style={{ fontSize: 'clamp(12px, 0.85vw, 13px)', color: 'var(--texte-muted)', lineHeight: 1.6 }}>
+            Les membres de la communauté universitaire entendent réaffirmer leur souci de n'utiliser 
+            les nouvelles techniques de l'information dans le respect des règles établies.
+          </p>
+        </div>
+      </div>
+    )
+  },
+  reliure: {
+    title: 'Service reliure',
+    icon: '📋',
+    desc: 'Le service de reliure propose plusieurs types de reliures pour vos mémoires, thèses et documents.',
+    details: [
+      'Reliure thermique (couverture rigide)',
+      'Reliure spirale plastique',
+      'Reliure spirale métallique',
+      'Reliure manuelle et dos carré collé',
+      'Délai standard : 24 à 48h ouvrées',
+    ],
+    hours: '08h00 – 17h00 (Lun–Ven)',
+    content: (
+      <div style={{ marginTop: 20 }}>
+        <h3 style={{ fontSize: 'clamp(18px, 1.5vw, 22px)', color: 'var(--bleu-nuit)', marginBottom: 12 }}>
+          Atelier de reliure
+        </h3>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          La section reliure est équipée d'un atelier en charge de protéger le livre, d'augmenter sa 
+          stabilité et sa durée de vie.
+        </p>
+        <h4 style={{ fontWeight: 700, marginTop: 20, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Types de reliure
+        </h4>
+        <ul style={{ lineHeight: 1.7, paddingLeft: 20, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          <li><strong>Reliure courante :</strong> travail sobre en toile, en carton ou en cuir</li>
+          <li><strong>Reliure d'art :</strong> pour les particuliers, bibliophiles et collectionneurs</li>
+        </ul>
+      </div>
+    )
+  },
+  mediation: {
+    title: 'Médiation documentaire',
+    icon: '🤝',
+    desc: 'Le service de médiation aide les usagers à optimiser leur recherche documentaire.',
+    details: [
+      'Assistance à la recherche bibliographique',
+      "Aide à l'utilisation du catalogue PMB",
+      'Initiation aux bases de données en ligne',
+      'Rédaction de bibliographies',
+      'Rendez-vous individuels sur réservation',
+    ],
+    hours: '09h00 – 17h00 (Lun–Ven) — Sur rendez-vous',
+    content: null
+  },
+  formation: {
+    title: 'Formation documentaire',
+    icon: '🎓',
+    desc: "Formations collectives et individuelles à la maîtrise de l'information scientifique.",
+    details: [
+      'Formation L1-L2 : Introduction à la bibliothèque (2h)',
+      'Formation Master : Méthodologie de la recherche (4h)',
+      'Atelier : Rédiger une bibliographie normalisée',
+      'Atelier : Utiliser Research4Life et les bases données',
+      'Chaque jeudi à 14h00 — Salle B12',
+    ],
+    hours: 'Jeudi 14h00 (session libre) + sessions programmées',
+    content: (
+      <div style={{ marginTop: 20 }}>
+        <h3 style={{ fontSize: 'clamp(18px, 1.5vw, 22px)', color: 'var(--bleu-nuit)', marginBottom: 12 }}>
+          Produits documentaires
+        </h3>
+        <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          La Bibliothèque Centrale élabore pour vous des produits documentaires pour répondre au mieux 
+          à vos besoins d'information.
+        </p>
+        <h4 style={{ fontWeight: 700, marginTop: 20, color: 'var(--bleu-nuit)', fontSize: 'clamp(15px, 1.1vw, 17px)' }}>
+          Produits proposés
+        </h4>
+        <ul style={{ lineHeight: 1.7, paddingLeft: 20, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+          <li><strong>Dossier documentaire :</strong> Ensemble de documents sur une question donnée</li>
+          <li><strong>Bibliographie :</strong> Liste de notices bibliographiques classées</li>
+          <li><strong>Bulletin d'information :</strong> Publication périodique sur les actualités</li>
+          <li><strong>Synthèse documentaire :</strong> Condensation et reformulation d'informations</li>
+        </ul>
+      </div>
+    )
+  }
+};
+
+export function ServicesPage({ type = 'general' }) {
+  const s = SERVICES_DATA[type] || SERVICES_DATA.consultation;
+
+  if (type === 'general') {
+    return (
+      <>
+        <Seo
+          title="Nos services"
+          path="/services"
+          description="Découvrez les services de la Bibliothèque Centrale Universitaire de Yaoundé I : consultation, WiFi campus, reliure, médiation documentaire et formation."
+          keywords="services bibliothèque UYI, consultation bibliothèque, wifi campus, reliure, médiation documentaire, formation documentaire"
+          canonical="https://bcu-uyi.cm/services"
+        />
+        <Layout>
+        <Helmet>
+          <title>Nos Services - Bibliothèque Centrale UYI</title>
+          <meta name="description" content="Découvrez tous les services de la Bibliothèque Centrale de l'Université de Yaoundé I : consultation, WiFi, reliure, médiation et formation documentaire." />
+        </Helmet>
+        <style>{responsiveStyles}</style>
+        <div style={{ 
+          background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+          padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+        }}>
+          <div className="container">
+            <Breadcrumb items={[
+              { label: 'Accueil', href: '/' },
+              { label: 'Services' }
+            ]} />
+            <h1 className="font-serif" style={{ 
+              fontSize: 'clamp(28px, 4vw, 40px)', 
+              color: 'white', 
+              fontWeight: 400 
+            }}>
+              Nos <span style={{ color: 'var(--or)' }}>Services</span>
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+              Découvrez l'ensemble des services proposés par la Bibliothèque Centrale
+            </p>
+          </div>
+        </div>
+        <div className="container" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 'clamp(16px, 2vw, 24px)'
+          }}>
+            {[
+              { title: 'Espace consultation', icon: '📖', desc: 'Salles de lecture climatisées avec plus de 500 places assises', link: '/services/consultation' },
+              { title: 'Accès WiFi Campus', icon: '📶', desc: 'WiFi haut débit 200 Mbps couvrant 100% des espaces', link: '/services/wifi' },
+              { title: 'Service Reliure', icon: '📋', desc: 'Reliure thermique, spirale et dos carré collé', link: '/services/reliure' },
+              { title: 'Médiation documentaire', icon: '🤝', desc: 'Assistance à la recherche bibliographique et aux bases de données', link: '/services/mediation' },
+              { title: 'Formation documentaire', icon: '🎓', desc: 'Formations à la maîtrise de l\'information scientifique', link: '/services/formation' },
+            ].map((service, index) => (
+              <Reveal key={service.title} className="reveal-up" delay={index * 80}>
+                <Link to={service.link} style={{
+                  background: 'white',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: 'clamp(20px, 2.5vw, 28px)',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  display: 'block',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'center'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                  e.currentTarget.style.borderColor = 'var(--or)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = '';
+                  e.currentTarget.style.boxShadow = '';
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                }}>
+                  <div style={{ fontSize: 'clamp(32px, 3.5vw, 40px)', marginBottom: 12 }}>{service.icon}</div>
+                  <h3 style={{ fontWeight: 700, fontSize: 'clamp(15px, 1.1vw, 17px)', color: 'var(--bleu-nuit)', marginBottom: 8 }}>
+                    {service.title}
+                  </h3>
+                  <p style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', color: 'var(--texte-muted)', lineHeight: 1.6 }}>
+                    {service.desc}
+                  </p>
+                  <div style={{ marginTop: 14, color: 'var(--or)', fontSize: 'clamp(12px, 0.8vw, 13px)', fontWeight: 600 }}>
+                    En savoir plus →
+                  </div>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+        </Layout>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Seo
+        title={s.title}
+        path={`/services/${type}`}
+        description={`${s.desc} - Service de la Bibliothèque Centrale Universitaire de Yaoundé I.`}
+        keywords={`${s.title}, service bibliothèque, bibliothèque UYI, documentation, assistance documentaire`}
+        canonical={`https://bcu-uyi.cm/services/${type}`}
+      />
+      <Layout>
+      <Helmet>
+        <title>{s.title} - Bibliothèque Centrale UYI</title>
+        <meta name="description" content={`${s.desc} - Service de la Bibliothèque Centrale Universitaire de Yaoundé I.`} />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Services', href: '/services' },
+            { label: s.title }
+          ]} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 1.5vw, 16px)', marginBottom: 8, flexWrap: 'wrap' }}>
+            <div style={{
+              fontSize: 'clamp(36px, 4vw, 48px)',
+              flexShrink: 0
+            }}>
+              {s.icon}
+            </div>
+            <h1 className="font-serif" style={{ 
+              fontSize: 'clamp(28px, 3.5vw, 36px)', 
+              color: 'white', 
+              fontWeight: 400 
+            }}>
+              {s.title}
+            </h1>
+          </div>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            {s.desc}
+          </p>
+        </div>
+      </div>
+      <div className="container-sm" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+        <Reveal className="reveal-up">
+          <div style={{ 
+            background: 'white', 
+            border: '1px solid var(--border)', 
+            borderRadius: 'var(--radius)', 
+            padding: 'clamp(20px, 3vw, 32px)', 
+            marginBottom: 24 
+          }}>
+            <h3 style={{ fontWeight: 700, marginBottom: 16, fontSize: 'clamp(16px, 1.1vw, 17px)', color: 'var(--bleu-nuit)' }}>
+              Ce que nous offrons
+            </h3>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {s.details.map(d => (
+                <li key={d} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 'clamp(14px, 0.95vw, 15px)', color: 'var(--texte-muted)' }}>
+                  <CheckCircle size={18} color="var(--or)" style={{ flexShrink: 0, marginTop: 1 }} />
+                  {d}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
+        <Reveal className="reveal-up" delay={100}>
+          <div style={{ 
+            background: 'var(--beige)', 
+            borderRadius: 'var(--radius-sm)', 
+            padding: 'clamp(14px, 1.5vw, 16px) clamp(20px, 3vw, 24px)', 
+            border: '1px solid var(--border)', 
+            fontSize: 'clamp(13px, 0.9vw, 14px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap'
+          }}>
+            <Clock size={18} color="var(--or)" />
+            <strong>Horaires :</strong> {s.hours}
+          </div>
+        </Reveal>
+        <div style={{ marginTop: 32, display: 'flex', gap: 'clamp(8px, 1vw, 12px)', flexWrap: 'wrap' }}>
+          <Link to="/contact" className="btn btn-bleu" style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', padding: 'clamp(9px, 1vw, 11px) clamp(16px, 2vw, 24px)' }}>
+            Nous contacter
+          </Link>
+          <Link to="/catalogue" className="btn btn-ghost" style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', padding: 'clamp(9px, 1vw, 11px) clamp(16px, 2vw, 24px)' }}>
+            <Search size={16} /> Explorer le catalogue
+          </Link>
+        </div>
+        {s.content && (
+          <Reveal className="reveal-up" delay={150}>
+            <div style={{ marginTop: 40, paddingTop: 40, borderTop: '1px solid var(--border)' }}>
+              {s.content}
+            </div>
+          </Reveal>
+        )}
+      </div>
+      </Layout>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE RESSOURCES ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function RessourcesPage() {
+  const DATABASES = [
+    { name: 'Research4Life', logo: '🌐', desc: 'Accès aux plus grandes revues scientifiques mondiales pour les pays en développement.', href: 'https://www.research4life.org', categories: ['Médecine', 'Agriculture', 'Droit', 'Business'], color: '#059669' },
+    { name: 'OpenDOAR', logo: '📂', desc: 'Répertoire mondial des archives institutionnelles en accès ouvert.', href: 'https://v2.sherpa.ac.uk/opendoar/', categories: ['Open Access'], color: '#6366f1' },
+    { name: 'DOAJ', logo: '📰', desc: 'Répertoire de revues en accès libre avec contrôle qualité éditorial.', href: 'https://doaj.org', categories: ['Pluridisciplinaire'], color: '#1B1464' },
+    { name: 'OpenEdition', logo: '📚', desc: 'Portail de ressources numériques en sciences humaines et sociales.', href: 'https://www.openedition.org', categories: ['SHS', 'Lettres'], color: '#8b5cf6' },
+    { name: 'Gallica (BNF)', logo: '🗺️', desc: 'Bibliothèque numérique de la Bibliothèque nationale de France.', href: 'https://gallica.bnf.fr', categories: ['Patrimoine', 'Archives'], color: '#7C3AED' },
+    { name: 'HAL Open Archives', logo: '📖', desc: 'Archive ouverte pluridisciplinaire pour le dépôt et la diffusion d\'articles scientifiques.', href: 'https://hal.archives-ouvertes.fr', categories: ['Recherche', 'Open Access'], color: '#10B981' },
+  ];
+
+  return (
+    <Layout>
+      <Helmet>
+        <title>Ressources électroniques - Bibliothèque Centrale UYI</title>
+        <meta name="description" content="Accédez aux bases de données et ressources en ligne disponibles pour la communauté de l'Université de Yaoundé I : Research4Life, OpenEdition, Gallica et plus." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Ressources électroniques' }
+          ]} />
+          <h1 className="font-serif" style={{ 
+            fontSize: 'clamp(28px, 4vw, 40px)', 
+            color: 'white', 
+            fontWeight: 400, 
+            marginBottom: 8 
+          }}>
+            Ressources <span style={{ color: 'var(--or)' }}>électroniques</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            Accès aux bases de données et ressources en ligne disponibles pour la communauté UYI
+          </p>
+        </div>
+      </div>
+      <div className="container" style={{ padding: 'clamp(32px, 5vw, 56px) 16px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+          gap: 'clamp(16px, 2vw, 24px)' 
+        }}>
+          {DATABASES.map((db, index) => (
+            <Reveal key={db.name} className="reveal-up" delay={index * 50}>
+              <a href={db.href} target="_blank" rel="noopener noreferrer" className="card" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                padding: 'clamp(16px, 2vw, 28px)',
+                transition: 'all 0.3s ease',
+                textDecoration: 'none',
+                color: 'inherit',
+                borderTop: `4px solid ${db.color || 'var(--or)'}`
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = '';
+                e.currentTarget.style.boxShadow = '';
+              }}>
+                <div style={{ fontSize: 'clamp(36px, 4vw, 48px)', marginBottom: 12 }}>{db.logo}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                  <h3 style={{ fontWeight: 700, fontSize: 'clamp(15px, 1.1vw, 17px)', color: 'var(--bleu-nuit)' }}>{db.name}</h3>
+                  <ExternalLink size={14} color="var(--texte-muted)" />
+                </div>
+                <p style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', color: 'var(--texte-muted)', lineHeight: 1.7, flex: 1, marginBottom: 14 }}>
+                  {db.desc}
+                </p>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {db.categories.map(c => (
+                    <span key={c} className="badge badge-blue" style={{ fontSize: 'clamp(9px, 0.7vw, 10px)' }}>{c}</span>
+                  ))}
+                </div>
+              </a>
+            </Reveal>
+          ))}
+        </div>
+        <Reveal className="reveal-up" delay={300}>
+          <div style={{ 
+            marginTop: 'clamp(40px, 5vw, 60px)', 
+            padding: 'clamp(24px, 3vw, 32px)', 
+            background: 'white', 
+            borderRadius: 'var(--radius)', 
+            border: '1px solid var(--border)' 
+          }}>
+            <h3 style={{ 
+              fontSize: 'clamp(18px, 1.8vw, 22px)', 
+              color: 'var(--bleu-nuit)', 
+              marginBottom: 16, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 10 
+            }}>
+              <Globe size={24} color="var(--or)" />
+              Accès aux ressources
+            </h3>
+            <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+              Pour accéder à ces ressources, vous devez être connecté au réseau de l'Université ou utiliser 
+              vos identifiants SIGB. Les bases de données sont accessibles depuis le catalogue PMB ou directement 
+              via les liens fournis.
+            </p>
+            <div style={{ marginTop: 16, display: 'flex', gap: 'clamp(8px, 1vw, 12px)', flexWrap: 'wrap' }}>
+              <Link to="/catalogue" className="btn btn-bleu btn-sm" style={{ fontSize: 'clamp(13px, 0.9vw, 14px)' }}>
+                <Search size={16} /> Accéder au catalogue
+              </Link>
+              <Link to="/contact" className="btn btn-ghost btn-sm" style={{ fontSize: 'clamp(13px, 0.9vw, 14px)' }}>
+                <Mail size={16} /> Aide et assistance
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </Layout>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE THÈSES ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function ThesesPage() {
+  return (
+    <Layout>
+      <Helmet>
+        <title>Thèses et Mémoires - Répertoire institutionnel UYI</title>
+        <meta name="description" content="Répertoire des thèses et mémoires de l'Université de Yaoundé I. Plus de 12 400 travaux de recherche consultables en ligne." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', 
+        padding: 'clamp(32px, 5vw, 48px) 0 clamp(24px, 3vw, 32px) 0' 
+      }}>
+        <div className="container">
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Thèses & Mémoires' }
+          ]} />
+          <h1 className="font-serif" style={{ 
+            fontSize: 'clamp(28px, 4vw, 40px)', 
+            color: 'white', 
+            fontWeight: 400, 
+            marginBottom: 8 
+          }}>
+            Thèses & <span style={{ color: 'var(--or)' }}>Mémoires</span>
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
+            Répertoire institutionnel — 12 400+ travaux de recherche UY1
+          </p>
+        </div>
+      </div>
+      <div className="container" style={{ padding: 'clamp(32px, 5vw, 56px) 16px', textAlign: 'center' }}>
+        <Reveal className="reveal-up">
+          <div style={{ fontSize: 'clamp(48px, 6vw, 64px)', marginBottom: 24 }}>🎓</div>
+          <h2 style={{ 
+            fontWeight: 700, 
+            fontSize: 'clamp(22px, 2.5vw, 28px)', 
+            marginBottom: 16, 
+            color: 'var(--bleu-nuit)' 
+          }}>
+            Répertoire des thèses & mémoires
+          </h2>
+          <p style={{ 
+            fontSize: 'clamp(14px, 1vw, 16px)', 
+            color: 'var(--texte-muted)', 
+            marginBottom: 32, 
+            maxWidth: 560, 
+            margin: '0 auto 32px' 
+          }}>
+            Recherchez parmi les thèses et mémoires soutenus à l'Université de Yaoundé I depuis 1970.
+          </p>
+          <div style={{ display: 'flex', gap: 'clamp(10px, 1.5vw, 16px)', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/catalogue?type=these" className="btn btn-bleu btn-lg" style={{ 
+              padding: 'clamp(12px, 1.5vw, 14px) clamp(24px, 3vw, 32px)',
+              fontSize: 'clamp(14px, 1vw, 16px)'
+            }}>
+              <Search size={18} /> Rechercher une thèse
+            </Link>
+            <Link to="/catalogue?type=memoire" className="btn btn-outline-white btn-lg" style={{ 
+              background: 'var(--bleu-nuit)', 
+              color: 'white', 
+              border: '2px solid var(--or)',
+              padding: 'clamp(12px, 1.5vw, 14px) clamp(24px, 3vw, 32px)',
+              fontSize: 'clamp(14px, 1vw, 16px)'
+            }}>
+              <BookOpen size={18} /> Parcourir les mémoires
+            </Link>
+          </div>
+        </Reveal>
+        <Reveal className="reveal-up" delay={150}>
+          <div style={{ 
+            marginTop: 'clamp(40px, 5vw, 60px)', 
+            textAlign: 'left', 
+            padding: 'clamp(24px, 3vw, 36px)', 
+            background: 'white', 
+            borderRadius: 'var(--radius)', 
+            border: '1px solid var(--border)' 
+          }}>
+            <h3 style={{ 
+              fontSize: 'clamp(18px, 1.8vw, 22px)', 
+              color: 'var(--bleu-nuit)', 
+              marginBottom: 16, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 10 
+            }}>
+              <GraduationCap size={24} color="var(--or)" />
+              Thèses et mémoires disponibles
+            </h3>
+            <h4 style={{ fontWeight: 700, marginTop: 24, fontSize: 'clamp(15px, 1.1vw, 16px)', color: 'var(--bleu-nuit)' }}>
+              Catalogue des thèses et mémoires
+            </h4>
+            <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+              Notre catalogue comporte une base de données bibliographiques des mémoires et thèses soutenus 
+              dans les différentes filières des facultés de notre université.
+              <br/>
+              <Link to="/catalogue" style={{ color: 'var(--or)', fontWeight: 600 }}>Consulter les thèses</Link>
+            </p>
+            <h4 style={{ fontWeight: 700, marginTop: 24, fontSize: 'clamp(15px, 1.1vw, 16px)', color: 'var(--bleu-nuit)' }}>
+              Archive ouverte de HAL
+            </h4>
+            <p style={{ lineHeight: 1.7, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+              Les thèses et mémoires sont aussi disponibles en texte intégral sur l'archive ouverte HAL.
+              <br/>
+              <a 
+                href="https://hal.archives-ouvertes.fr/UNIV-YAOUNDE1" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'var(--or)', fontWeight: 600 }}
+              >
+                Accéder à l'archive HAL de l'UYI
+              </a>
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    </Layout>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE POLITIQUE DOCUMENTAIRE ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function PolitiquePage() {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleDownload = () => {
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setShowSuccess(false);
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 12 + 3;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          setIsDownloading(false);
+          setShowSuccess(true);
+          const link = document.createElement('a');
+          link.href = politiquePDF;
+          link.download = 'Politique_documentaire_BC-UYI.pdf';
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => setShowSuccess(false), 4000);
+        }, 400);
+      }
+      setDownloadProgress(Math.min(progress, 100));
+    }, 120);
+  };
+
+  const handleViewPDF = () => {
+    window.open(politiquePDF, '_blank');
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Layout>
+      <Helmet>
+        <title>Politique Documentaire - Bibliothèque Centrale UYI</title>
+        <meta name="description" content="Consultez la charte documentaire de la Bibliothèque Centrale Universitaire de Yaoundé I. Orientations stratégiques pour la constitution, la gestion et la diffusion des collections." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ 
+        background: 'linear-gradient(135deg, #0f0a2a 0%, #1B1464 30%, #2D2178 60%, #4a3a8a 100%)',
+        padding: 'clamp(32px, 5vw, 80px) 0 clamp(24px, 3vw, 60px) 0',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          <Breadcrumb items={[
+            { label: 'Accueil', href: '/' },
+            { label: 'Politique documentaire' }
+          ]} />
+          
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: 'clamp(8px, 1.5vw, 16px)'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              background: 'rgba(124,58,237,0.2)',
+              border: '1px solid rgba(124,58,237,0.3)',
+              color: 'white',
+              padding: '6px 16px',
+              borderRadius: 50,
+              fontSize: 'clamp(10px, 0.8vw, 12px)',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              width: 'fit-content'
+            }}>
+              <FileText size={14} /> DOCUMENT OFFICIEL
+            </div>
+            
+            <h1 className="font-serif" style={{ 
+              fontSize: 'clamp(28px, 4.5vw, 52px)',
+              color: 'white',
+              fontWeight: 400,
+              lineHeight: 1.1,
+              marginBottom: 8
+            }}>
+              Politique <span style={{ color: 'var(--or)' }}>Documentaire</span>
+            </h1>
+            
+            <p style={{ 
+              color: 'rgba(255,255,255,0.75)',
+              fontSize: 'clamp(14px, 1.2vw, 18px)',
+              maxWidth: 640,
+              lineHeight: 1.6
+            }}>
+              Les orientations stratégiques de la Bibliothèque Centrale Universitaire de Yaoundé I
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="container" style={{ padding: 'clamp(32px, 5vw, 64px) 16px' }}>
+        <div style={{ 
+          display: 'grid',
+          gridTemplateColumns: '1fr 340px',
+          gap: 'clamp(24px, 4vw, 48px)',
+          alignItems: 'start'
+        }}
+        className="politique-grid">
+          
+          <div>
+            <Reveal className="reveal-up">
+              <div style={{ 
+                background: 'white', 
+                borderRadius: 'var(--radius)', 
+                border: '1px solid var(--border)', 
+                padding: 'clamp(20px, 3vw, 40px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04)'
+              }}>
+                <div style={{ marginBottom: 'clamp(24px, 3vw, 32px)' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    marginBottom: 16
+                  }}>
+                    <div style={{
+                      width: 'clamp(36px, 3.5vw, 40px)',
+                      height: 'clamp(36px, 3.5vw, 40px)',
+                      borderRadius: '50%',
+                      background: 'rgba(124,58,237,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--or)'
+                    }}>
+                      <BookOpen size={20} />
+                    </div>
+                    <h2 style={{ fontSize: 'clamp(18px, 2vw, 26px)', fontWeight: 700, color: 'var(--bleu-nuit)' }}>
+                      Présentation
+                    </h2>
+                  </div>
+                  <p style={{ lineHeight: 1.8, color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)' }}>
+                    La charte documentaire de la BC-UYI vise à garantir l'adéquation de l'action universitaire, 
+                    en conformité avec les orientations académiques et de recherche. Elle définit les principes 
+                    fondamentaux qui guident la constitution, la gestion et la diffusion des collections.
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: 'clamp(24px, 3vw, 32px)' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    marginBottom: 16
+                  }}>
+                    <div style={{
+                      width: 'clamp(36px, 3.5vw, 40px)',
+                      height: 'clamp(36px, 3.5vw, 40px)',
+                      borderRadius: '50%',
+                      background: 'rgba(124,58,237,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--or)'
+                    }}>
+                      <Target size={20} />
+                    </div>
+                    <h2 style={{ fontSize: 'clamp(18px, 2vw, 26px)', fontWeight: 700, color: 'var(--bleu-nuit)' }}>
+                      Missions
+                    </h2>
+                  </div>
+                  <ul style={{ lineHeight: 1.8, paddingLeft: 'clamp(20px, 2vw, 24px)', color: 'var(--texte-muted)', fontSize: 'clamp(14px, 0.95vw, 15px)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <li>Mettre à disposition une documentation de qualité adaptée aux besoins de la communauté universitaire</li>
+                    <li>Faciliter l'accès à la documentation en formant les utilisateurs à la recherche documentaire</li>
+                    <li>Développer le parc informatique et l'offre en documentation électronique</li>
+                    <li>Soutenir activement la recherche à l'Université de Yaoundé I</li>
+                    <li>Développer des partenariats locaux, nationaux et internationaux</li>
+                    <li>Participer à la vie du campus et à l'action culturelle universitaire</li>
+                  </ul>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+
+          <div style={{ 
+            position: 'sticky', 
+            top: 'calc(var(--header-h) + 24px)'
+          }}
+          className="download-card-wrapper">
+            <Reveal className="reveal-up" delay={200}>
+              <div style={{
+                background: 'white',
+                borderRadius: 'var(--radius)',
+                border: '1px solid var(--border)',
+                padding: 'clamp(20px, 2.5vw, 32px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                borderTop: '4px solid var(--or)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  marginBottom: 20
+                }}>
+                  <div style={{
+                    width: 'clamp(40px, 4vw, 48px)',
+                    height: 'clamp(40px, 4vw, 48px)',
+                    borderRadius: '50%',
+                    background: 'rgba(124,58,237,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--or)',
+                    flexShrink: 0
+                  }}>
+                    <FileDown size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontWeight: 700, fontSize: 'clamp(14px, 1.1vw, 16px)', color: 'var(--bleu-nuit)' }}>
+                      Télécharger le PDF
+                    </h3>
+                    <p style={{ fontSize: 'clamp(11px, 0.8vw, 12px)', color: 'var(--texte-muted)' }}>
+                      Document officiel • 12 pages
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  style={{
+                    width: '100%',
+                    padding: 'clamp(12px, 1.2vw, 14px) clamp(16px, 2vw, 20px)',
+                    background: 'linear-gradient(135deg, var(--or), var(--or-dark))',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 12,
+                    fontSize: 'clamp(14px, 1vw, 15px)',
+                    fontWeight: 600,
+                    cursor: isDownloading ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 10,
+                    transition: 'all 0.3s ease',
+                    opacity: isDownloading ? 0.7 : 1,
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={e => {
+                    if (!isDownloading) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,58,237,0.3)';
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = '';
+                    e.currentTarget.style.boxShadow = '';
+                  }}
+                >
+                  {isDownloading ? (
+                    <>
+                      <div style={{
+                        width: 20,
+                        height: 20,
+                        border: '3px solid rgba(255,255,255,0.3)',
+                        borderTop: '3px solid white',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite'
+                      }} />
+                      <span>Téléchargement en cours {Math.round(downloadProgress)}%</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} />
+                      <span>Télécharger le document</span>
+                    </>
+                  )}
+                </button>
+
+                {isDownloading && (
+                  <div style={{
+                    marginTop: 12,
+                    width: '100%',
+                    height: 4,
+                    background: 'var(--beige)',
+                    borderRadius: 4,
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      width: `${downloadProgress}%`,
+                      height: '100%',
+                      background: 'linear-gradient(90deg, var(--or), var(--or-light))',
+                      borderRadius: 4,
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                )}
+
+                {showSuccess && (
+                  <div style={{
+                    marginTop: 12,
+                    padding: 'clamp(8px, 1vw, 10px) clamp(12px, 1.2vw, 14px)',
+                    background: '#d1fae5',
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    fontSize: 'clamp(12px, 0.85vw, 13px)',
+                    color: '#065f46',
+                    animation: 'fadeIn 0.3s ease'
+                  }}>
+                    <CheckCircle size={16} />
+                    <span>Téléchargement terminé avec succès !</span>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleViewPDF}
+                  style={{
+                    width: '100%',
+                    marginTop: 12,
+                    padding: 'clamp(8px, 1vw, 10px) clamp(12px, 1.2vw, 14px)',
+                    background: 'var(--beige)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    fontSize: 'clamp(13px, 0.9vw, 14px)',
+                    fontWeight: 500,
+                    color: 'var(--bleu-nuit)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(124,58,237,0.08)';
+                    e.currentTarget.style.borderColor = 'var(--or)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'var(--beige)';
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                  }}
+                >
+                  <Eye size={16} />
+                  Visualiser le document
+                </button>
+
+                <div style={{
+                  marginTop: 16,
+                  paddingTop: 16,
+                  borderTop: '1px solid var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: 'clamp(12px, 0.85vw, 13px)',
+                    color: 'var(--texte-muted)',
+                    padding: '8px 0'
+                  }}>
+                    <span>📄 Format PDF</span>
+                    <span>📏 1.2 Mo</span>
+                  </div>
+
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 8
+                  }}>
+                    <button
+                      onClick={handleCopyLink}
+                      style={{
+                        padding: 'clamp(6px, 0.8vw, 8px) clamp(10px, 1vw, 12px)',
+                        background: 'var(--beige)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        fontSize: 'clamp(11px, 0.8vw, 12px)',
+                        fontWeight: 500,
+                        color: 'var(--texte-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(124,58,237,0.08)';
+                        e.currentTarget.style.borderColor = 'var(--or)';
+                        e.currentTarget.style.color = 'var(--or)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'var(--beige)';
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                        e.currentTarget.style.color = 'var(--texte-muted)';
+                      }}
+                    >
+                      <Copy size={14} />
+                      {copied ? 'Copié !' : 'Copier le lien'}
+                    </button>
+                    <button
+                      style={{
+                        padding: 'clamp(6px, 0.8vw, 8px) clamp(10px, 1vw, 12px)',
+                        background: 'var(--beige)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 8,
+                        fontSize: 'clamp(11px, 0.8vw, 12px)',
+                        fontWeight: 500,
+                        color: 'var(--texte-muted)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(124,58,237,0.08)';
+                        e.currentTarget.style.borderColor = 'var(--or)';
+                        e.currentTarget.style.color = 'var(--or)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'var(--beige)';
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                        e.currentTarget.style.color = 'var(--texte-muted)';
+                      }}
+                    >
+                      <Share2 size={14} />
+                      Partager
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        ${responsiveStyles}
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @media (max-width: 1024px) {
+          .politique-grid {
+            grid-template-columns: 1fr !important;
+            gap: 32px !important;
+          }
+          .download-card-wrapper {
+            position: relative !important;
+            top: 0 !important;
+          }
+        }
+      `}</style>
+    </Layout>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ─── PAGE 404 ──────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+export function NotFoundPage() {
+  return (
+    <Layout>
+      <Helmet>
+        <title>Page non trouvée - Bibliothèque Centrale UYI</title>
+        <meta name="description" content="La page que vous recherchez n'existe pas ou a été déplacée." />
+      </Helmet>
+      <style>{responsiveStyles}</style>
+      <div style={{ textAlign: 'center', padding: 'clamp(60px, 10vw, 120px) 16px' }}>
+        <div style={{ fontSize: 'clamp(48px, 8vw, 80px)', marginBottom: 24 }}>📭</div>
+        <h1 style={{ fontSize: 'clamp(24px, 3vw, 32px)', fontWeight: 800, marginBottom: 12, color: 'var(--bleu-nuit)' }}>
+          Page introuvable
+        </h1>
+        <p style={{ color: 'var(--texte-muted)', marginBottom: 32, fontSize: 'clamp(14px, 1vw, 16px)' }}>
+          La page que vous recherchez n'existe pas ou a été déplacée.
+        </p>
+        <Link to="/" className="btn btn-bleu btn-lg" style={{
+          padding: 'clamp(12px, 1.5vw, 14px) clamp(24px, 3vw, 32px)',
+          fontSize: 'clamp(14px, 1vw, 16px)'
+        }}>
+          ← Retour à l'accueil
+        </Link>
+      </div>
+    </Layout>
+  );
+}

@@ -139,3 +139,7 @@ secrets.yml
 secrets.json
 credentials.json
 service-account.json
+
+# ── Backups Git (sauvegardes locales) ───────────────────────
+.git.backup/
+**/.git.backup/

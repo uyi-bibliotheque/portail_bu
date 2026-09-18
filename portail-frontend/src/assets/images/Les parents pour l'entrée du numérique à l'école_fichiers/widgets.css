@@ -1,0 +1,156 @@
+/* css widget par défaut */
+/* conteneur */
+.widget{
+	width: 256px;
+	border-right: 1px solid #d6d6d6;
+    border-left:1px solid #d6d6d6;
+	padding:0;
+	background-color: #fff;
+	max-height: 305px;
+    float:left;
+    margin-right:15px;
+}
+.first .widget{
+    border-left:none;
+}
+.last .widget{
+    border-right:none;
+    margin-right:0;
+    margin-left:1px;
+}
+.widget * {
+	margin:0;
+	padding:0;
+}
+.widget a {
+	color: #003872;
+	text-decoration: none;
+}
+.widget a:hover {
+	color: #f90;
+}
+.widget ul{
+    border:none;
+}
+.widget .widget-header{
+	max-height: 30px;
+	font-size: 10px;
+	line-height: 10px;
+	color:#fff;
+	font-family:'DroidSansRegular',​Verdana,​sans-serif;
+}
+.widget .widget-header p{
+	padding-right:13px;
+	float:left;
+	background:url('common/img/fond-titre.png') no-repeat scroll top right transparent;
+}
+.widget .widget-header p span{
+	font-size:12px;
+	font-weight:bold;
+	padding:10px 0 10px 10px;
+	background-color:#989090;
+	display:inline-block;
+	text-transform:uppercase;
+}
+.widget .widget-header p span.avec{
+    padding-left: 5px;
+    padding-right: 3px;
+	text-transform:none;
+	font-weight:normal;
+	font-size:10px;
+	line-height: 10px;
+	vertical-align:top;
+}
+.widget .widget-header img{
+	float:right;
+	padding: 3px 10px 3px 0;
+	border:none;
+}
+
+.widget .widget-content{
+	clear:both;
+	padding:10px;
+	max-width:238px;
+	overflow:hidden;
+}
+
+/* carrousel */
+.widget-carrousel-counter{
+	font-family:'DroidSansRegular',​Verdana,​sans-serif;
+	font-weight:normal;
+	font-size: 12px;
+	line-height:20px;
+	color:#666;
+}
+.widget .widget-carrousel-prev, .widget .widget-carrousel-next{
+	background: url("common/img/fleche-bloc-promo.png") no-repeat scroll left -28px transparent;
+    display: inline-block;
+    height: 20px;
+    vertical-align: bottom;
+    width: 20px;
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2) {
+    .widget .widget-carrousel-prev, .widget .widget-carrousel-next, .widget .widget-carrousel-prev:hover, .widget .widget-carrousel-next:hover {
+	    background-image: url('common/img/fleches-bloc-promo-x2.png');
+	    background-size:50px 200px;
+	}
+}
+.widget .widget-carrousel-next{
+	margin-left:5px;
+}
+.widget .widget-carrousel-next:hover{
+	background-position:left -79px;
+}
+.widget .widget-carrousel-prev{
+	background-position:left -129px;
+	margin-right:5px;
+}
+.widget .widget-carrousel-prev:hover{
+	background-position:left -180px;
+}
+.widget .widget-carrousel-count{
+	color:#e8531d;
+}
+
+.widget .widget-footer-button{
+	font-family:'DroidSansRegular',​Verdana,​sans-serif;
+    color:#fff;
+    font-size:12px;
+    line-height:20px;
+	text-transform:uppercase;
+	text-align:center;
+	background-color:#407EC9;
+	border:1px solid #005e8f;
+	border-radius:2px;
+	text-shadow: 0 -1px 0 #003c5b;
+    background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0, rgba(0,0,0,0)), color-stop(1, rgba(0,0,0,.3)));
+    background-image: -webkit-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,.3) 100%);
+    background-image: -o-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,.3) 100%);
+    background-image: -moz-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,.3) 100%);
+    background-image: -ms-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,.3) 100%);
+    background-image: linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,.3) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#88000000, endColorstr=#00000000);
+    background-origin: border-box;
+    border-radius: 2px 2px 2px 2px;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    font-weight: bold;
+    margin: 5px 2px 0 0;
+    padding: 2px 8px;
+    vertical-align: middle;
+}
+.widget .widget-footer-button:hover{
+	color:#fff;
+}
+.pub-zoom .widget li p{
+    max-width: none;
+}
+
+/* IE10 + IE9*/
+.ie .widget .widget-header{
+	letter-spacing:-0.5px;
+}
+/* IE7 + IE8*/
+.ie7 .widget .widget-header, .ie8 .widget .widget-header{
+	letter-spacing:-1px;
+}

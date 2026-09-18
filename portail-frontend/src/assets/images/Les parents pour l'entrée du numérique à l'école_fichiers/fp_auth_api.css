@@ -1,0 +1,576 @@
+/**************************************************************************/
+/**************** CSS pour la mise en forme *******************************/
+/****   - de la popup de Login/ register ************************************/
+/****   - des actions fp_auth : suivre, recommander, réagir *****************/
+/**************************************************************************/
+
+@font-face
+{
+  font-family: PTSansRegular;
+  src: url('/sites/default/themes/figaropremium/fonts/PTS55F-webfont.eot');
+  src: url('/sites/default/themes/figaropremium/fonts/PTS55F-webfont.eot?#iefix') format('embedded-opentype'),
+  url('/sites/default/themes/figaropremium/fonts/PTS55F-webfont.woff') format('woff'),
+  url('/sites/default/themes/figaropremium/fonts/PTS55F-webfont.ttf') format('truetype'),
+  url('/sites/default/themes/figaropremium/fonts/PTS55F-webfont.svg#PTSansRegular') format('svg');
+}
+
+
+/************************************/
+/**** pop-up qui porte l'iframe *****/
+/************************************/
+
+
+/**
+ * User dialog box.
+ */
+
+#fp-dialog-popup {
+  background-color: #fff;
+  min-width: 540px;
+  padding: 60px 20px 20px 20px;
+  position: fixed;
+  top: 40px;
+  z-index: 50000000;
+}
+
+* html #fp-dialog-popup {
+  position: absolute;
+}
+
+*+ html  #fp-dialog-popup {
+  position: absolute;
+}
+
+/**
+ * User dialog close button.
+ */
+#fp-dialog-popup #fp-dialog-close-popup-wrapper a {
+  font-size: 40px;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  z-index: 1003;
+  width: 40px;
+  height: 40px;
+  right: 5px;
+  top: 5px;
+  display: block;
+}
+
+
+/**
+* Screen blocker.
+*/
+#fp-dialog-screen-blocker {
+  z-index: 50000000;
+  background-color: #000000;
+  left: 0;
+  opacity: 0.5;
+  position: fixed;
+  top: 0;
+  -ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=50)"; // first!
+}
+
+* html #fp-dialog-screen-blocker {
+  position: absolute;
+  filter: alpha(opacity=50);
+}
+*+ html #fp-dialog-screen-blocker {
+  position: absolute;
+  filter: alpha(opacity=50);
+}
+
+/**
+* User dialog iframe (Iframe incluant les form de login / register).
+*/
+#fp-dialog-iframe {
+  border: 0px none;
+  height: 550px;
+  width: 940px;
+  z-index: 6000;
+}
+
+
+/**************************************/
+/********* Buttons d'action **********/
+/*************************************/
+
+.fpAuth-button {
+  background-color: #F5F5F5;
+  border: 1px solid #999999;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+  float:right;
+  display: inline-block;
+  font-size: 12px;
+  margin: 0;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+/********* Boutons Suivre ***********/
+
+.fpApp-suivre-container,
+.fpApp-suivretag-container {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 5px 10px;
+}
+
+.fpApp-suivre-container a,
+.fpApp-suivretag-container a{
+  background: url(/sites/default/themes/figaropremium/images/user-page/suivre.png) no-repeat left center;
+  color: #003872;
+  display: inline-block;
+  font-size: 14px;
+  padding: 3px 0 3px 28px;
+}
+
+.fpApp-suivre-container a.follow,
+.fpApp-suivretag-container a.follow {
+  background: url(/sites/default/themes/figaropremium/images/user-page/suivre.png) no-repeat left center;
+  color: #003872;
+}
+.fpApp-suivre-container a.abonne,
+.fpApp-suivretag-container a.abonne {
+  background: url(/sites/default/themes/figaropremium/images/user-page/abonne.png) no-repeat left center;
+  color: #8e8e8e;
+}
+.fpApp-suivre-container a.unfollow,
+.fpApp-suivretag-container a.unfollow {
+  background: url(/sites/default/themes/figaropremium/images/user-page/neplussuivre.png) no-repeat left center;
+  color: #003872;
+}
+
+.fpApp-suivre-container,
+.fpApp-suivretag-container {
+  background-color: #edf6fd;
+  background-image: none;
+  background: -moz-linear-gradient(top, #ffffff 0%, #dcebfc 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#dcebfc)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #ffffff 0%,#dcebfc 100%); /* Chrome10+,Safari5.1+ */
+  background: -ms-linear-gradient(top, #ffffff 0%,#dcebfc 100%); /* IE10+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dcebfc',GradientType=0 ); /* IE6-9 */
+  background: linear-gradient(top, #ffffff 0%,#dcebfc 100%);
+  border: 1px solid #7193b6;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+}
+
+.abonne .fpApp-suivre-container,
+.abonne .fpApp-suivretag-container{
+  background: -moz-linear-gradient(top, #ffffff 0%, #e8e8e8 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#e8e8e8)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #ffffff 0%,#e8e8e8 100%); /* Chrome10+,Safari5.1+ */
+  background: -ms-linear-gradient(top, #ffffff 0%,#e8e8e8 100%); /* IE10+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e8e8e8',GradientType=0 ); /* IE6-9 */
+  background: linear-gradient(top, #ffffff 0%,#e8e8e8 100%);
+  border: 1px solid #e8e8e8;
+}
+.abonne .fpApp-suivre-container:hover,
+.abonne .fpApp-suivretag-container:hover{
+  background: -moz-linear-gradient(top, #ffffff 0%, #dcebfc 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#dcebfc)); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, #ffffff 0%,#dcebfc 100%); /* Chrome10+,Safari5.1+ */
+  background: -ms-linear-gradient(top, #ffffff 0%,#dcebfc 100%); /* IE10+ */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dcebfc',GradientType=0 ); /* IE6-9 */
+  background: linear-gradient(top, #ffffff 0%,#dcebfc 100%);
+  border-color: #7193b6;
+}
+
+/*********************************/
+/***** COMMENT FORM RESPONSIVE ***/
+/*********************************/
+
+/*
+ * fpAuth.RWD.CSS
+ * Bloc Reagir Responsive
+ * 1. All width
+ * 2. Mobile (default)
+ * 3. (min-width:720px)
+ * 4. (min-width:1000px)
+ */
+
+/*------------------------------------*\
+  ALL WIDTH
+\*------------------------------------*/
+
+/* Commons */
+
+div.fpAuth div, div.fpAuth span, div.fpAuth h1, div.fpAuth h2, div.fpAuth h3, div.fpAuth h4, div.fpAuth h5, div.fpAuth h6, div.fpAuth p, div.fpAuth a, div.fpAuth em, div.fpAuth img, div.fpAuth small, div.fpAuth strong, div.fpAuth b, div.fpAuth i, div.fpAuth dl, div.fpAuth dt, div.fpAuth dd, div.fpAuth ol, div.fpAuth ul, div.fpAuth li, div.fpAuth fieldset, div.fpAuth form, div.fpAuth label, div.fpAuth legend, div.fpAuth table {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+div.fpAuth {
+  font: normal 12px/16px 'PTSansRegular', Arial, sans-serif;
+  padding:0;
+}
+
+div.fpAuth a { color:#003872; text-decoration:none; }
+div.fpAuth a:hover,
+div.fpAuth input:hover { color:#ff9900; cursor:pointer; }
+div.fpAuth ul {
+  list-style: none;
+}
+
+div.fpAuth .fpAuth-button {
+  font-size: 12px;
+  display: inline-block;
+  border: 1px solid #333;
+  border: 1px solid rgba(0,0,0,.15);
+  background-color: #407ec9;
+  background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0,rgba(0,0,0,0)),color-stop(1,rgba(0,0,0,.3)));
+  background-image: -webkit-linear-gradient(top,rgba(0,0,0,0) 0,rgba(0,0,0,.3) 100%);
+  background-image: -o-linear-gradient(top,rgba(0,0,0,0) 0,rgba(0,0,0,.3) 100%);
+  background-image: -moz-linear-gradient(top,rgba(0,0,0,0) 0,rgba(0,0,0,.3) 100%);
+  background-image: -ms-linear-gradient(top,rgba(0,0,0,0) 0,rgba(0,0,0,.3) 100%);
+  background-image: linear-gradient(top,rgba(0,0,0,0) 0,rgba(0,0,0,.3) 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#00000000,endColorstr=#88000000);
+  color: #fff!important;
+  line-height: 22px;
+  vertical-align: middle;
+  margin: 5px 2px 0 0;
+  padding: 2px 8px!important;
+  font-family: "DroidSans",sans-serif;
+  font-weight: bold;
+  border-radius: 2px;
+  box-shadow: 0 0 1px rgba(0,0,0,0.5);
+  -webkit-background-origin: border-box;
+  -moz-background-origin: border-box;
+  -ms-background-origin: border-box;
+  background-origin: border-box;
+}
+
+
+div.fpAuth .fpAuth-button.gold {
+  border-color:#ae5909;
+  background: rgb(235,126,21);
+  background: -moz-linear-gradient(top,  rgba(235,126,21,1) 0%, rgba(225,113,13,1) 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(235,126,21,1)), color-stop(100%,rgba(225,113,13,1)));
+  background: -webkit-linear-gradient(top,  rgba(235,126,21,1) 0%,rgba(225,113,13,1) 100%);
+  background: -o-linear-gradient(top,  rgba(235,126,21,1) 0%,rgba(225,113,13,1) 100%);
+  background: -ms-linear-gradient(top,  rgba(235,126,21,1) 0%,rgba(225,113,13,1) 100%);
+  background: linear-gradient(to bottom,  rgba(235,126,21,1) 0%,rgba(225,113,13,1) 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eb7e15', endColorstr='#e1710d',GradientType=0 );
+}
+
+/* Zone réagir (messages et/ou form) */
+div.fpAuth .unlogged,
+div.fpAuth .error,
+div.fpAuth .status,
+div.fpAuth .fpAuth-comment-form
+{
+  position:relative;
+  border:1px solid #ccc;
+  padding:8px 10px 40px 10px;
+  background:#FFF;
+  overflow:hidden;
+  zoom:1;
+  margin:7px 0 15px;
+}
+div.fpAuth .unlogged,
+div.fpAuth .error,
+div.fpAuth .status,
+div.fpAuth .fpAuth-comment-form textarea {
+  font-weight: bold;
+  color:#999;
+  font-size:11px;
+  font-family: "DroidSans", Arial, sans-serif;
+}
+/* Box message Ok pour Connect*/
+div.fpAuth .status {
+  border-color:#aed591;
+  background:#dcf3cc;
+  color:#999;
+  display:block;
+}
+/* Boc message ko erreur technique */
+div.fpAuth .error {
+  background-color: #FFCCCC;
+  border-color: #DD7777;
+  color: #220000;
+  display:block;
+}
+div.fpAuth h6 {
+  color:#666;
+  font-size:14px;
+  line-height:18px;
+  margin:0 0 2px;
+}
+div.fpAuth li {
+  margin:3px 0 2px 15px;
+  list-style: disc;
+}
+div.fpAuth .fpAuth-button {
+  position:absolute;
+  bottom:9px;
+  right:9px;
+}
+div.fpAuth center .fpAuth-button {
+  right:40%;
+}
+
+
+/* Avatar (All width + Mobile) */
+div.fpAuth .avatar-wrapper {
+  position:absolute;
+  left:0;
+  font-size:11px;
+  font-weight:bold;
+  overflow:hidden;
+  top:0;
+  width:50px; /* Mobile */
+}
+div.fpAuth .avatar {
+  display:block;
+  margin:0 0 2px;
+  position:relative;
+  border:3px solid #b4b4b4;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  -webkit-box-shadow: 1px 1px 2px #333;
+  box-shadow: 1px 1px 2px #333;
+  width:36px;  /* Mobile */
+}
+div.fpAuth .avatar img {
+  width:35px; /* Mobile */
+  max-width:35px; /* Mobile */
+  height:auto;
+  display:block;
+  border:1px solid #FFF;
+}
+div.fpAuth .avatar .arrow {
+  position:absolute;
+  right:-10px;
+  top:1px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 7px solid #b4b4b4;
+}
+div.fpAuth .avatar .username {
+  display:block;
+  margin:8px 0 0;
+  width:36px;
+  font-size:12px; /*mobile*/
+  line-height:18px;
+}
+div.fpAuth .avatar .username a {
+  color:#003872;
+}
+
+/* Form Post (All width + Mobile) */
+
+div.fpAuth form.fpAuth-comment-form {
+  border:0 none;
+  padding:0 0 32px;
+  background:none;
+  height:auto;
+}
+div.fpAuth form.fpAuth-comment-form .fpAuth-button {
+  right:3px;
+}
+div.fpAuth form.fpAuth-comment-form textarea {
+  font-size:14px;
+  line-height:20px;
+  border:1px solid #ccc;
+  display:block;
+  float:right;
+  width:76%; /*mobile*/
+  max-width:76%; /*mobile*/
+  margin:0 0 8px 30px; /*mobile*/
+  height:103px; /*mobile*/
+  padding:9px;
+  background:#FFF;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+div.fpAuth form.fpAuth-comment-form .fpAuth-comment-form-description {
+  color:#666;
+  font-style:italic;
+  font-size:12px; /*mobile*/
+  line-height:18px;
+  overflow:hidden;
+  zoom:1;
+  clear:both;
+  position:relative;
+  padding:0 70px 0 0;
+  margin-bottom: 10px;
+}
+div.fpAuth form.fpAuth-comment-form .comment-lentgh-counter {
+  position:absolute;
+  top:0;
+  right:1px;
+}
+
+/*------------------------------------*\
+    720px
+\*------------------------------------*/
+
+@media only screen and (min-width:720px) {
+  /* Commons > 720 */
+  div.fpAuth .unlogged,
+  div.fpAuth .error,
+  div.fpAuth .status,
+  div.fpAuth .fpAuth-comment-form {
+    height:172px;
+  }
+  div.fpAuth .unlogged,
+  div.fpAuth .error,
+  div.fpAuth .status,
+  div.fpAuth .fpAuth-comment-form,
+  div.fpAuth .fpAuth-comment-form textarea {
+    margin-top:0;
+  }
+  /* Avatar > 720 */
+  div.fpAuth .avatar-wrapper .username {
+    font-size:12px;
+    line-height:16px;
+    margin-top:7px;
+  }
+  /* Form Post > 720 */
+  div.fpAuth form.fpAuth-comment-form textarea {
+    height:164px;
+  }
+}
+
+/*------------------------------------*\
+    1000px
+\*------------------------------------*/
+
+@media only screen and (min-width:1000px) {
+
+  /* Commons > 1000 */
+  div.fpAuth .unlogged,
+  div.fpAuth .error,
+  div.fpAuth .status,
+  div.fpAuth .fpAuth-comment-form {
+    height:168px;
+    font-size:14px;
+    line-height:21px;
+  }
+  div.fpAuth .fpAuth-comment-form {
+    padding-right:62px;
+    width:auto;
+  }
+  div.fpAuth h6 {
+    font-size:18px;
+    line-height:24px;
+  }
+  /* Avatar > 1000 */
+  div.fpAuth .avatar-wrapper {
+    width:67px;
+    position: absolute;
+  }
+  div.fpAuth .avatar {
+    border-width: 4px;
+    width:50px;
+  }
+  div.fpAuth .avatar img {
+    width:48px;
+    max-width:48px;
+  }
+  div.fpAuth .avatar .arrow {
+    right:-13px;
+    border-top-width:10px;
+    border-bottom-width:10px;
+    border-left-width:9px;
+  }
+
+  /* Form Post > 1000 */
+  div.fpAuth form.fpAuth-comment-form {
+    padding-left:70px;
+  }
+  div.fpAuth form.fpAuth-comment-form textarea {
+    font-size:18px;
+    line-height:24px;
+    width:100%;
+    max-width:100%;
+    padding:12px;
+    height:160px;
+  }
+  div.fpAuth .avatar .username {
+    font-size:14px;
+  }
+  div.fpAuth form.fpAuth-comment-form .fpAuth-comment-form-description {
+    font-weight:normal;
+    margin:0 0 9px;
+  }
+}
+
+/** buttons color**/
+
+/*-- BLEU ------------------------*/
+button.bleu,
+a.bleu,
+a.bleu:link,
+a.bleu:visited {
+  color:#FFF;
+  background: rgb(56,143,202); /* Old browsers */
+  background: -moz-linear-gradient(top, rgba(56,143,202,1) 0%, rgba(28,94,173,1) 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(56,143,202,1)), color-stop(100%, rgba(28,94,173,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, rgba(56,143,202,1) 0%, rgba(28,94,173,1) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgba(56,143,202,1) 0%, rgba(28,94,173,1) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgba(56,143,202,1) 0%, rgba(28,94,173,1) 100%); /* IE10+ */
+  background: linear-gradient(top, rgba(56,143,202,1) 0%, rgba(28,94,173,1) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#388fca', endColorstr='#1c5ead', GradientType=0 ); /* IE6-9 */
+
+  border-color:#006bd0;
+}
+button.bleu:hover,
+a.bleu:hover {
+  background: rgb(47,105,170); /* Old browsers */
+  background: -moz-linear-gradient(top, rgba(47,105,170,1) 1%, rgba(84,154,201,1) 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(1%, rgba(47,105,170,1)), color-stop(100%, rgba(84,154,201,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, rgba(47,105,170,1) 1%, rgba(84,154,201,1) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgba(47,105,170,1) 1%, rgba(84,154,201,1) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgba(47,105,170,1) 1%, rgba(84,154,201,1) 100%); /* IE10+ */
+  background: linear-gradient(top, rgba(47,105,170,1) 1%, rgba(84,154,201,1) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2f69aa', endColorstr='#549ac9', GradientType=0 ); /* IE6-9 */
+}
+
+/*-- ORANGE MARKETING ------------------------*/
+button.orange,
+a.orange{
+  color:#FFF;
+  background: rgb(247,126,34); /* Old browsers */
+  background: -moz-linear-gradient(top, rgba(247,126,34,1) 0%, rgba(211,76,46,1) 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(247,126,34,1)), color-stop(100%, rgba(211,76,46,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, rgba(247,126,34,1) 0%, rgba(211,76,46,1) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgba(247,126,34,1) 0%, rgba(211,76,46,1) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgba(247,126,34,1) 0%, rgba(211,76,46,1) 100%); /* IE10+ */
+  background: linear-gradient(top, rgba(247,126,34,1) 0%, rgba(211,76,46,1) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f77e22', endColorstr='#d34c2e', GradientType=0 ); /* IE6-9 */
+  border-color:rgba(211,76,46,1);
+}
+
+button.orange:hover,
+a.orange:hover {
+  background: rgb(211,76,46); /* Old browsers */
+  background: -moz-linear-gradient(top, rgba(211,76,46,1) 0%, rgba(247,126,34,1) 100%); /* FF3.6+ */
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(211,76,46,1)), color-stop(100%, rgba(247,126,34,1))); /* Chrome,Safari4+ */
+  background: -webkit-linear-gradient(top, rgba(211,76,46,1) 0%, rgba(247,126,34,1) 100%); /* Chrome10+,Safari5.1+ */
+  background: -o-linear-gradient(top, rgba(211,76,46,1) 0%, rgba(247,126,34,1) 100%); /* Opera 11.10+ */
+  background: -ms-linear-gradient(top, rgba(211,76,46,1) 0%, rgba(247,126,34,1) 100%); /* IE10+ */
+  background: linear-gradient(top, rgba(211,76,46,1) 0%, rgba(247,126,34,1) 100%); /* W3C */
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d34c2e', endColorstr='#f77e22', GradientType=0 ); /* IE6-9 */
+}
+
+/* ---- FORM ------------------------------------- */
+div.fpAuth-form-loading textarea {
+  background: url("../images/blue-loading-29.gif") no-repeat scroll 99% 2% transparent !important;
+}
+
+div.fpAuth-form-loading button.fpAuth-button {
+  display:none;
+}
