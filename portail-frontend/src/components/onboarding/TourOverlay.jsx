@@ -21,7 +21,7 @@ const TOUR_STEPS = [
   {
     id: 'welcome',
     selector: null,
-    title: 'Bienvenue à la BCU UYI 👋',
+    title: 'Bienvenue à la BCUYI 👋',
     text: "Suivez ce guide rapide pour découvrir les fonctionnalités essentielles du portail documentaire. Cliquez sur Suivant pour continuer.",
     position: 'center',
     icon: '🎓',
@@ -76,7 +76,7 @@ const TOUR_STEPS = [
     id: 'depot',
     selector: '.desktop-nav .nav-item:nth-child(5) .nav-link',
     title: 'Dépôt institutionnel',
-    text: 'Les étudiants peuvent déposer leur mémoire ou thèse en ligne en quelques clics.',
+    text: 'Vous pouvez voir ce qu\'est le dépôt institutionnel et y accéder.',
     position: 'bottom',
     icon: '📤',
     pointer: '👆',

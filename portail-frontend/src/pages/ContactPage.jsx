@@ -1,4 +1,4 @@
-// pages/ContactPage.jsx - VERSION FINALE (URL /contact/ + reCAPTCHA robuste)
+// pages/ContactPage.jsx - VERSION FINALE (Google Maps + honeypot + reCAPTCHA)
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, ShieldCheck, Loader2, ExternalLink } from 'lucide-react';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
@@ -19,10 +19,23 @@ const SUBJECTS = [
   { fr: 'Autre', en: 'Other' },
 ];
 
+// ═══════════════════════════════════════════════════════════════════
 // ─── Coordonnées de la BCU UYI ────────────────────────────────────
+// Plus Code Google Maps : VG42+VM6 Yaoundé
+// Adresse : Campus principal Ngoa-Ekelle, Université de Yaoundé I
+// BP 1312, Yaoundé, Cameroun
+// Tél : +237 242 06 47 28
+// ═══════════════════════════════════════════════════════════════════
 const BCU_COORDS = {
   lat: 3.8667,
   lng: 11.5050,
+  plusCode: 'VG42+VM6',
+  city: 'Yaoundé',
+  // ✅ URLs Google Maps avec Plus Code (localisation exacte)
+  embedUrl: (lang = 'fr', zoom = 17) =>
+    `https://www.google.com/maps?q=VG42%2BVM6+Yaound%C3%A9&hl=${lang}&z=${zoom}&output=embed`,
+  openUrl: () =>
+    `https://www.google.com/maps/search/?api=1&query=VG42%2BVM6+Yaound%C3%A9`,
 };
 
 export default function ContactPage() {
@@ -72,7 +85,7 @@ export default function ContactPage() {
       phone: 'Téléphone',
       email: 'Email',
       hours: 'Horaires d\'ouverture',
-      addressContent: 'Campus de l\'Université de Yaoundé I\nYaoundé, Cameroun\nBP 337',
+      addressContent: 'Campus principal Ngoa-Ekelle\nUniversité de Yaoundé I\nBP 1312, Yaoundé, Cameroun',
       hoursContent: 'Lundi – Vendredi : 07h30 – 15h30\nSamedi : 08h00 – 13h00\nDimanche : Fermé',
       mapTitle: 'Localisation BCU UYI sur Google Maps',
       openInGoogleMaps: 'Ouvrir dans Google Maps',
@@ -113,7 +126,7 @@ export default function ContactPage() {
       phone: 'Phone',
       email: 'Email',
       hours: 'Opening hours',
-      addressContent: 'University of Yaoundé I Campus\nYaoundé, Cameroon\nBP 337',
+      addressContent: 'Ngoa-Ekelle Main Campus\nUniversity of Yaoundé I\nBP 1312, Yaoundé, Cameroon',
       hoursContent: 'Monday – Friday: 07h30 – 15h30\nSaturday: 08h00 – 13h00\nSunday: Closed',
       mapTitle: 'BCU UYI location on Google Maps',
       openInGoogleMaps: 'Open in Google Maps',
@@ -169,7 +182,8 @@ export default function ContactPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (form.honeypot) {
+    // ─── Anti-spam honeypot (silencieux) ────────────────────────
+    if (form.honeypot && form.honeypot.trim() !== '') {
       console.warn('🍯 Honeypot détecté — soumission ignorée');
       return;
     }
@@ -193,18 +207,17 @@ export default function ContactPage() {
           console.log('✅ Token reCAPTCHA généré:', recaptchaToken.substring(0, 20) + '...');
         } catch (recaptchaErr) {
           console.error('❌ Erreur génération token reCAPTCHA:', recaptchaErr);
-          // On continue — le backend gère le fail-open
         }
       }
 
-      // 2. Envoi du formulaire
+      // 2. Envoi du formulaire (avec _hp_field au lieu de website)
       await sendContact({
         name: form.name.trim(),
         email: form.email.trim(),
         subject: form.subject,
         message: form.message.trim(),
         recaptcha_token: recaptchaToken,
-        website: form.honeypot,
+        _hp_field: form.honeypot,   // ← Nom neutre (anti auto-fill)
       });
 
       setSuccess(true);
@@ -284,8 +297,9 @@ export default function ContactPage() {
   ];
 
   const lang = isEnglish ? 'en' : 'fr';
-  const googleMapsEmbedUrl = `https://www.google.com/maps?q=${BCU_COORDS.lat},${BCU_COORDS.lng}&hl=${lang}&z=16&output=embed`;
-  const googleMapsOpenUrl = `https://www.google.com/maps/search/?api=1&query=${BCU_COORDS.lat},${BCU_COORDS.lng}`;
+  // ✅ URLs Google Maps avec Plus Code (VG42+VM6)
+  const googleMapsEmbedUrl = BCU_COORDS.embedUrl(lang, 17);
+  const googleMapsOpenUrl = BCU_COORDS.openUrl();
 
   return (
     <>
@@ -498,23 +512,34 @@ export default function ContactPage() {
                     {tr.formTitle}
                   </h2>
 
-                  {/* Honeypot */}
-                  <input
-                    type="text"
-                    name="website"
-                    value={form.honeypot}
-                    onChange={e => set('honeypot', e.target.value)}
+                  {/* HONEYPOT ANTI-BOT (corrigé) */}
+                  <div
+                    aria-hidden="true"
                     style={{
                       position: 'absolute',
                       left: '-9999px',
+                      top: '-9999px',
                       width: 1,
                       height: 1,
-                      opacity: 0
+                      overflow: 'hidden',
+                      opacity: 0,
+                      pointerEvents: 'none'
                     }}
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                  />
+                  >
+                    <label htmlFor="_hp_field">
+                      {isEnglish ? 'Do not fill this field' : 'Ne pas remplir ce champ'}
+                    </label>
+                    <input
+                      id="_hp_field"
+                      type="text"
+                      name="_hp_field"
+                      value={form.honeypot}
+                      onChange={e => set('honeypot', e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="new-password"
+                      aria-hidden="true"
+                    />
+                  </div>
 
                   {/* Nom + Email */}
                   <div style={{

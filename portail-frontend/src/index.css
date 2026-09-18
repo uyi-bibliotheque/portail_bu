@@ -2409,3 +2409,47 @@ tbody td {
     font-size: 12px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   reCAPTCHA v3 — Badge décalé vers la gauche
+   ─────────────────────────────────────────────────────────────
+   Positionné à gauche pour éviter la superposition
+   avec le bouton de cookies (react-cookie-consent).
+   ═══════════════════════════════════════════════════════════════ */
+.grecaptcha-badge {
+  left: 20px !important;
+  right: auto !important;
+  bottom: 20px !important;
+  transition: all 0.3s ease !important;
+  z-index: 100 !important;
+}
+
+/* Version tablette — réduire légèrement */
+@media (max-width: 992px) {
+  .grecaptcha-badge {
+    left: 12px !important;
+    bottom: 12px !important;
+    transform: scale(0.9) !important;
+    transform-origin: bottom left !important;
+  }
+}
+
+/* Version mobile — plus petit et collé au bord */
+@media (max-width: 768px) {
+  .grecaptcha-badge {
+    left: 10px !important;
+    bottom: 10px !important;
+    transform: scale(0.8) !important;
+    transform-origin: bottom left !important;
+  }
+}
+
+/* Très petits écrans — encore plus compact */
+@media (max-width: 480px) {
+  .grecaptcha-badge {
+    left: 6px !important;
+    bottom: 6px !important;
+    transform: scale(0.7) !important;
+    transform-origin: bottom left !important;
+  }
+}

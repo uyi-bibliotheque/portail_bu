@@ -87,7 +87,7 @@ export default function Footer() {
             {/* Réseaux sociaux */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <a
-                href="#"
+                href="https://www.facebook.com/Biblioth%C3%A8que-Centrale-Universit%C3%A9-de-Yaound%C3%A9-1-1389540161289157/?ref=hl"
                 aria-label="Facebook"
                 style={{
                   width: 36, height: 36, borderRadius: 8,
@@ -103,7 +103,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="#"
+                href="https://www.youtube.com/?gl=FR"
                 aria-label="YouTube"
                 style={{
                   width: 36, height: 36, borderRadius: 8,
