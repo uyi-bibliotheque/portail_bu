@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════════
+  # ─── BASE DE DONNÉES POSTGRESQL ───────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════
+  db:
+    image: postgres:16-alpine
+    container_name: portail_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-portail_bu}
+      POSTGRES_USER: ${DB_USER:-portail_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Buccird2009}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-portail_user} -d ${DB_NAME:-portail_bu}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - portail_network
+
+  # ═══════════════════════════════════════════════════════════════════
+  # ─── CACHE & MESSAGE BROKER REDIS ────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: portail_redis
+    restart: always
+    networks:
+      - portail_network
+
+  # ═══════════════════════════════════════════════════════════════════
+  # ─── BACKEND DJANGO API ───────────────────────────────────────────
+  # ═══════════════════════════════════════════════════════════════════
+  backend:
+    build:
+      context: ./portail-backend
+      dockerfile: Dockerfile
+    container_name: portail_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    environment:
+      # Variables Django
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-12345
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+      # Base de données
+      - USE_POSTGRES=True
+      - DB_NAME=portail_bu
+      - DB_USER=portail_user
+      - DB_PASSWORD=Buccird2009
+      - DB_HOST=db
+      - DB_PORT=5432
+      # Frontend
+      - FRONTEND_URL=http://localhost:5173
+      # Sécurité (désactivée en dev)
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+      - SECURE_HSTS_SECONDS=0
+      - SECURE_HSTS_INCLUDE_SUBDOMAINS=False
+      - SECURE_HSTS_PRELOAD=False
+      # Email
+      - EMAIL_HOST_USER=bcuy1-portail@offilive.com
+      - EMAIL_HOST_PASSWORD=
+      - DOCUMENTS_ROOT=/app/Documents
+      - LOG_LEVEL=INFO
+      - RECAPTCHA_PUBLIC_KEY=${RECAPTCHA_PUBLIC_KEY}
+      - RECAPTCHA_PRIVATE_KEY=${RECAPTCHA_PRIVATE_KEY}
+      - RECAPTCHA_SCORE_THRESHOLD=${RECAPTCHA_SCORE_THRESHOLD:-0.5}
+    volumes:
+      - backend_media:/app/media
+      - backend_static:/app/staticfiles
+      - ./Documents:/app/Documents
+    networks:
+      - portail_network
+
+  # ═══════════════════════════════════════════════════════════════════
+  # ─── FRONTEND REACT + NGINX REVERSE PROXY ─────────────────────────
+  # ═══════════════════════════════════════════════════════════════════
+  frontend:
+    build:
+      context: ./portail-frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_RECAPTCHA_SITE_KEY=${RECAPTCHA_PUBLIC_KEY}
+    container_name: portail_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "5173:80"
+    networks:
+      - portail_network
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_media:
+    driver: local
+  backend_static:
+    driver: local
+
+networks:
+  portail_network:
+    driver: bridge
