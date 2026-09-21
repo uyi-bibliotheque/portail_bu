@@ -1,4 +1,4 @@
-// pages/admin/AdminDashboard.jsx - VERSION FINALE AVEC DIAGRAMMES FONCTIONNELS
+// pages/admin/AdminDashboard.jsx - PROFIL DANS UN MODAL "MON COMPTE"
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -8,7 +8,8 @@ import {
   Activity, Award, FileCheck, Search, RefreshCw,
   Shield, ArrowLeft, LogOut, XCircle, Plus, Edit2, Trash2,
   Image, Save, X, Upload, CheckSquare, FileSignature,
-  ChevronDown, Package, Send, CheckCheck, Mail, Database
+  ChevronDown, Package, Send, CheckCheck, Mail, Database,
+  UserCircle, AtSign, BadgeCheck, KeyRound, EyeOff, Lock, Hash
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -16,6 +17,7 @@ import {
   CartesianGrid, Tooltip, Legend, AreaChart, Area,
   ComposedChart
 } from 'recharts';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import {
@@ -23,7 +25,8 @@ import {
   getUnreadCount, getDashboardChart, getTopDocuments,
   getRecentActivity, listUsers, createUser, getArticles,
   createArticle, updateArticle, deleteArticle, listMemoires,
-  updateMemoireStatus, downloadQuitus, markAsRead, markAllAsRead
+  updateMemoireStatus, downloadQuitus, markAsRead, markAllAsRead,
+  updateProfile, changePassword
 } from '../../services/endpoints';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -213,16 +216,508 @@ function DashboardSidebar({ activeTab, onTabChange }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// ─── MODAL "MON COMPTE" ─────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+
+function MonCompteModal({ isOpen, onClose, user, onUpdate }) {
+  const { addToast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [changingPwd, setChangingPwd] = useState(false);
+  const [showPwd, setShowPwd] = useState({ old: false, new: false, confirm: false });
+
+  const [formData, setFormData] = useState({
+    first_name: user?.first_name || '',
+    last_name: user?.last_name || '',
+  });
+  const [pwdData, setPwdData] = useState({ old_password: '', new_password: '', confirm_password: '' });
+  const [pwdErrors, setPwdErrors] = useState({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setEditing(false);
+      setShowPasswordForm(false);
+      setFormData({
+        first_name: user?.first_name || '',
+        last_name: user?.last_name || '',
+      });
+      setPwdData({ old_password: '', new_password: '', confirm_password: '' });
+      setPwdErrors({});
+    }
+  }, [isOpen, user]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = originalOverflow; };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
+  const handleSaveProfile = async () => {
+    if (!formData.first_name.trim() && !formData.last_name.trim()) {
+      addToast('Veuillez renseigner au moins un champ', 'warning');
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateProfile({
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+      });
+      addToast('✅ Profil mis à jour avec succès !', 'success');
+      setEditing(false);
+      onUpdate?.();
+    } catch (err) {
+      console.error('Erreur mise à jour profil:', err);
+      const msg = err?.response?.data?.detail || err?.response?.data?.message || Object.values(err?.response?.data || {})[0] || 'Erreur lors de la mise à jour';
+      addToast(typeof msg === 'string' ? msg : 'Erreur lors de la mise à jour', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+    });
+    setEditing(false);
+  };
+
+  const validatePwd = () => {
+    const err = {};
+    if (!pwdData.old_password) err.old_password = 'Mot de passe actuel requis';
+    if (!pwdData.new_password) err.new_password = 'Nouveau mot de passe requis';
+    else if (pwdData.new_password.length < 8) err.new_password = 'Minimum 8 caractères';
+    if (pwdData.new_password !== pwdData.confirm_password) err.confirm_password = 'Les mots de passe ne correspondent pas';
+    return err;
+  };
+
+  const handleChangePassword = async () => {
+    const err = validatePwd();
+    setPwdErrors(err);
+    if (Object.keys(err).length > 0) return;
+
+    setChangingPwd(true);
+    try {
+      await changePassword({
+        old_password: pwdData.old_password,
+        new_password: pwdData.new_password,
+        confirm_password: pwdData.confirm_password,
+      });
+      addToast('✅ Mot de passe changé avec succès !', 'success');
+      setPwdData({ old_password: '', new_password: '', confirm_password: '' });
+      setPwdErrors({});
+      setShowPasswordForm(false);
+    } catch (err2) {
+      const data = err2?.response?.data;
+      let msg = 'Erreur lors du changement de mot de passe';
+      if (typeof data === 'string') msg = data;
+      else if (data?.detail) msg = data.detail;
+      else if (data?.old_password) msg = Array.isArray(data.old_password) ? data.old_password[0] : data.old_password;
+      else if (data?.new_password) msg = Array.isArray(data.new_password) ? data.new_password[0] : data.new_password;
+      else if (data?.error) msg = data.error;
+      addToast(msg, 'error');
+    } finally {
+      setChangingPwd(false);
+    }
+  };
+
+  const initials = ((user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')).toUpperCase() || user?.username?.[0]?.toUpperCase() || '?';
+
+  const roleInfo = user?.role === 'ADMIN'
+    ? { label: 'ADMINISTRATEUR', color: '#7C3AED', Icon: Shield }
+    : { label: 'BIBLIOTHÉCAIRE', color: '#3b82f6', Icon: BadgeCheck };
+  const RoleIcon = roleInfo.Icon;
+
+  if (!isOpen) return null;
+
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mon-compte-title"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(15,10,42,0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2147483600,
+        padding: 'clamp(12px, 3vw, 24px)',
+        animation: 'monCompteFadeIn 0.25s ease',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 20,
+          width: '100%',
+          maxWidth: 720,
+          maxHeight: '92vh',
+          overflowY: 'auto',
+          boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
+          animation: 'monCompteScaleIn 0.3s ease',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header du modal */}
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+            background: `linear-gradient(135deg, ${COLORS.bleuNuit} 0%, ${COLORS.bleuNuitLight} 60%, ${COLORS.or} 140%)`,
+            padding: '24px 28px',
+            color: 'white',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 14,
+              background: 'rgba(255,255,255,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <UserCircle size={26} />
+            </div>
+            <div>
+              <h2 id="mon-compte-title" style={{ fontSize: 'clamp(18px, 2vw, 22px)', fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
+                Mon compte
+              </h2>
+              <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', marginTop: 2, margin: 0 }}>
+                Gérez vos informations personnelles
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            aria-label="Fermer"
+            style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              color: 'white', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.28)'; e.currentTarget.style.transform = 'rotate(90deg)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = ''; }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Contenu */}
+        <div style={{ padding: '28px' }}>
+
+          {/* Carte identité */}
+          <div
+            style={{
+              background: COLORS.beige,
+              borderRadius: 16,
+              padding: '20px 22px',
+              marginBottom: 20,
+              border: `1px solid ${COLORS.beigeDark}`,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+              <div
+                style={{
+                  width: 72, height: 72, borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${COLORS.bleuNuit}, ${COLORS.or})`,
+                  color: 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 26, fontWeight: 800, flexShrink: 0,
+                  boxShadow: `0 8px 24px ${COLORS.bleuNuit}30`,
+                  border: '3px solid white',
+                }}
+              >
+                {initials}
+              </div>
+
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: COLORS.bleuNuit, margin: 0 }}>
+                    {`${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username}
+                  </h3>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '3px 10px', borderRadius: 50,
+                    background: `${roleInfo.color}15`,
+                    color: roleInfo.color,
+                    fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em',
+                  }}>
+                    <RoleIcon size={11} />
+                    {roleInfo.label}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 20px', fontSize: 13, color: COLORS.texteMuted }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <AtSign size={13} /> {user?.username || '—'}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Mail size={13} /> {user?.email || '—'}
+                  </span>
+                  {user?.matricule && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Hash size={13} /> {user.matricule}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Boutons d'action */}
+          {!editing && !showPasswordForm && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+              <button
+                onClick={() => setEditing(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '11px 20px', borderRadius: 10,
+                  background: COLORS.bleuNuit, color: 'white',
+                  border: 'none', cursor: 'pointer',
+                  fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                  transition: 'all 0.2s',
+                  boxShadow: `0 4px 16px ${COLORS.bleuNuit}30`,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${COLORS.bleuNuit}40`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 4px 16px ${COLORS.bleuNuit}30`; }}
+              >
+                <Edit2 size={15} /> Modifier mes informations
+              </button>
+
+              <button
+                onClick={() => setShowPasswordForm(true)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '11px 20px', borderRadius: 10,
+                  background: 'white', color: COLORS.or,
+                  border: `1px solid ${COLORS.or}40`,
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(124,58,237,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.transform = ''; }}
+              >
+                <KeyRound size={15} /> Changer mon mot de passe
+              </button>
+            </div>
+          )}
+
+          {/* Formulaire infos */}
+          {editing && (
+            <div style={{
+              background: COLORS.beige,
+              borderRadius: 14,
+              padding: '20px 22px',
+              marginBottom: 8,
+              border: `1px solid ${COLORS.beigeDark}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, color: COLORS.bleuNuit, fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Edit2 size={15} /> Modifier mes informations
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: COLORS.bleuNuit, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Prénom
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.first_name}
+                    onChange={(e) => setFormData((p) => ({ ...p, first_name: e.target.value }))}
+                    placeholder="Votre prénom"
+                    disabled={saving}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid white', background: 'white', fontSize: 14, fontFamily: 'inherit', color: COLORS.bleuNuit, outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.or; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'white'; }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: COLORS.bleuNuit, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Nom
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.last_name}
+                    onChange={(e) => setFormData((p) => ({ ...p, last_name: e.target.value }))}
+                    placeholder="Votre nom"
+                    disabled={saving}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid white', background: 'white', fontSize: 14, fontFamily: 'inherit', color: COLORS.bleuNuit, outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = COLORS.or; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'white'; }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ fontSize: 11.5, color: COLORS.texteMuted, marginBottom: 14, fontStyle: 'italic' }}>
+                ℹ️ Le nom d'utilisateur, l'email et le matricule ne peuvent pas être modifiés ici.
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 22px', borderRadius: 10,
+                    background: COLORS.bleuNuit, color: 'white',
+                    border: 'none', cursor: saving ? 'wait' : 'pointer',
+                    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    transition: 'all 0.2s', opacity: saving ? 0.7 : 1,
+                    boxShadow: `0 4px 16px ${COLORS.bleuNuit}30`,
+                  }}
+                >
+                  {saving ? <><RefreshCw size={14} className="spin" /> Enregistrement...</> : <><Save size={14} /> Enregistrer</>}
+                </button>
+
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={saving}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 22px', borderRadius: 10,
+                    background: 'white', color: COLORS.texteMuted,
+                    border: '1px solid var(--border)',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <X size={14} /> Annuler
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Formulaire mot de passe */}
+          {showPasswordForm && (
+            <div style={{
+              background: 'rgba(124,58,237,0.04)',
+              borderRadius: 14,
+              padding: '20px 22px',
+              marginTop: 8,
+              border: '1px solid rgba(124,58,237,0.15)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, color: COLORS.or, fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Lock size={15} /> Changement de mot de passe
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
+                {[
+                  { key: 'old_password', label: 'Mot de passe actuel', show: showPwd.old, field: 'old' },
+                  { key: 'new_password', label: 'Nouveau mot de passe', show: showPwd.new, field: 'new' },
+                  { key: 'confirm_password', label: 'Confirmer le mot de passe', show: showPwd.confirm, field: 'confirm' },
+                ].map(({ key, label, show, field }) => (
+                  <div key={key}>
+                    <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: COLORS.bleuNuit, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {label}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={show ? 'text' : 'password'}
+                        value={pwdData[key]}
+                        onChange={(e) => { setPwdData((p) => ({ ...p, [key]: e.target.value })); setPwdErrors((p) => ({ ...p, [key]: '' })); }}
+                        placeholder="••••••••"
+                        disabled={changingPwd}
+                        style={{ width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, border: `1.5px solid ${pwdErrors[key] ? COLORS.red : 'white'}`, background: 'white', fontSize: 14, fontFamily: 'inherit', color: COLORS.bleuNuit, outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPwd((p) => ({ ...p, [field]: !p[field] }))}
+                        tabIndex={-1}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: COLORS.texteMuted, display: 'flex', alignItems: 'center' }}
+                      >
+                        {show ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                    {pwdErrors[key] && <div style={{ fontSize: 11, color: COLORS.red, marginTop: 4 }}>{pwdErrors[key]}</div>}
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontSize: 11.5, color: COLORS.texteMuted, marginBottom: 14, padding: '8px 12px', background: 'white', borderRadius: 8, borderLeft: `3px solid ${COLORS.amber}` }}>
+                💡 Le mot de passe doit contenir <strong>au moins 8 caractères</strong>.
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleChangePassword}
+                  disabled={changingPwd}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 22px', borderRadius: 10,
+                    background: COLORS.or, color: 'white',
+                    border: 'none', cursor: changingPwd ? 'wait' : 'pointer',
+                    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    transition: 'all 0.2s', opacity: changingPwd ? 0.7 : 1,
+                    boxShadow: `0 4px 16px ${COLORS.or}40`,
+                  }}
+                >
+                  {changingPwd ? <><RefreshCw size={14} className="spin" /> Modification...</> : <><KeyRound size={14} /> Changer le mot de passe</>}
+                </button>
+
+                <button
+                  onClick={() => { setShowPasswordForm(false); setPwdData({ old_password: '', new_password: '', confirm_password: '' }); setPwdErrors({}); }}
+                  disabled={changingPwd}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 22px', borderRadius: 10,
+                    background: 'white', color: COLORS.texteMuted,
+                    border: '1px solid var(--border)',
+                    cursor: changingPwd ? 'not-allowed' : 'pointer',
+                    fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <X size={14} /> Annuler
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(modalContent, document.body);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // ─── STAT CARD ────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
 function StatCard({ label, value, icon, color, bg, trend, subtitle, loading }) {
   if (loading) {
     return (
-      <div style={{
-        background: 'white', border: '1px solid var(--border)',
-        borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'center'
-      }}>
+      <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: 20, display: 'flex', gap: 16, alignItems: 'center' }}>
         <div className="skeleton" style={{ width: 48, height: 48, borderRadius: 12 }} />
         <div style={{ flex: 1 }}>
           <div className="skeleton" style={{ height: 28, width: '40%', marginBottom: 6 }} />
@@ -233,53 +728,23 @@ function StatCard({ label, value, icon, color, bg, trend, subtitle, loading }) {
   }
 
   return (
-    <div style={{
-      background: 'white',
-      border: '1px solid var(--border)',
-      borderRadius: 12,
-      padding: 20,
-      transition: 'all 0.3s ease',
-      position: 'relative',
-      overflow: 'hidden'
-    }}
-    onMouseEnter={e => {
-      e.currentTarget.style.transform = 'translateY(-2px)';
-      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)';
-    }}
-    onMouseLeave={e => {
-      e.currentTarget.style.transform = '';
-      e.currentTarget.style.boxShadow = '';
-    }}>
+    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: 20, transition: 'all 0.3s ease', position: 'relative', overflow: 'hidden' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.06)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 28, fontWeight: 800, color: color || COLORS.bleuNuit, lineHeight: 1.2 }}>
             {value !== undefined && value !== null ? value.toLocaleString('fr-FR') : '0'}
           </div>
           <div style={{ fontSize: 13, color: COLORS.texteMuted, marginTop: 4 }}>{label}</div>
-          {subtitle && (
-            <div style={{ fontSize: 11, color: COLORS.texteLight, marginTop: 2 }}>{subtitle}</div>
-          )}
+          {subtitle && <div style={{ fontSize: 11, color: COLORS.texteLight, marginTop: 2 }}>{subtitle}</div>}
           {trend !== undefined && (
-            <div style={{
-              fontSize: 11,
-              color: trend > 0 ? COLORS.green : COLORS.red,
-              fontWeight: 600,
-              marginTop: 4,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4
-            }}>
+            <div style={{ fontSize: 11, color: trend > 0 ? COLORS.green : COLORS.red, fontWeight: 600, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
               {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}%
             </div>
           )}
         </div>
-        <div style={{
-          width: 48, height: 48, borderRadius: 12,
-          background: bg || `${color}15`,
-          color: color || COLORS.bleuNuit,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0
-        }}>
+        <div style={{ width: 48, height: 48, borderRadius: 12, background: bg || `${color}15`, color: color || COLORS.bleuNuit, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon}
         </div>
       </div>
@@ -293,10 +758,7 @@ function StatCard({ label, value, icon, color, bg, trend, subtitle, loading }) {
 
 function ChartCard({ title, subtitle, children, loading, action }) {
   return (
-    <div style={{
-      background: 'white', borderRadius: 12, padding: 24,
-      border: '1px solid var(--border)', transition: 'all 0.2s'
-    }}>
+    <div style={{ background: 'white', borderRadius: 12, padding: 24, border: '1px solid var(--border)', transition: 'all 0.2s' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <h3 style={{ fontWeight: 700, fontSize: 15 }}>{title}</h3>
@@ -307,9 +769,7 @@ function ChartCard({ title, subtitle, children, loading, action }) {
       {loading ? (
         <div className="skeleton" style={{ height: 250, borderRadius: 8 }} />
       ) : (
-        <div style={{ width: '100%', minHeight: 250 }}>
-          {children}
-        </div>
+        <div style={{ width: '100%', minHeight: 250 }}>{children}</div>
       )}
     </div>
   );
@@ -341,33 +801,16 @@ function ActivityItem({ activity, index }) {
   };
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12,
-      padding: '10px 14px',
-      background: index % 2 === 0 ? COLORS.beige : 'transparent',
-      borderRadius: 8
-    }}>
-      <div style={{
-        width: 32, height: 32, borderRadius: '50%',
-        background: getBg(activity.type),
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0
-      }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: index % 2 === 0 ? COLORS.beige : 'transparent', borderRadius: 8 }}>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', background: getBg(activity.type), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         {getIcon(activity.type)}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: 13, fontWeight: 500,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-        }}>
+        <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {activity.title || 'Activité'}
         </div>
         <div style={{ fontSize: 11, color: COLORS.texteMuted, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <span>
-            {activity.date ? new Date(activity.date).toLocaleDateString('fr-FR', {
-              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-            }) : ''}
-          </span>
+          <span>{activity.date ? new Date(activity.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}</span>
           {activity.user && <span>• {activity.user}</span>}
         </div>
       </div>
@@ -381,9 +824,8 @@ function ActivityItem({ activity, index }) {
 
 function OverviewSection({
   stats, memoireStats, chartData, topDocuments, activities,
-  unreadCount, loading, onRefresh, selectedPeriod, setSelectedPeriod
+  unreadCount, loading, selectedPeriod, setSelectedPeriod
 }) {
-  // 🔧 Calculs sécurisés avec fallbacks
   const totalMemoires = memoireStats?.total || 0;
   const enAttente = memoireStats?.en_attente || 0;
   const valides = memoireStats?.valide || 0;
@@ -392,11 +834,8 @@ function OverviewSection({
   const rejetes = memoireStats?.rejete || 0;
   const incomplets = memoireStats?.incomplet || 0;
 
-  const completionRate = totalMemoires > 0
-    ? Math.round((quitusSignes / totalMemoires) * 100)
-    : 0;
+  const completionRate = totalMemoires > 0 ? Math.round((quitusSignes / totalMemoires) * 100) : 0;
 
-  // 🍩 Données pour le diagramme circulaire
   const memoireStatusData = [
     { name: 'En attente', value: enAttente, color: COLORS.amber },
     { name: 'Validés', value: valides, color: COLORS.green },
@@ -406,54 +845,15 @@ function OverviewSection({
     { name: 'Incomplets', value: incomplets, color: COLORS.texteLight },
   ].filter(d => d.value > 0);
 
-  // 📊 Métriques principales
   const metrics = [
-    {
-      label: 'Total mémoires',
-      value: totalMemoires,
-      icon: <FileText size={20} />,
-      color: COLORS.blue,
-      bg: 'rgba(59,130,246,0.1)',
-      subtitle: `Taux de complétion : ${completionRate}%`
-    },
-    {
-      label: 'En attente de validation',
-      value: enAttente,
-      icon: <Clock size={20} />,
-      color: COLORS.amber,
-      bg: 'rgba(245,158,11,0.1)'
-    },
-    {
-      label: 'Quitus signés',
-      value: quitusSignes,
-      icon: <FileCheck size={20} />,
-      color: COLORS.green,
-      bg: 'rgba(16,185,129,0.1)'
-    },
-    {
-      label: 'Utilisateurs',
-      value: stats?.users_count || 0,
-      icon: <Users size={20} />,
-      color: COLORS.bleuNuit,
-      bg: 'rgba(27,20,100,0.06)'
-    },
-    {
-      label: 'Documents',
-      value: stats?.documents_count || 0,
-      icon: <BookOpen size={20} />,
-      color: COLORS.or,
-      bg: 'rgba(124,58,237,0.1)'
-    },
-    {
-      label: 'Notifications non lues',
-      value: unreadCount,
-      icon: <Bell size={20} />,
-      color: COLORS.red,
-      bg: 'rgba(239,68,68,0.1)'
-    },
+    { label: 'Total mémoires', value: totalMemoires, icon: <FileText size={20} />, color: COLORS.blue, bg: 'rgba(59,130,246,0.1)', subtitle: `Taux de complétion : ${completionRate}%` },
+    { label: 'En attente de validation', value: enAttente, icon: <Clock size={20} />, color: COLORS.amber, bg: 'rgba(245,158,11,0.1)' },
+    { label: 'Quitus signés', value: quitusSignes, icon: <FileCheck size={20} />, color: COLORS.green, bg: 'rgba(16,185,129,0.1)' },
+    { label: 'Utilisateurs', value: stats?.users_count || 0, icon: <Users size={20} />, color: COLORS.bleuNuit, bg: 'rgba(27,20,100,0.06)' },
+    { label: 'Documents', value: stats?.documents_count || 0, icon: <BookOpen size={20} />, color: COLORS.or, bg: 'rgba(124,58,237,0.1)' },
+    { label: 'Notifications non lues', value: unreadCount, icon: <Bell size={20} />, color: COLORS.red, bg: 'rgba(239,68,68,0.1)' },
   ];
 
-  // 📊 Préparer les données de graphique avec valeurs par défaut
   const chartDataSafe = chartData && chartData.length > 0
     ? chartData
     : [
@@ -468,52 +868,20 @@ function OverviewSection({
   return (
     <>
       {/* ═══ MÉTRIQUES ═══ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: 16,
-        marginBottom: 24
-      }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
         {metrics.map((metric, index) => (
-          <StatCard
-            key={index}
-            label={metric.label}
-            value={metric.value}
-            icon={metric.icon}
-            color={metric.color}
-            bg={metric.bg}
-            subtitle={metric.subtitle}
-            loading={loading}
-          />
+          <StatCard key={index} label={metric.label} value={metric.value} icon={metric.icon} color={metric.color} bg={metric.bg} subtitle={metric.subtitle} loading={loading} />
         ))}
       </div>
 
       {/* ═══ GRAPHIQUES PRINCIPAUX ═══ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-        gap: 24,
-        marginBottom: 24
-      }}
-      className="dashboard-grid-2-1">
-        {/* 📈 Évolution des dépôts */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 24, marginBottom: 24 }} className="dashboard-grid-2-1">
         <ChartCard
           title="📈 Évolution des dépôts"
           subtitle="6 derniers mois"
           loading={loading}
           action={
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-              style={{
-                padding: '4px 12px',
-                borderRadius: 6,
-                border: '1px solid var(--border)',
-                fontSize: 12,
-                background: 'white',
-                cursor: 'pointer'
-              }}
-            >
+            <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, background: 'white', cursor: 'pointer' }}>
               <option value="3months">3 mois</option>
               <option value="6months">6 mois</option>
               <option value="12months">12 mois</option>
@@ -529,101 +897,30 @@ function OverviewSection({
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={COLORS.beigeDark} vertical={false} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 11, fill: COLORS.texteMuted }}
-                axisLine={{ stroke: COLORS.beigeDark }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: COLORS.texteMuted }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 10,
-                  border: `1px solid ${COLORS.beigeDark}`,
-                  fontSize: 12,
-                  background: 'white',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-                }}
-                labelStyle={{ fontWeight: 700, marginBottom: 4 }}
-              />
-              <Legend
-                wrapperStyle={{ fontSize: 12, paddingTop: 10 }}
-                iconType="circle"
-              />
-              <Area
-                type="monotone"
-                dataKey="depots"
-                fill="url(#colorDepots)"
-                stroke={COLORS.bleuNuit}
-                strokeWidth={2}
-                name="Dépôts"
-              />
-              <Line
-                type="monotone"
-                dataKey="validations"
-                stroke={COLORS.green}
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: COLORS.green }}
-                activeDot={{ r: 6 }}
-                name="Validations"
-              />
-              <Bar
-                dataKey="quitus"
-                fill={COLORS.or}
-                name="Quitus"
-                radius={[6, 6, 0, 0]}
-                barSize={20}
-              />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={{ stroke: COLORS.beigeDark }} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }} labelStyle={{ fontWeight: 700, marginBottom: 4 }} />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} iconType="circle" />
+              <Area type="monotone" dataKey="depots" fill="url(#colorDepots)" stroke={COLORS.bleuNuit} strokeWidth={2} name="Dépôts" />
+              <Line type="monotone" dataKey="validations" stroke={COLORS.green} strokeWidth={2.5} dot={{ r: 4, fill: COLORS.green }} activeDot={{ r: 6 }} name="Validations" />
+              <Bar dataKey="quitus" fill={COLORS.or} name="Quitus" radius={[6, 6, 0, 0]} barSize={20} />
             </ComposedChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        {/* 🍩 Statut des mémoires */}
-        <ChartCard
-          title="📊 Statut des mémoires"
-          subtitle={`Total : ${totalMemoires} mémoire${totalMemoires > 1 ? 's' : ''}`}
-          loading={loading}
-        >
+        <ChartCard title="📊 Statut des mémoires" subtitle={`Total : ${totalMemoires} mémoire${totalMemoires > 1 ? 's' : ''}`} loading={loading}>
           {memoireStatusData.length === 0 ? (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              height: 280, color: COLORS.texteMuted,
-              background: COLORS.beige, borderRadius: 12
-            }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 280, color: COLORS.texteMuted, background: COLORS.beige, borderRadius: 12 }}>
               <PieIcon size={40} style={{ marginBottom: 12, opacity: 0.3 }} />
               <p style={{ fontSize: 13 }}>Aucun mémoire enregistré</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
               <RePieChart>
-                <Pie
-                  data={memoireStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                  labelLine={false}
-                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                >
-                  {memoireStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                <Pie data={memoireStatusData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value" labelLine={false} label={({ percent }) => `${(percent * 100).toFixed(0)}%`}>
+                  {memoireStatusData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.color} />))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    borderRadius: 10,
-                    border: `1px solid ${COLORS.beigeDark}`,
-                    fontSize: 12,
-                    background: 'white',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-                  }}
-                />
+                <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }} />
               </RePieChart>
             </ResponsiveContainer>
           )}
@@ -631,19 +928,10 @@ function OverviewSection({
       </div>
 
       {/* ═══ TOP DOCUMENTS & ACTIVITÉ ═══ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: 24,
-        marginBottom: 24
-      }}>
-        {/* 🏆 Top documents */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, marginBottom: 24 }}>
         <ChartCard title="🏆 Documents les plus consultés" loading={loading}>
           {!topDocuments || topDocuments.length === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: 30, color: COLORS.texteMuted,
-              background: COLORS.beige, borderRadius: 12
-            }}>
+            <div style={{ textAlign: 'center', padding: 30, color: COLORS.texteMuted, background: COLORS.beige, borderRadius: 12 }}>
               <TrendingUp size={32} style={{ marginBottom: 8, opacity: 0.3 }} />
               <p style={{ fontSize: 13 }}>Aucun document consulté</p>
             </div>
@@ -654,35 +942,15 @@ function OverviewSection({
                 const percentage = Math.min((doc.downloads / maxVal) * 100, 100);
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%',
-                      background: CHART_COLORS[i % CHART_COLORS.length],
-                      color: 'white',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 12, fontWeight: 700, flexShrink: 0
-                    }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: CHART_COLORS[i % CHART_COLORS.length], color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
                       {i + 1}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 13, fontWeight: 500,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                      }}>
-                        {doc.title || 'Document sans titre'}
-                      </div>
-                      <div style={{ fontSize: 11, color: COLORS.texteMuted }}>
-                        {doc.downloads || 0} vues
-                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title || 'Document sans titre'}</div>
+                      <div style={{ fontSize: 11, color: COLORS.texteMuted }}>{doc.downloads || 0} vues</div>
                     </div>
-                    <div style={{
-                      width: 60, height: 6, background: COLORS.beige,
-                      borderRadius: 3, overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${percentage}%`, height: '100%',
-                        background: CHART_COLORS[i % CHART_COLORS.length],
-                        borderRadius: 3, transition: 'width 1s ease'
-                      }} />
+                    <div style={{ width: 60, height: 6, background: COLORS.beige, borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: `${percentage}%`, height: '100%', background: CHART_COLORS[i % CHART_COLORS.length], borderRadius: 3, transition: 'width 1s ease' }} />
                     </div>
                   </div>
                 );
@@ -691,67 +959,30 @@ function OverviewSection({
           )}
         </ChartCard>
 
-        {/* ⚡ Activité récente */}
-        <ChartCard
-          title="⚡ Activité récente"
-          subtitle={`${activities?.length || 0} événements`}
-          loading={loading}
-        >
+        <ChartCard title="⚡ Activité récente" subtitle={`${activities?.length || 0} événements`} loading={loading}>
           {!activities || activities.length === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: 30, color: COLORS.texteMuted,
-              background: COLORS.beige, borderRadius: 12
-            }}>
+            <div style={{ textAlign: 'center', padding: 30, color: COLORS.texteMuted, background: COLORS.beige, borderRadius: 12 }}>
               <Activity size={32} style={{ marginBottom: 8, opacity: 0.3 }} />
               <p style={{ fontSize: 13 }}>Aucune activité récente</p>
             </div>
           ) : (
-            <div style={{
-              display: 'flex', flexDirection: 'column', gap: 4,
-              maxHeight: 280, overflowY: 'auto', paddingRight: 4
-            }}>
-              {activities.slice(0, 8).map((activity, index) => (
-                <ActivityItem key={index} activity={activity} index={index} />
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 280, overflowY: 'auto', paddingRight: 4 }}>
+              {activities.slice(0, 8).map((activity, index) => (<ActivityItem key={index} activity={activity} index={index} />))}
             </div>
           )}
         </ChartCard>
       </div>
 
-      {/* ═══ RÉPARTITION DES DÉPÔTS PAR FACULTÉ ═══ */}
       {stats?.depots_by_faculty && stats.depots_by_faculty.length > 0 && (
-        <ChartCard
-          title="🎓 Répartition par faculté"
-          subtitle="Nombre de dépôts par établissement"
-          loading={loading}
-        >
+        <ChartCard title="🎓 Répartition par faculté" subtitle="Nombre de dépôts par établissement" loading={loading}>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={stats.depots_by_faculty} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={COLORS.beigeDark} vertical={false} />
-              <XAxis
-                dataKey="name"
-                tick={{ fontSize: 11, fill: COLORS.texteMuted }}
-                axisLine={{ stroke: COLORS.beigeDark }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 11, fill: COLORS.texteMuted }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 10,
-                  border: `1px solid ${COLORS.beigeDark}`,
-                  fontSize: 12,
-                  background: 'white',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)'
-                }}
-              />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={{ stroke: COLORS.beigeDark }} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }} />
               <Bar dataKey="value" name="Dépôts" radius={[8, 8, 0, 0]}>
-                {stats.depots_by_faculty.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                ))}
+                {stats.depots_by_faculty.map((entry, index) => (<Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -792,10 +1023,7 @@ function MemoireCard({ memoire, onStatusUpdate, onRefresh }) {
   };
 
   const handleRejectConfirm = async () => {
-    if (!rejectReason.trim()) {
-      addToast('Veuillez saisir un motif de rejet', 'error');
-      return;
-    }
+    if (!rejectReason.trim()) { addToast('Veuillez saisir un motif de rejet', 'error'); return; }
     setShowRejectModal(false);
     await handleAction('rejete', rejectReason);
     setRejectReason('');
@@ -811,9 +1039,7 @@ function MemoireCard({ memoire, onStatusUpdate, onRefresh }) {
       a.click();
       URL.revokeObjectURL(url);
       addToast('Quitus téléchargé', 'success');
-    } catch (error) {
-      addToast('Erreur téléchargement quitus', 'error');
-    }
+    } catch (error) { addToast('Erreur téléchargement quitus', 'error'); }
   };
 
   const canValidateVerification = memoire.status === 'en_attente_verification';
@@ -827,26 +1053,16 @@ function MemoireCard({ memoire, onStatusUpdate, onRefresh }) {
 
   const formatDate = (date) => {
     if (!date) return 'Non définie';
-    try {
-      return format(new Date(date), 'dd MMM yyyy', { locale: fr });
-    } catch { return 'Date invalide'; }
+    try { return format(new Date(date), 'dd MMM yyyy', { locale: fr }); } catch { return 'Date invalide'; }
   };
 
   return (
     <>
-      <div style={{
-        background: 'white',
-        border: `1px solid ${memoire.status === 'rejete' ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`,
-        borderRadius: 12,
-        padding: 20,
-        transition: 'all 0.2s'
-      }}>
+      <div style={{ background: 'white', border: `1px solid ${memoire.status === 'rejete' ? 'rgba(239,68,68,0.3)' : 'var(--border)'}`, borderRadius: 12, padding: 20, transition: 'all 0.2s' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-              <span className={`badge ${status.badge}`}>
-                {status.icon} {status.label}
-              </span>
+              <span className={`badge ${status.badge}`}>{status.icon} {status.label}</span>
               {memoire.is_quitus_signed && <span className="badge badge-green">✅ Quitus signé</span>}
               {memoire.physical_deposit_confirmed && <span className="badge badge-blue">📦 Dépôt physique</span>}
               {memoire.documents_conform && <span className="badge badge-green">✅ Conforme</span>}
@@ -869,33 +1085,17 @@ function MemoireCard({ memoire, onStatusUpdate, onRefresh }) {
             </div>
 
             {memoire.rejection_reason && (
-              <div style={{
-                marginTop: 8, padding: '6px 12px',
-                background: 'rgba(239,68,68,0.05)',
-                borderRadius: 6, fontSize: 12, color: '#b91c1c',
-                display: 'flex', alignItems: 'center', gap: 6
-              }}>
+              <div style={{ marginTop: 8, padding: '6px 12px', background: 'rgba(239,68,68,0.05)', borderRadius: 6, fontSize: 12, color: '#b91c1c', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <XCircle size={14} /> {memoire.rejection_reason}
               </div>
             )}
 
-            <button
-              onClick={() => setShowDetails(!showDetails)}
-              style={{
-                marginTop: 8, color: COLORS.texteMuted, fontSize: 12,
-                background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 4
-              }}
-            >
+            <button onClick={() => setShowDetails(!showDetails)} style={{ marginTop: 8, color: COLORS.texteMuted, fontSize: 12, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
               {showDetails ? '▲ Moins de détails' : '▼ Plus de détails'}
             </button>
 
             {showDetails && (
-              <div style={{
-                marginTop: 8, padding: 12, background: COLORS.beige,
-                borderRadius: 8, fontSize: 12, color: COLORS.texteMuted,
-                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4
-              }}>
+              <div style={{ marginTop: 8, padding: 12, background: COLORS.beige, borderRadius: 8, fontSize: 12, color: COLORS.texteMuted, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
                 <div><strong>ID:</strong> {String(memoire.id).slice(0, 8)}...</div>
                 <div><strong>Type:</strong> {memoire.type_document || 'Mémoire'}</div>
                 <div><strong>Déposé le:</strong> {formatDate(memoire.created_at)}</div>
@@ -906,101 +1106,50 @@ function MemoireCard({ memoire, onStatusUpdate, onRefresh }) {
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             {canSendConvocation && (
-              <button
-                onClick={() => handleAction('convocation_envoyee')}
-                disabled={loading}
-                className="btn btn-primary btn-sm"
-                style={{ background: COLORS.amber, color: 'white' }}
-              >
+              <button onClick={() => handleAction('convocation_envoyee')} disabled={loading} className="btn btn-primary btn-sm" style={{ background: COLORS.amber, color: 'white' }}>
                 <Send size={13} /> Convocation
               </button>
             )}
-
             {canMarkPhysical && (
-              <button
-                onClick={() => handleAction('en_attente_verification')}
-                disabled={loading}
-                className="btn btn-primary btn-sm"
-                style={{ background: COLORS.green, color: 'white' }}
-              >
+              <button onClick={() => handleAction('en_attente_verification')} disabled={loading} className="btn btn-primary btn-sm" style={{ background: COLORS.green, color: 'white' }}>
                 <Package size={13} /> Dépôt
               </button>
             )}
-
             {canValidateVerification && (
-              <button
-                onClick={() => handleAction('verification_ok')}
-                disabled={loading}
-                className="btn btn-primary btn-sm"
-                style={{ background: COLORS.or, color: 'white' }}
-              >
+              <button onClick={() => handleAction('verification_ok')} disabled={loading} className="btn btn-primary btn-sm" style={{ background: COLORS.or, color: 'white' }}>
                 <CheckCircle size={13} /> Vérifier
               </button>
             )}
-
             {canSignQuitus && (
-              <button
-                onClick={() => handleAction('quitus_disponible')}
-                disabled={loading}
-                className="btn btn-primary btn-sm"
-                style={{ background: COLORS.green, color: 'white' }}
-              >
+              <button onClick={() => handleAction('quitus_disponible')} disabled={loading} className="btn btn-primary btn-sm" style={{ background: COLORS.green, color: 'white' }}>
                 <FileSignature size={13} /> Signer
               </button>
             )}
-
             {showDownloadQuitus && (
-              <button
-                onClick={handleDownloadQuitus}
-                className="btn btn-primary btn-sm"
-                style={{ background: COLORS.blue, color: 'white' }}
-              >
+              <button onClick={handleDownloadQuitus} className="btn btn-primary btn-sm" style={{ background: COLORS.blue, color: 'white' }}>
                 <Download size={13} />
               </button>
             )}
-
             {canConfirmRetire && (
-              <button
-                onClick={() => handleAction('quitus_retire')}
-                disabled={loading}
-                className="btn btn-primary btn-sm"
-                style={{ background: COLORS.green, color: 'white' }}
-              >
+              <button onClick={() => handleAction('quitus_retire')} disabled={loading} className="btn btn-primary btn-sm" style={{ background: COLORS.green, color: 'white' }}>
                 <CheckSquare size={13} /> Retrait
               </button>
             )}
 
             <div style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="btn btn-ghost btn-sm"
-                disabled={loading}
-              >
+              <button onClick={() => setShowActions(!showActions)} className="btn btn-ghost btn-sm" disabled={loading}>
                 {loading ? <RefreshCw size={13} className="spin" /> : <ChevronDown size={13} />}
                 Actions
               </button>
               {showActions && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: 4,
-                  background: 'white', border: '1px solid var(--border)',
-                  borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  padding: 6, minWidth: 220, zIndex: 10, maxHeight: 300, overflowY: 'auto'
-                }}>
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: 'white', border: '1px solid var(--border)', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 6, minWidth: 220, zIndex: 10, maxHeight: 300, overflowY: 'auto' }}>
                   {canReject && (
-                    <button
-                      onClick={() => { setShowActions(false); setShowRejectModal(true); }}
-                      className="btn btn-ghost btn-sm"
-                      style={{ width: '100%', justifyContent: 'flex-start', color: COLORS.red }}
-                    >
+                    <button onClick={() => { setShowActions(false); setShowRejectModal(true); }} className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'flex-start', color: COLORS.red }}>
                       <XCircle size={14} /> Rejeter
                     </button>
                   )}
                   {canReopen && (
-                    <button
-                      onClick={() => handleAction('depot_en_ligne')}
-                      className="btn btn-ghost btn-sm"
-                      style={{ width: '100%', justifyContent: 'flex-start' }}
-                    >
+                    <button onClick={() => handleAction('depot_en_ligne')} className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'flex-start' }}>
                       <RefreshCw size={14} /> Réouvrir
                     </button>
                   )}
@@ -1011,50 +1160,15 @@ function MemoireCard({ memoire, onStatusUpdate, onRefresh }) {
         </div>
       </div>
 
-      {/* Modal de rejet */}
       {showRejectModal && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: 20
-        }}
-        onClick={e => e.target === e.currentTarget && setShowRejectModal(false)}>
-          <div style={{
-            background: 'white', borderRadius: 16, padding: 32,
-            maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
-              ❌ Rejeter le dépôt
-            </h3>
-            <p style={{ fontSize: 14, color: COLORS.texteMuted, marginBottom: 16 }}>
-              Veuillez indiquer le motif du rejet pour informer l'étudiant.
-            </p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Motif du rejet..."
-              style={{
-                width: '100%', minHeight: 80, padding: '12px 14px',
-                borderRadius: 8, border: '1px solid var(--border)',
-                fontSize: 13, fontFamily: 'inherit', resize: 'vertical',
-                marginBottom: 16
-              }}
-            />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }} onClick={e => e.target === e.currentTarget && setShowRejectModal(false)}>
+          <div style={{ background: 'white', borderRadius: 16, padding: 32, maxWidth: 440, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>❌ Rejeter le dépôt</h3>
+            <p style={{ fontSize: 14, color: COLORS.texteMuted, marginBottom: 16 }}>Veuillez indiquer le motif du rejet pour informer l'étudiant.</p>
+            <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Motif du rejet..." style={{ width: '100%', minHeight: 80, padding: '12px 14px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, fontFamily: 'inherit', resize: 'vertical', marginBottom: 16 }} />
             <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={() => setShowRejectModal(false)}
-                className="btn btn-ghost"
-                style={{ flex: 1 }}
-                disabled={loading}
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleRejectConfirm}
-                className="btn btn-primary"
-                style={{ flex: 1, background: COLORS.red, color: 'white' }}
-                disabled={loading}
-              >
+              <button onClick={() => setShowRejectModal(false)} className="btn btn-ghost" style={{ flex: 1 }} disabled={loading}>Annuler</button>
+              <button onClick={handleRejectConfirm} className="btn btn-primary" style={{ flex: 1, background: COLORS.red, color: 'white' }} disabled={loading}>
                 {loading ? <RefreshCw size={16} className="spin" /> : 'Rejeter'}
               </button>
             </div>
@@ -1088,27 +1202,18 @@ function MemoiresSection({ memoireStats, onRefresh, loading }) {
     try {
       const response = await listMemoires({ status: filter !== 'all' ? filter : undefined });
       setMemoires(response.data?.results || response.data || []);
-    } catch (error) {
-      console.error('Erreur chargement mémoires:', error);
-      addToast('Erreur chargement des mémoires', 'error');
-    } finally {
-      setLocalLoading(false);
-    }
+    } catch (error) { console.error('Erreur chargement mémoires:', error); addToast('Erreur chargement des mémoires', 'error'); }
+    finally { setLocalLoading(false); }
   };
 
-  useEffect(() => {
-    loadMemoires();
-  }, [filter]);
+  useEffect(() => { loadMemoires(); }, [filter]);
 
   const handleStatusUpdate = async (id, payload) => {
     try {
       await updateMemoireStatus(id, payload);
       await loadMemoires();
       if (onRefresh) onRefresh();
-    } catch (error) {
-      console.error('Erreur mise à jour statut:', error);
-      throw error;
-    }
+    } catch (error) { console.error('Erreur mise à jour statut:', error); throw error; }
   };
 
   const filteredMemoires = memoires.filter(m =>
@@ -1132,122 +1237,48 @@ function MemoiresSection({ memoireStats, onRefresh, loading }) {
   return (
     <div>
       {memoireStats && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-          gap: 10,
-          marginBottom: 24
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 10, marginBottom: 24 }}>
           {statCards.map(s => (
-            <div
-              key={s.key}
-              onClick={() => setFilter(s.key)}
-              style={{
-                background: 'white',
-                border: `2px solid ${filter === s.key ? s.color : 'var(--border)'}`,
-                borderRadius: 10,
-                padding: '12px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: filter === s.key ? '0 4px 12px rgba(0,0,0,0.06)' : 'none'
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = ''}
-            >
-              <div style={{
-                fontSize: 22, fontWeight: 700, color: s.color
-              }}>
-                {memoireStats[s.key] || 0}
-              </div>
-              <div style={{ fontSize: 10, color: COLORS.texteMuted, marginTop: 2 }}>
-                {s.label}
-              </div>
+            <div key={s.key} onClick={() => setFilter(s.key)} style={{ background: 'white', border: `2px solid ${filter === s.key ? s.color : 'var(--border)'}`, borderRadius: 10, padding: '12px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s', boxShadow: filter === s.key ? '0 4px 12px rgba(0,0,0,0.06)' : 'none' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = ''}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{memoireStats[s.key] || 0}</div>
+              <div style={{ fontSize: 10, color: COLORS.texteMuted, marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {STATUS_FILTERS.map(s => (
-            <button
-              key={s.value}
-              onClick={() => setFilter(s.value)}
-              style={{
-                padding: '5px 14px',
-                borderRadius: 50,
-                fontSize: 12,
-                fontWeight: filter === s.value ? 600 : 400,
-                background: filter === s.value ? COLORS.bleuNuit : 'white',
-                color: filter === s.value ? 'white' : 'var(--texte)',
-                border: `1px solid ${filter === s.value ? COLORS.bleuNuit : 'var(--border)'}`,
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
+            <button key={s.value} onClick={() => setFilter(s.value)} style={{ padding: '5px 14px', borderRadius: 50, fontSize: 12, fontWeight: filter === s.value ? 600 : 400, background: filter === s.value ? COLORS.bleuNuit : 'white', color: filter === s.value ? 'white' : 'var(--texte)', border: `1px solid ${filter === s.value ? COLORS.bleuNuit : 'var(--border)'}`, cursor: 'pointer', transition: 'all 0.2s' }}>
               {s.label}
             </button>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ position: 'relative' }}>
-            <Search size={15} style={{
-              position: 'absolute', left: 12, top: '50%',
-              transform: 'translateY(-50%)', color: COLORS.texteLight
-            }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Rechercher..."
-              style={{
-                padding: '7px 12px 7px 36px',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                fontSize: 13,
-                width: 200,
-                background: 'white'
-              }}
-            />
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: COLORS.texteLight }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." style={{ padding: '7px 12px 7px 36px', border: '1px solid var(--border)', borderRadius: 10, fontSize: 13, width: 200, background: 'white' }} />
           </div>
-          <button onClick={loadMemoires} className="btn btn-ghost btn-sm">
-            <RefreshCw size={14} className={localLoading ? 'spin' : ''} />
-          </button>
+          <button onClick={loadMemoires} className="btn btn-ghost btn-sm"><RefreshCw size={14} className={localLoading ? 'spin' : ''} /></button>
         </div>
       </div>
 
       {localLoading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className="skeleton" style={{ height: 140, borderRadius: 12 }} />
-          ))}
+          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 140, borderRadius: 12 }} />)}
         </div>
       ) : filteredMemoires.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: 40,
-          background: 'white', borderRadius: 12, border: '1px solid var(--border)'
-        }}>
+        <div style={{ textAlign: 'center', padding: 40, background: 'white', borderRadius: 12, border: '1px solid var(--border)' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>📭</div>
           <h3>Aucun dépôt trouvé</h3>
           <p style={{ color: COLORS.texteMuted }}>
-            {filter !== 'all'
-              ? `Aucun dépôt avec le statut "${STATUS_FILTERS.find(f => f.value === filter)?.label || filter}"`
-              : 'Aucun dépôt ne correspond à vos critères.'}
+            {filter !== 'all' ? `Aucun dépôt avec le statut "${STATUS_FILTERS.find(f => f.value === filter)?.label || filter}"` : 'Aucun dépôt ne correspond à vos critères.'}
           </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {filteredMemoires.map(m => (
-            <MemoireCard
-              key={m.id}
-              memoire={m}
-              onStatusUpdate={handleStatusUpdate}
-              onRefresh={loadMemoires}
-            />
-          ))}
+          {filteredMemoires.map(m => (<MemoireCard key={m.id} memoire={m} onStatusUpdate={handleStatusUpdate} onRefresh={loadMemoires} />))}
         </div>
       )}
     </div>
@@ -1255,7 +1286,7 @@ function MemoiresSection({ memoireStats, onRefresh, loading }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ─── SECTION ACTUALITÉS (simplifiée) ─────────────────────────────
+// ─── SECTION ACTUALITÉS ──────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
 function ActualitesSection() {
@@ -1269,25 +1300,16 @@ function ActualitesSection() {
       const response = await getArticles();
       const data = Array.isArray(response.data) ? response.data : response.data?.results || [];
       setArticles(data);
-    } catch (error) {
-      console.error('Erreur chargement:', error);
-      addToast('Erreur chargement des articles', 'error');
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Erreur chargement:', error); addToast('Erreur chargement des articles', 'error'); }
+    finally { setLoading(false); }
   }, [addToast]);
 
   useEffect(() => { loadArticles(); }, [loadArticles]);
 
   const handleDelete = async (id) => {
     if (!confirm('Supprimer cet article ?')) return;
-    try {
-      await deleteArticle(id);
-      addToast('🗑️ Article supprimé', 'success');
-      loadArticles();
-    } catch (error) {
-      addToast('Erreur suppression', 'error');
-    }
+    try { await deleteArticle(id); addToast('🗑️ Article supprimé', 'success'); loadArticles(); }
+    catch (error) { addToast('Erreur suppression', 'error'); }
   };
 
   return (
@@ -1295,65 +1317,37 @@ function ActualitesSection() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700 }}>Actualités ({articles.length})</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link to="/admin/actualites" className="btn btn-bleu btn-sm">
-            <Plus size={14} /> Nouvel article
-          </Link>
-          <button onClick={loadArticles} className="btn btn-ghost btn-sm">
-            <RefreshCw size={14} className={loading ? 'spin' : ''} />
-          </button>
+          <Link to="/admin/actualites" className="btn btn-bleu btn-sm"><Plus size={14} /> Nouvel article</Link>
+          <button onClick={loadArticles} className="btn btn-ghost btn-sm"><RefreshCw size={14} className={loading ? 'spin' : ''} /></button>
         </div>
       </div>
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className="skeleton" style={{ height: 100, borderRadius: 12 }} />
-          ))}
+          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 100, borderRadius: 12 }} />)}
         </div>
       ) : articles.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, background: 'white', borderRadius: 12, border: '1px solid var(--border)' }}>
           <Newspaper size={48} style={{ opacity: 0.3, marginBottom: 12 }} />
           <h3>Aucun article</h3>
-          <Link to="/admin/actualites" className="btn btn-bleu" style={{ marginTop: 16 }}>
-            Créer un article
-          </Link>
+          <Link to="/admin/actualites" className="btn btn-bleu" style={{ marginTop: 16 }}>Créer un article</Link>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {articles.map(a => (
-            <div key={a.id} style={{
-              background: 'white', borderRadius: 12, padding: 16,
-              border: '1px solid var(--border)',
-              display: 'flex', gap: 16, alignItems: 'flex-start'
-            }}>
+            <div key={a.id} style={{ background: 'white', borderRadius: 12, padding: 16, border: '1px solid var(--border)', display: 'flex', gap: 16, alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-                  {a.category && (
-                    <span className="badge badge-blue" style={{ fontSize: 10 }}>{a.category}</span>
-                  )}
+                  {a.category && (<span className="badge badge-blue" style={{ fontSize: 10 }}>{a.category}</span>)}
                   {a.is_event && <span className="badge badge-or" style={{ fontSize: 10 }}>📅 Événement</span>}
                   {!a.is_published && <span className="badge badge-slate" style={{ fontSize: 10 }}>📝 Brouillon</span>}
                 </div>
                 <h4 style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{a.title}</h4>
-                <p style={{
-                  fontSize: 12, color: COLORS.texteMuted, lineHeight: 1.6,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>
-                  {a.content}
-                </p>
+                <p style={{ fontSize: 12, color: COLORS.texteMuted, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.content}</p>
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
-                <Link to="/admin/actualites" className="btn btn-ghost btn-sm">
-                  <Edit2 size={14} />
-                </Link>
-                <button
-                  onClick={() => handleDelete(a.id)}
-                  className="btn btn-ghost btn-sm"
-                  style={{ color: COLORS.red }}
-                >
-                  <Trash2 size={14} />
-                </button>
+                <Link to="/admin/actualites" className="btn btn-ghost btn-sm"><Edit2 size={14} /></Link>
+                <button onClick={() => handleDelete(a.id)} className="btn btn-ghost btn-sm" style={{ color: COLORS.red }}><Trash2 size={14} /></button>
               </div>
             </div>
           ))}
@@ -1364,7 +1358,7 @@ function ActualitesSection() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ─── SECTION UTILISATEURS (intégrée) ─────────────────────────────
+// ─── SECTION UTILISATEURS ────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
 function UsersSection() {
@@ -1372,10 +1366,7 @@ function UsersSection() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({
-    username: '', email: '', first_name: '', last_name: '',
-    role: 'BIBLIO', password: '', confirm_password: ''
-  });
+  const [form, setForm] = useState({ username: '', email: '', first_name: '', last_name: '', role: 'BIBLIO', password: '', confirm_password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -1388,30 +1379,17 @@ function UsersSection() {
       else if (response.data?.results) usersData = response.data.results;
       else if (response.data?.data) usersData = response.data.data;
       setUsers(usersData);
-    } catch (error) {
-      console.error('Erreur chargement:', error);
-      setError('Erreur lors du chargement');
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Erreur chargement:', error); setError('Erreur lors du chargement'); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { loadUsers(); }, []);
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (form.password !== form.confirm_password) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-    if (form.password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
-      return;
-    }
-
+    setError(''); setSuccess('');
+    if (form.password !== form.confirm_password) { setError('Les mots de passe ne correspondent pas'); return; }
+    if (form.password.length < 6) { setError('Le mot de passe doit contenir au moins 6 caractères'); return; }
     setCreating(true);
     try {
       await createUser(form);
@@ -1422,9 +1400,7 @@ function UsersSection() {
     } catch (err) {
       const msg = err.response?.data?.detail || err.response?.data?.message || 'Erreur création';
       setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
-    } finally {
-      setCreating(false);
-    }
+    } finally { setCreating(false); }
   };
 
   const getRoleBadge = (role) => {
@@ -1440,12 +1416,9 @@ function UsersSection() {
     <div className="users-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 24 }}>
       <div style={{ background: 'white', borderRadius: 12, border: '1px solid var(--border)', padding: 20 }}>
         <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Utilisateurs ({users.length})</h3>
-
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[1, 2, 3].map(i => (
-              <div key={i} className="skeleton" style={{ height: 40, borderRadius: 8 }} />
-            ))}
+            {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 40, borderRadius: 8 }} />)}
           </div>
         ) : users.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 40, color: COLORS.texteMuted }}>
@@ -1456,22 +1429,14 @@ function UsersSection() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Email</th>
-                  <th>Rôle</th>
-                </tr>
+                <tr><th>Nom</th><th>Email</th><th>Rôle</th></tr>
               </thead>
               <tbody>
                 {users.map(u => (
                   <tr key={u.id || u.username}>
                     <td>{u.first_name ? `${u.first_name} ${u.last_name}` : u.username}</td>
                     <td>{u.email || '-'}</td>
-                    <td>
-                      <span className={`badge ${getRoleBadge(u.role)}`}>
-                        {u.role_display || u.role}
-                      </span>
-                    </td>
+                    <td><span className={`badge ${getRoleBadge(u.role)}`}>{u.role_display || u.role}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -1485,46 +1450,20 @@ function UsersSection() {
           <UserPlus size={18} /> Créer un utilisateur
         </h3>
 
-        {error && (
-          <div style={{
-            padding: '10px 14px', background: 'rgba(239,68,68,0.05)',
-            border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8,
-            color: '#b91c1c', marginBottom: 12, fontSize: 13
-          }}>
-            ❌ {error}
-          </div>
-        )}
-
-        {success && (
-          <div style={{
-            padding: '10px 14px', background: 'rgba(16,185,129,0.05)',
-            border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8,
-            color: '#047857', marginBottom: 12, fontSize: 13
-          }}>
-            ✅ {success}
-          </div>
-        )}
+        {error && (<div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#b91c1c', marginBottom: 12, fontSize: 13 }}>❌ {error}</div>)}
+        {success && (<div style={{ padding: '10px 14px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, color: '#047857', marginBottom: 12, fontSize: 13 }}>✅ {success}</div>)}
 
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input className="form-input" placeholder="Identifiant *" value={form.username}
-            onChange={e => setForm({ ...form, username: e.target.value })} required />
-          <input className="form-input" type="email" placeholder="Email *" value={form.email}
-            onChange={e => setForm({ ...form, email: e.target.value })} required />
-          <input className="form-input" placeholder="Prénom *" value={form.first_name}
-            onChange={e => setForm({ ...form, first_name: e.target.value })} required />
-          <input className="form-input" placeholder="Nom *" value={form.last_name}
-            onChange={e => setForm({ ...form, last_name: e.target.value })} required />
-          <input className="form-input" type="password" placeholder="Mot de passe *" value={form.password}
-            onChange={e => setForm({ ...form, password: e.target.value })} required />
-          <input className="form-input" type="password" placeholder="Confirmer *" value={form.confirm_password}
-            onChange={e => setForm({ ...form, confirm_password: e.target.value })} required />
+          <input className="form-input" placeholder="Identifiant *" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} required />
+          <input className="form-input" type="email" placeholder="Email *" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required />
+          <input className="form-input" placeholder="Prénom *" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} required />
+          <input className="form-input" placeholder="Nom *" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} required />
+          <input className="form-input" type="password" placeholder="Mot de passe *" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required />
+          <input className="form-input" type="password" placeholder="Confirmer *" value={form.confirm_password} onChange={e => setForm({ ...form, confirm_password: e.target.value })} required />
           <select className="form-select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-            {AVAILABLE_ROLES.map(r => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
+            {AVAILABLE_ROLES.map(r => (<option key={r.value} value={r.value}>{r.label}</option>))}
           </select>
-          <button type="submit" className="btn btn-bleu" disabled={creating}
-            style={{ justifyContent: 'center' }}>
+          <button type="submit" className="btn btn-bleu" disabled={creating} style={{ justifyContent: 'center' }}>
             {creating ? 'Création...' : '➕ Créer'}
           </button>
         </form>
@@ -1548,17 +1487,11 @@ function NotificationsSection() {
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const [notifRes, unreadRes] = await Promise.all([
-        getNotifications(),
-        getUnreadCount()
-      ]);
+      const [notifRes, unreadRes] = await Promise.all([getNotifications(), getUnreadCount()]);
       setNotifications(notifRes.data?.results || notifRes.data || []);
       setUnreadCount(unreadRes.data?.count || 0);
-    } catch (error) {
-      console.error('Erreur chargement:', error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error('Erreur chargement:', error); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { loadNotifications(); }, []);
@@ -1568,9 +1501,7 @@ function NotificationsSection() {
       await markAsRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      addToast('Erreur', 'error');
-    }
+    } catch (error) { addToast('Erreur', 'error'); }
   };
 
   const handleMarkAllAsRead = async () => {
@@ -1579,9 +1510,7 @@ function NotificationsSection() {
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       setUnreadCount(0);
       addToast('Toutes marquées comme lues', 'success');
-    } catch (error) {
-      addToast('Erreur', 'error');
-    }
+    } catch (error) { addToast('Erreur', 'error'); }
   };
 
   const filtered = notifications.filter(n => {
@@ -1599,50 +1528,21 @@ function NotificationsSection() {
             { value: 'unread', label: 'Non lues', count: unreadCount },
             { value: 'read', label: 'Lues', count: notifications.length - unreadCount }
           ].map(f => (
-            <button
-              key={f.value}
-              onClick={() => setFilter(f.value)}
-              style={{
-                padding: '6px 16px',
-                borderRadius: 50,
-                fontSize: 12,
-                fontWeight: filter === f.value ? 600 : 400,
-                background: filter === f.value ? COLORS.bleuNuit : 'white',
-                color: filter === f.value ? 'white' : 'var(--texte)',
-                border: `1px solid ${filter === f.value ? COLORS.bleuNuit : 'var(--border)'}`,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6
-              }}
-            >
+            <button key={f.value} onClick={() => setFilter(f.value)} style={{ padding: '6px 16px', borderRadius: 50, fontSize: 12, fontWeight: filter === f.value ? 600 : 400, background: filter === f.value ? COLORS.bleuNuit : 'white', color: filter === f.value ? 'white' : 'var(--texte)', border: `1px solid ${filter === f.value ? COLORS.bleuNuit : 'var(--border)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
               {f.label}
-              {f.count > 0 && (
-                <span style={{
-                  background: filter === f.value ? 'rgba(255,255,255,0.2)' : COLORS.beige,
-                  padding: '0 6px', borderRadius: 50, fontSize: 10
-                }}>{f.count}</span>
-              )}
+              {f.count > 0 && (<span style={{ background: filter === f.value ? 'rgba(255,255,255,0.2)' : COLORS.beige, padding: '0 6px', borderRadius: 50, fontSize: 10 }}>{f.count}</span>)}
             </button>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {unreadCount > 0 && (
-            <button onClick={handleMarkAllAsRead} className="btn btn-bleu btn-sm">
-              <CheckCheck size={14} /> Tout lire
-            </button>
-          )}
-          <button onClick={loadNotifications} className="btn btn-ghost btn-sm">
-            <RefreshCw size={14} className={loading ? 'spin' : ''} />
-          </button>
+          {unreadCount > 0 && (<button onClick={handleMarkAllAsRead} className="btn btn-bleu btn-sm"><CheckCheck size={14} /> Tout lire</button>)}
+          <button onClick={loadNotifications} className="btn btn-ghost btn-sm"><RefreshCw size={14} className={loading ? 'spin' : ''} /></button>
         </div>
       </div>
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[1, 2, 3].map(i => (
-            <div key={i} className="skeleton" style={{ height: 100, borderRadius: 12 }} />
-          ))}
+          {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 100, borderRadius: 12 }} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: 40, background: 'white', borderRadius: 12, border: '1px solid var(--border)' }}>
@@ -1652,60 +1552,20 @@ function NotificationsSection() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.map(n => (
-            <div
-              key={n.id}
-              onClick={() => navigate(`/admin/notifications/${n.id}`)}
-              style={{
-                display: 'flex', alignItems: 'flex-start', gap: 14,
-                padding: '14px 18px',
-                background: n.is_read ? 'white' : 'rgba(124,58,237,0.03)',
-                border: `1px solid ${n.is_read ? 'var(--border)' : 'rgba(124,58,237,0.15)'}`,
-                borderRadius: 12,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                position: 'relative'
-              }}
-              onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow = ''}
-            >
-              {!n.is_read && (
-                <div style={{
-                  position: 'absolute', top: 14, right: 14,
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: COLORS.or
-                }} />
-              )}
-              <div style={{
-                width: 40, height: 40, borderRadius: '50%',
-                background: n.is_read ? COLORS.beige : 'rgba(124,58,237,0.1)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0
-              }}>
+            <div key={n.id} onClick={() => navigate(`/admin/notifications/${n.id}`)} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 18px', background: n.is_read ? 'white' : 'rgba(124,58,237,0.03)', border: `1px solid ${n.is_read ? 'var(--border)' : 'rgba(124,58,237,0.15)'}`, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)'} onMouseLeave={e => e.currentTarget.style.boxShadow = ''}>
+              {!n.is_read && (<div style={{ position: 'absolute', top: 14, right: 14, width: 8, height: 8, borderRadius: '50%', background: COLORS.or }} />)}
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: n.is_read ? COLORS.beige : 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Bell size={18} color={n.is_read ? COLORS.texteLight : COLORS.or} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <h4 style={{ fontSize: 14, fontWeight: n.is_read ? 500 : 700, marginBottom: 4 }}>
-                  {n.title}
-                </h4>
-                <p style={{
-                  fontSize: 13, color: COLORS.texteMuted, lineHeight: 1.6,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>
-                  {n.message}
-                </p>
+                <h4 style={{ fontSize: 14, fontWeight: n.is_read ? 500 : 700, marginBottom: 4 }}>{n.title}</h4>
+                <p style={{ fontSize: 13, color: COLORS.texteMuted, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.message}</p>
                 <div style={{ fontSize: 11, color: COLORS.texteLight, marginTop: 6 }}>
-                  {new Date(n.created_at).toLocaleString('fr-FR', {
-                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-                  })}
+                  {new Date(n.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
               {!n.is_read && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleMarkAsRead(n.id); }}
-                  className="btn btn-bleu btn-sm"
-                  style={{ fontSize: 11 }}
-                >
+                <button onClick={(e) => { e.stopPropagation(); handleMarkAsRead(n.id); }} className="btn btn-bleu btn-sm" style={{ fontSize: 11 }}>
                   Marquer lu
                 </button>
               )}
@@ -1722,7 +1582,7 @@ function NotificationsSection() {
 // ═══════════════════════════════════════════════════════════════════
 
 export default function AdminDashboard() {
-  const { user, isStaff, isAdmin } = useAuth();
+  const { user, isStaff, isAdmin, refreshUser } = useAuth();
   const { addToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1735,6 +1595,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('6months');
+  const [showMonCompte, setShowMonCompte] = useState(false);
 
   const activeTab = searchParams.get('tab') || 'overview';
 
@@ -1742,14 +1603,7 @@ export default function AdminDashboard() {
     if (showToast) setRefreshing(true);
 
     try {
-      const [
-        statsRes,
-        memoireRes,
-        unreadRes,
-        chartRes,
-        topDocsRes,
-        activityRes
-      ] = await Promise.all([
+      const [statsRes, memoireRes, unreadRes, chartRes, topDocsRes, activityRes] = await Promise.all([
         getDashboardStats().catch(() => ({ data: {} })),
         getMemoireStats().catch(() => ({ data: {} })),
         getUnreadCount().catch(() => ({ data: { count: 0 } })),
@@ -1779,17 +1633,19 @@ export default function AdminDashboard() {
     if (isStaff) loadData();
   }, [isStaff, loadData]);
 
-  const handleTabChange = (tab) => {
-    setSearchParams({ tab });
-  };
+  const handleProfileUpdated = useCallback(async () => {
+    if (typeof refreshUser === 'function') {
+      try { await refreshUser(); } catch (e) { console.warn('Impossible de recharger le profil:', e); }
+    }
+  }, [refreshUser]);
+
+  const handleTabChange = (tab) => { setSearchParams({ tab }); };
 
   if (!isStaff) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <h2>Accès réservé au personnel</h2>
-        <Link to="/" className="btn btn-bleu" style={{ marginTop: 20 }}>
-          Retour à l'accueil
-        </Link>
+        <Link to="/" className="btn btn-bleu" style={{ marginTop: 20 }}>Retour à l'accueil</Link>
       </div>
     );
   }
@@ -1814,7 +1670,6 @@ export default function AdminDashboard() {
             activities={activities}
             unreadCount={unreadCount}
             loading={loading}
-            onRefresh={() => loadData(true)}
             selectedPeriod={selectedPeriod}
             setSelectedPeriod={setSelectedPeriod}
           />
@@ -1844,23 +1699,45 @@ export default function AdminDashboard() {
                 {isAdmin ? 'Administrateur' : 'Bibliothécaire'} • Bienvenue, {user?.first_name || user?.username}
               </p>
             </div>
-            <button
-              onClick={() => loadData(true)}
-              className="btn btn-outline-white"
-              disabled={refreshing}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px', borderRadius: 8,
-                background: 'rgba(255,255,255,0.08)',
-                color: 'white', border: '1px solid rgba(255,255,255,0.12)',
-                cursor: refreshing ? 'not-allowed' : 'pointer',
-                fontSize: 13, fontWeight: 600,
-                transition: 'all 0.2s'
-              }}
-            >
-              <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
-              {refreshing ? 'Actualisation...' : 'Actualiser'}
-            </button>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* ✅ Bouton Mon compte */}
+              <button
+                onClick={() => setShowMonCompte(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 18px', borderRadius: 8,
+                  background: 'rgba(255,255,255,0.15)',
+                  color: 'white', border: '1px solid rgba(255,255,255,0.25)',
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                  fontFamily: 'inherit', transition: 'all 0.2s',
+                  backdropFilter: 'blur(8px)',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.28)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.transform = ''; }}
+                aria-label="Mon compte"
+              >
+                <UserCircle size={16} />
+                Mon compte
+              </button>
+
+              <button
+                onClick={() => loadData(true)}
+                className="btn btn-outline-white"
+                disabled={refreshing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 20px', borderRadius: 8,
+                  background: 'rgba(255,255,255,0.08)',
+                  color: 'white', border: '1px solid rgba(255,255,255,0.12)',
+                  cursor: refreshing ? 'not-allowed' : 'pointer',
+                  fontSize: 13, fontWeight: 600,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
+                {refreshing ? 'Actualisation...' : 'Actualiser'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1868,6 +1745,14 @@ export default function AdminDashboard() {
           {renderContent()}
         </div>
       </div>
+
+      {/* ✅ MODAL MON COMPTE */}
+      <MonCompteModal
+        isOpen={showMonCompte}
+        onClose={() => setShowMonCompte(false)}
+        user={user}
+        onUpdate={handleProfileUpdated}
+      />
 
       <style>{`
         @keyframes spin {
@@ -1878,6 +1763,14 @@ export default function AdminDashboard() {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }
+        @keyframes monCompteFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes monCompteScaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .spin { animation: spin 1s linear infinite; }
         .skeleton {
           background: linear-gradient(90deg, #f0ede8 25%, #e8e4dd 50%, #f0ede8 75%);
@@ -1885,7 +1778,7 @@ export default function AdminDashboard() {
           animation: shimmer 1.5s ease-in-out infinite;
           border-radius: 6px;
         }
-        
+
         /* Badges */
         .badge {
           display: inline-flex;
@@ -1921,15 +1814,9 @@ export default function AdminDashboard() {
           font-family: inherit;
         }
         .btn-sm { padding: 5px 12px; font-size: 12px; }
-        .btn-bleu {
-          background: ${COLORS.bleuNuit};
-          color: white;
-        }
+        .btn-bleu { background: ${COLORS.bleuNuit}; color: white; }
         .btn-bleu:hover { background: ${COLORS.bleuNuitLight}; }
-        .btn-primary {
-          background: ${COLORS.bleuNuit};
-          color: white;
-        }
+        .btn-primary { background: ${COLORS.bleuNuit}; color: white; }
         .btn-primary:hover { background: ${COLORS.bleuNuitLight}; }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-ghost {
