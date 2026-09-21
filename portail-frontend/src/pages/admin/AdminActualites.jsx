@@ -809,7 +809,7 @@ export default function AdminActualites() {
       <div style={{ background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)', padding: '32px 0 24px' }}>
         <div className="container">
           <Link
-            to="/dashboard"
+            to="/admin/dashboard"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
