@@ -147,39 +147,62 @@ function getJsonLd() {
 }
 
 // ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
+// ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
 function getImageUrl(article) {
   if (!article) return null;
 
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const normalizeUrl = (value) => {
+    if (!value) return null;
 
-  if (article.image_display) {
-    let url = article.image_display;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('/media/')) return `${apiBase}${url}`;
-    if (!url.startsWith('/')) url = `/${url}`;
-    if (!url.startsWith('/media/')) url = `/media${url}`;
-    return `${apiBase}${url}`;
-  }
-
-  if (article.image) {
-    let url = article.image;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('news_images/')) return `${apiBase}/media/${url}`;
-    if (!url.startsWith('/')) url = `/${url}`;
-    if (!url.startsWith('/media/')) url = `/media${url}`;
-    return `${apiBase}${url}`;
-  }
-
-  if (article.image_url) {
-    if (article.image_url.startsWith('http://') || article.image_url.startsWith('https://')) {
-      return article.image_url;
+    // Si le backend renvoie une ancienne URL localhost,
+    // on conserve uniquement le chemin /media/...
+    if (
+      value.startsWith('http://localhost:8000') ||
+      value.startsWith('https://localhost:8000') ||
+      value.startsWith('http://127.0.0.1:8000') ||
+      value.startsWith('https://127.0.0.1:8000')
+    ) {
+      try {
+        value = new URL(value).pathname;
+      } catch {
+        return null;
+      }
     }
-    return `${apiBase}${article.image_url}`;
-  }
 
-  return null;
+    // Les URLs externes réelles sont conservées
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+
+    // Déjà un chemin média correct
+    if (value.startsWith('/media/')) {
+      return value;
+    }
+
+    // Chemin du type news_images/xxx.jpg
+    if (value.startsWith('news_images/')) {
+      return `/media/${value}`;
+    }
+
+    // Normalisation générale
+    if (!value.startsWith('/')) {
+      value = `/${value}`;
+    }
+
+    if (!value.startsWith('/media/')) {
+      value = `/media${value}`;
+    }
+
+    return value;
+  };
+
+  return (
+    normalizeUrl(article.image_display) ||
+    normalizeUrl(article.image) ||
+    normalizeUrl(article.image_url) ||
+    null
+  );
 }
-
 // ═══════════════════════════════════════════════════════════════════
 // ─── UTILITAIRE : EXTRAIRE LES ARTICLES DE LA RÉPONSE API ────────
 // ✅ Gère plusieurs formats de réponse : {results:[...]}, [...], {data:[...]}
@@ -504,11 +527,7 @@ function HeroHoursWidget() {
   const { language } = useLanguage();
   const isEnglish = language === 'en';
 
-  const hours = [
-    { day: isEnglish ? 'Mon – Fri' : 'Lun – Ven', hours: '07h30 – 15h30', icon: '📖' },
-    { day: isEnglish ? 'Saturday' : 'Samedi', hours: '08h00 – 13h00', icon: '📚' },
-    { day: isEnglish ? 'Sunday' : 'Dimanche', hours: isEnglish ? 'Closed' : 'Fermé', icon: '🔒' },
-  ];
+const hours = [ { day: isEnglish ? 'Monday' : 'Lundi', hours: '12h00 – 22h00', icon: '📖' }, { day: isEnglish ? 'Tuesday – Friday' : 'Mardi – Vendredi', hours: '09h00 – 22h00', icon: '📚' }, { day: isEnglish ? 'Saturday' : 'Samedi', hours: '10h00 – 16h00', icon: '📚' }, { day: isEnglish ? 'Sunday' : 'Dimanche', hours: isEnglish ? 'Closed' : 'Fermé', icon: '🔒' }, ];
 
   return (
     <div
@@ -2540,9 +2559,9 @@ export default function HomePage() {
                     </h3>
                     <p style={{ fontSize: 13, color: 'var(--texte-muted)', lineHeight: 1.8 }}>
                       {isEnglish ? (
-                        <>Monday – Friday: 07h30 – 15h30<br />Saturday: 08h00 – 13h00<br />Sunday: Closed</>
+                        <>Monday – Friday: 08h00 – 22h00<br />Saturday: 08h00 – 16h00<br />Sunday: Closed</>
                       ) : (
-                        <>Lundi – Vendredi : 07h30 – 15h30<br />Samedi : 08h00 – 13h00<br />Dimanche : Fermé</>
+                        <>Lundi – Vendredi : 08h00 – 22h00<br />Samedi : 08h00 – 16h00<br />Dimanche : Fermé</>
                       )}
                     </p>
                   </div>

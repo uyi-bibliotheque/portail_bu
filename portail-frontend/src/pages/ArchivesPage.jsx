@@ -30,7 +30,7 @@ const EXTERNAL_LINKS = {
 // ─── CONSTANTES ──────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const FACULTIES = {
   'FS':      { name: 'Faculté des Sciences', abbr: 'FS', color: '#0d4a28' },

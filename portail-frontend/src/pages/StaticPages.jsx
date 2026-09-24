@@ -708,24 +708,24 @@ export function HorairesPage() {
   const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
 
   const hours = isEnglish
-    ? [
-        { day: 'Monday', hours: '07:30 – 15:30', open: true },
-        { day: 'Tuesday', hours: '07:30 – 15:30', open: true },
-        { day: 'Wednesday', hours: '07:30 – 15:30', open: true },
-        { day: 'Thursday', hours: '07:30 – 15:30', open: true },
-        { day: 'Friday', hours: '07:30 – 15:30', open: true },
-        { day: 'Saturday', hours: '08:00 – 13:00', open: true },
-        { day: 'Sunday', hours: 'Closed', open: false },
-      ]
-    : [
-        { day: 'Lundi', hours: '07h30 – 15h30', open: true },
-        { day: 'Mardi', hours: '07h30 – 15h30', open: true },
-        { day: 'Mercredi', hours: '07h30 – 15h30', open: true },
-        { day: 'Jeudi', hours: '07h30 – 15h30', open: true },
-        { day: 'Vendredi', hours: '07h30 – 15h30', open: true },
-        { day: 'Samedi', hours: '08h00 – 13h00', open: true },
-        { day: 'Dimanche', hours: 'Fermé', open: false },
-      ];
+  ? [
+      { day: 'Monday', hours: '12:00 – 22:00', open: true },
+      { day: 'Tuesday', hours: '09:00 – 22:00', open: true },
+      { day: 'Wednesday', hours: '09:00 – 22:00', open: true },
+      { day: 'Thursday', hours: '09:00 – 22:00', open: true },
+      { day: 'Friday', hours: '09:00 – 22:00', open: true },
+      { day: 'Saturday', hours: '10:00 – 16:00', open: true },
+      { day: 'Sunday', hours: 'Closed', open: false },
+    ]
+  : [
+      { day: 'Lundi', hours: '12h00 – 22h00', open: true },
+      { day: 'Mardi', hours: '09h00 – 22h00', open: true },
+      { day: 'Mercredi', hours: '09h00 – 22h00', open: true },
+      { day: 'Jeudi', hours: '09h00 – 22h00', open: true },
+      { day: 'Vendredi', hours: '09h00 – 22h00', open: true },
+      { day: 'Samedi', hours: '10h00 – 16h00', open: true },
+      { day: 'Dimanche', hours: 'Fermé', open: false },
+    ];
 
   return (
     <Layout>
@@ -1310,8 +1310,8 @@ const SERVICES_DATA = {
       'Bibliography writing',
       'Individual appointments by reservation'
     ],
-    hoursFr: '09h00 – 17h00 (Lun–Ven) — Sur rendez-vous',
-    hoursEn: '09:00 – 17:00 (Mon–Fri) — By appointment',
+    hoursFr: '10h00 – 22h00 (Lun–Ven) — Sur rendez-vous',
+    hoursEn: '10:00 – 22:00 (Mon–Fri) — By appointment',
     content: null
   },
   formation: {

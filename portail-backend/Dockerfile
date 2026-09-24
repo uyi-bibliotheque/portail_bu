@@ -6,9 +6,9 @@ FROM python:3.11-slim-bookworm
 # Empêcher Python d'écrire des fichiers .pyc et forcer la sortie stdout/stderr non tamponnée
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive
+
 
 WORKDIR /app
 

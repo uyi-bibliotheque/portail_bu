@@ -251,39 +251,89 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://bcuy1",
+    "http://10.4.2.112",
     "https://bcu-uyi.cm",
 ]
 
 # ═══════════════════════════════════════════════════════════════════
-# ─── CONFIGURATION SSL ADAPTATIVE ─────────────────────────────────
+# ─── CONFIGURATION SSL / SÉCURITÉ ADAPTATIVE ───────────────────────
 # ═══════════════════════════════════════════════════════════════════
 
 X_FRAME_OPTIONS = 'DENY'
-SECURE_BROWSER_XSS_FILTER = True
+
+# Protection du navigateur
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
-# Configuration SSL selon l'environnement
-if DEBUG:
-    # ═══ MODE DÉVELOPPEMENT ═══
-    print("🔧 MODE DÉVELOPPEMENT - HTTPS désactivé")
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    # ═══ MODE PRODUCTION ═══
-    print("🔒 MODE PRODUCTION - HTTPS activé")
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000  # 1 an
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    CORS_ALLOW_ALL_ORIGINS = False
+# SECURE_BROWSER_XSS_FILTER est obsolète avec les navigateurs modernes.
+# Il est volontairement retiré.
+
+
+# ═══════════════════════════════════════════════════════════════════
+# ─── CONFIGURATION DE SÉCURITÉ SELON L'ENVIRONNEMENT ──────────────
+# ═══════════════════════════════════════════════════════════════════
+
+# Ces paramètres sont contrôlés par les variables d'environnement.
+# Cela permet d'avoir DEBUG=False sans forcer HTTPS tant que
+# HTTPS n'est pas configuré sur le serveur.
+
+print("🔧 Configuration sécurité")
+
+# Django est derrière un reverse proxy (Nginx).
+# Nginx pourra transmettre le protocole original avec :
+# X-Forwarded-Proto: http ou https
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Redirection HTTP → HTTPS
+# Contrôlée par la variable d'environnement SECURE_SSL_REDIRECT
+SECURE_SSL_REDIRECT = os.getenv(
+    "SECURE_SSL_REDIRECT", "False"
+).lower() == "true"
+
+# Cookies sécurisés
+# False actuellement car le site fonctionne en HTTP.
+SESSION_COOKIE_SECURE = os.getenv(
+    "SESSION_COOKIE_SECURE", "False"
+).lower() == "true"
+
+CSRF_COOKIE_SECURE = os.getenv(
+    "CSRF_COOKIE_SECURE", "False"
+).lower() == "true"
+
+# ═══════════════════════════════════════════════════════════════════
+# HSTS
+# ═══════════════════════════════════════════════════════════════════
+
+# 0 = HSTS désactivé
+# À activer uniquement lorsque HTTPS fonctionne réellement.
+SECURE_HSTS_SECONDS = int(
+    os.getenv("SECURE_HSTS_SECONDS", "0")
+)
+
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", "False"
+).lower() == "true"
+
+SECURE_HSTS_PRELOAD = os.getenv(
+    "SECURE_HSTS_PRELOAD", "False"
+).lower() == "true"
+
+# ═══════════════════════════════════════════════════════════════════
+# CORS
+# ═══════════════════════════════════════════════════════════════════
+
+# En production, on n'autorise pas toutes les origines.
+CORS_ALLOW_ALL_ORIGINS = os.getenv(
+    "CORS_ALLOW_ALL_ORIGINS", "False"
+).lower() == "true"
+
+print(f"🔒 DEBUG = {DEBUG}")
+print(f"🔒 SECURE_SSL_REDIRECT = {SECURE_SSL_REDIRECT}")
+print(f"🔒 SESSION_COOKIE_SECURE = {SESSION_COOKIE_SECURE}")
+print(f"🔒 CSRF_COOKIE_SECURE = {CSRF_COOKIE_SECURE}")
+print(f"🔒 HSTS = {SECURE_HSTS_SECONDS}s")
+
 
 # ═══════════════════════════════════════════════════════════════════
 # ─── LOGGING ──────────────────────────────────────────────────────

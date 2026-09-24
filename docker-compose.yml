@@ -40,6 +40,8 @@ services:
       context: ./portail-backend
       dockerfile: Dockerfile
     container_name: portail_backend
+    extra_hosts:
+      - "pmb.biblio:host-gateway"
     restart: always
     depends_on:
       db:
@@ -50,9 +52,12 @@ services:
       - "8000:8000"
     environment:
       # Variables Django
-      - DEBUG=True
-      - SECRET_KEY=dev-secret-key-12345
-      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - DEBUG=False
+
+      - SECRET_KEY=VmLC1o7bOdeAhN_-bC6f3ZSuGlDY-rg9IrdWel12X963egJb9GM9JXpmHFzlnGEaH-Y
+      - ALLOWED_HOSTS=10.4.2.112,127.0.0.1,localhost,bcuy1
+      - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD}
+
       # Base de données
       - USE_POSTGRES=True
       - DB_NAME=portail_bu
@@ -61,7 +66,9 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       # Frontend
-      - FRONTEND_URL=http://localhost:5173
+      - FRONTEND_URL=http://bcuy1
+      # WebService PMB
+      - PMB_WS_URL=${PMB_WS_URL}
       # Sécurité (désactivée en dev)
       - SECURE_SSL_REDIRECT=False
       - SESSION_COOKIE_SECURE=False
@@ -83,7 +90,6 @@ services:
       - ./Documents:/app/Documents
     networks:
       - portail_network
-
   # ═══════════════════════════════════════════════════════════════════
   # ─── FRONTEND REACT + NGINX REVERSE PROXY ─────────────────────────
   # ═══════════════════════════════════════════════════════════════════
@@ -93,23 +99,33 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_RECAPTCHA_SITE_KEY=${RECAPTCHA_PUBLIC_KEY}
+
     container_name: portail_frontend
     restart: always
+
     depends_on:
       - backend
+
     ports:
-      - "80:80"
-      - "5173:80"
+      - "8080:80"
+
+    volumes:
+      - backend_media:/app/media:ro
+
     networks:
       - portail_network
+
 
 volumes:
   postgres_data:
     driver: local
+
   backend_media:
     driver: local
+
   backend_static:
     driver: local
+
 
 networks:
   portail_network:

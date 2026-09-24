@@ -115,7 +115,7 @@ function DashboardSidebar({ activeTab, onTabChange }) {
       zIndex: 50
     }}>
       <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 8 }}>
-        <div style={{ fontWeight: 800, fontSize: 18, color: COLORS.orLight }}>BCU UYI</div>
+        <div style={{ fontWeight: 800, fontSize: 18, color: COLORS.orLight }}>BCUYI</div>
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Administration</div>
       </div>
 

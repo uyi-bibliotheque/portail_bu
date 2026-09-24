@@ -20,53 +20,60 @@ const CATEGORIES = [
 
 // ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
 
+// ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
 export function getImageUrl(article) {
   if (!article) return null;
 
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const normalizeUrl = (value) => {
+    if (!value) return null;
 
-  if (article.image_display) {
-    let url = article.image_display;
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
+    // Convertit les anciennes URLs localhost en chemins relatifs
+    if (
+      value.startsWith('http://localhost:8000') ||
+      value.startsWith('https://localhost:8000') ||
+      value.startsWith('http://127.0.0.1:8000') ||
+      value.startsWith('https://127.0.0.1:8000')
+    ) {
+      try {
+        value = new URL(value).pathname;
+      } catch {
+        return null;
+      }
     }
-    if (url.startsWith('/media/')) {
-      return `${apiBase}${url}`;
-    }
-    if (!url.startsWith('/')) {
-      url = `/${url}`;
-    }
-    if (!url.startsWith('/media/')) {
-      url = `/media${url}`;
-    }
-    return `${apiBase}${url}`;
-  }
 
-  if (article.image) {
-    let url = article.image;
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
+    // URLs externes réelles
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
     }
-    if (url.startsWith('news_images/')) {
-      return `${apiBase}/media/${url}`;
-    }
-    if (!url.startsWith('/')) {
-      url = `/${url}`;
-    }
-    if (!url.startsWith('/media/')) {
-      url = `/media${url}`;
-    }
-    return `${apiBase}${url}`;
-  }
 
-  if (article.image_url) {
-    if (article.image_url.startsWith('http://') || article.image_url.startsWith('https://')) {
-      return article.image_url;
+    // Chemin média déjà correct
+    if (value.startsWith('/media/')) {
+      return value;
     }
-    return `${apiBase}${article.image_url}`;
-  }
 
-  return null;
+    // Chemin news_images/...
+    if (value.startsWith('news_images/')) {
+      return `/media/${value}`;
+    }
+
+    // Normalisation
+    if (!value.startsWith('/')) {
+      value = `/${value}`;
+    }
+
+    if (!value.startsWith('/media/')) {
+      value = `/media${value}`;
+    }
+
+    return value;
+  };
+
+  return (
+    normalizeUrl(article.image_display) ||
+    normalizeUrl(article.image) ||
+    normalizeUrl(article.image_url) ||
+    null
+  );
 }
 
 // ─── COMPOSANT BOUTON RETOUR À L'ACCUEIL ─────────────────────────
