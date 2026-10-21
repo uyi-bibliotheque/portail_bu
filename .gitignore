@@ -82,7 +82,7 @@ env/
 ENV/
 .venv/
 .virtualenv/
-
+.env.example
 # Django spécifique
 staticfiles/
 static_root/
