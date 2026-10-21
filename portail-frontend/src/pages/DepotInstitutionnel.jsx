@@ -361,7 +361,7 @@ export default function DepotInstitutionnel() {
                 fontSize: 'clamp(14px, 0.95vw, 15px)',
               }}
             >
-              La Bibliothèque Centrale de l'Université de Yaoundé I, à travers son portail Web, donne accès
+              La Bibliothèque  Universitaire de Yaoundé I, à travers son portail Web, donne accès
               à ses utilisateurs aux travaux universitaires des autres, et offre la possibilité de recherche
               dans des dépôts institutionnels grâce à des outils de recherche simultanée.
             </p>

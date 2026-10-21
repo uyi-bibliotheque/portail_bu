@@ -41,6 +41,17 @@ import pmbImage from '../assets/images/pmb.jpg';
 import memoiresCatalogImage from '../assets/images/memoires.jpg';
 import politiquePDF from '../assets/Politique_documentaire_BC-UYI.pdf';
 
+// ============================================================
+// LOGOS DES BASES DE DONNÉES (E-RESSOURCES)
+// ============================================================
+import logoR4L from '../assets/images/logo/R4L25-coloured-logo-transparent-background.png';
+import logoOpenDOAR from '../assets/images/logo/OpenDOAR-logo.png';
+import logoDOAJ from '../assets/images/logo/doaj.png';
+import logoOpenEdition from '../assets/images/logo/openedition_72dpi.png';
+import logoElsevier from '../assets/images/logo/elsevier-ar21.svg';
+import logoGallica from '../assets/images/logo/gallica_25_fr.png';
+import logoHAL from '../assets/images/logo/hal_25_fr.png';
+
 // Images pour la reliure
 import reluireImage from '../assets/images/reluire.jpg';
 import reliureManuelleImage from '../assets/images/Reliure-manuelle-sans-machine.jpg';
@@ -384,6 +395,41 @@ function Breadcrumb({ items }) {
         </span>
       ))}
     </nav>
+  );
+}
+
+// ============================================================
+// LOGO DE BASE DE DONNÉES (avec fallback emoji)
+// ============================================================
+
+function DatabaseLogo({ src, emoji, alt }) {
+  const [errored, setErrored] = useState(false);
+
+  if (!src || errored) {
+    return (
+      <span style={{ fontSize: 'clamp(32px, 4vw, 44px)', lineHeight: 1 }}>
+        {emoji || '🌐'}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      onError={() => setErrored(true)}
+      style={{
+        maxHeight: '100%',
+        maxWidth: '160px',
+        width: 'auto',
+        height: 'auto',
+        objectFit: 'contain',
+        display: 'block',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.06))'
+      }}
+    />
   );
 }
 
@@ -1200,7 +1246,6 @@ const SERVICES_DATA = {
           {isEnglish ? <>If you have documents to bind, several options are available depending on the type of document and its destination. <strong>Our mission is to help you sort</strong> between the different binding methods and the different binding machines usable according to your needs.</> : <>Si vous avez des documents à relier, plusieurs possibilités s'offrent à vous selon le type de document et sa destination. <strong>Notre vocation est de vous aider à faire le tri</strong> entre les différentes méthodes de reliure et les différentes machines à relier utilisables en fonction de vos besoins.</>}
         </p>
 
-        {/* SECTION 1 */}
         <section style={{ marginBottom: 40 }}>
           <h4 style={{ fontWeight: 700, color: 'var(--bleu-nuit)', fontSize: 'clamp(16px, 1.2vw, 19px)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '2px solid var(--border-light)' }}>
             <span style={{ fontSize: 22 }}>✋</span>
@@ -1219,7 +1264,6 @@ const SERVICES_DATA = {
           </div>
         </section>
 
-        {/* SECTION 2 */}
         <section style={{ marginBottom: 40 }}>
           <h4 style={{ fontWeight: 700, color: 'var(--bleu-nuit)', fontSize: 'clamp(16px, 1.2vw, 19px)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '2px solid var(--border-light)' }}>
             <span style={{ fontSize: 22 }}>⚙️</span>
@@ -1258,7 +1302,6 @@ const SERVICES_DATA = {
           </div>
         </section>
 
-        {/* SECTION 3 */}
         <section style={{ marginBottom: 24 }}>
           <h4 style={{ fontWeight: 700, color: 'var(--bleu-nuit)', fontSize: 'clamp(16px, 1.2vw, 19px)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '2px solid var(--border-light)' }}>
             <span style={{ fontSize: 22 }}>🔥</span>
@@ -1877,21 +1920,106 @@ export function ERessourcesDisciplinePage({ slug = '1' }) {
 // RESSOURCES PAGE
 // ============================================================
 
+const DATABASES = [
+  {
+    nameFr: 'Research4Life', nameEn: 'Research4Life',
+    logo: logoR4L,
+    descFr: "Accès aux plus grandes revues scientifiques mondiales pour les pays en développement.",
+    descEn: "Access to the world's largest scientific journals for developing countries.",
+    href: 'https://www.research4life.org',
+    categoriesFr: ['Médecine', 'Agriculture', 'Droit', 'Business'],
+    categoriesEn: ['Medicine', 'Agriculture', 'Law', 'Business'],
+    color: '#059669'
+  },
+  {
+    nameFr: 'OpenDOAR', nameEn: 'OpenDOAR',
+    logo: logoOpenDOAR,
+    descFr: 'Répertoire mondial des archives institutionnelles en accès ouvert.',
+    descEn: 'Global directory of open access institutional repositories.',
+    href: 'https://v2.sherpa.ac.uk/opendoar/',
+    categoriesFr: ['Open Access'], categoriesEn: ['Open Access'],
+    color: '#6366f1'
+  },
+  {
+    nameFr: 'DOAJ', nameEn: 'DOAJ',
+    logo: logoDOAJ,
+    descFr: 'Répertoire de revues en accès libre avec contrôle qualité éditorial.',
+    descEn: 'Directory of open access journals with editorial quality control.',
+    href: 'https://doaj.org',
+    categoriesFr: ['Pluridisciplinaire'], categoriesEn: ['Multidisciplinary'],
+    color: '#1B1464'
+  },
+  {
+    nameFr: 'OpenEdition', nameEn: 'OpenEdition',
+    logo: logoOpenEdition,
+    descFr: 'Portail de ressources numériques en sciences humaines et sociales.',
+    descEn: 'Digital resources portal in humanities and social sciences.',
+    href: 'https://www.openedition.org',
+    categoriesFr: ['SHS', 'Lettres'], categoriesEn: ['HSS', 'Letters'],
+    color: '#8b5cf6'
+  },
+  {
+    nameFr: 'Elsevier', nameEn: 'Elsevier',
+    logo: logoElsevier,
+    descFr: 'Valide et diffuse les avancées de la recherche à travers des revues médicales et technologiques de premier plan, et des plateformes majeures comme ScienceDirect',
+    descEn: 'The publisher validates and disseminates advances in research through leading medical and technological journals, and major platforms like ScienceDirect.',
+    href: 'https://www.elsevier.com',
+    categoriesFr: ['SHS', 'Lettres'], categoriesEn: ['HSS', 'Letters'],
+    color: '#8b5cf6'
+  },
+  {
+    nameFr: 'Gallica (BNF)', nameEn: 'Gallica (BNF)',
+    logo: logoGallica,
+    descFr: 'Bibliothèque numérique de la Bibliothèque nationale de France.',
+    descEn: 'Digital library of the National Library of France.',
+    href: 'https://gallica.bnf.fr',
+    categoriesFr: ['Patrimoine', 'Archives'], categoriesEn: ['Heritage', 'Archives'],
+    color: '#7C3AED'
+  },
+  {
+    nameFr: 'HAL Open Archives', nameEn: 'HAL Open Archives',
+    logo: logoHAL,
+    descFr: "Archive ouverte pluridisciplinaire pour le dépôt et la diffusion d'articles scientifiques.",
+    descEn: 'Multidisciplinary open archive for depositing and disseminating scientific articles.',
+    href: 'https://hal.archives-ouvertes.fr',
+    categoriesFr: ['Recherche', 'Open Access'], categoriesEn: ['Research', 'Open Access'],
+    color: '#10B981'
+  },
+  {
+    nameFr: 'E-Ressources', nameEn: 'E-Resources',
+    logo: null,
+    emoji: '📡',
+    descFr: 'Ressources électroniques classées par discipline (8 domaines : chimie, biologie, arts, environnement...).',
+    descEn: 'Electronic resources classified by discipline (8 areas: chemistry, biology, arts, environment...).',
+    href: '/ressources/electroniques',
+    categoriesFr: ['Pluridisciplinaire', 'Revues'], categoriesEn: ['Multidisciplinary', 'Journals'],
+    color: '#0d9488', internal: true
+  },
+  {
+    nameFr: 'Périodiques électroniques', nameEn: 'Electronic Journals',
+    logo: null,
+    emoji: '📔',
+    descFr: 'Liste complète des périodiques électroniques accessibles à la BC-UYI, classés par discipline.',
+    descEn: 'Complete list of electronic journals accessible at the BC-UYI, classified by discipline.',
+    href: '/periodiques',
+    categoriesFr: ['Revues', 'Journaux'], categoriesEn: ['Journals', 'Newspapers'],
+    color: '#f59e0b', internal: true
+  },
+  {
+    nameFr: 'Archives ouvertes (Open Access)', nameEn: 'Open Access Archives',
+    logo: null,
+    emoji: '🌍',
+    descFr: "Répertoire des plateformes en accès libre : HAL, arXiv, OAPEN, Isidore, TEL, Google Books et plus.",
+    descEn: 'Directory of open access platforms: HAL, arXiv, OAPEN, Isidore, TEL, Google Books and more.',
+    href: '/open-access',
+    categoriesFr: ['Archives', 'Revues', 'Thèses'], categoriesEn: ['Archives', 'Journals', 'Theses'],
+    color: '#0891b2', internal: true
+  },
+];
+
 export function RessourcesPage() {
   const { language } = useLanguage();
   const isEnglish = language === 'en';
-
-  const DATABASES = [
-    { nameFr: 'Research4Life', nameEn: 'Research4Life', logo: '🌐', descFr: "Accès aux plus grandes revues scientifiques mondiales pour les pays en développement.", descEn: "Access to the world's largest scientific journals for developing countries.", href: 'https://www.research4life.org', categoriesFr: ['Médecine', 'Agriculture', 'Droit', 'Business'], categoriesEn: ['Medicine', 'Agriculture', 'Law', 'Business'], color: '#059669' },
-    { nameFr: 'OpenDOAR', nameEn: 'OpenDOAR', logo: '📂', descFr: 'Répertoire mondial des archives institutionnelles en accès ouvert.', descEn: 'Global directory of open access institutional repositories.', href: 'https://v2.sherpa.ac.uk/opendoar/', categoriesFr: ['Open Access'], categoriesEn: ['Open Access'], color: '#6366f1' },
-    { nameFr: 'DOAJ', nameEn: 'DOAJ', logo: '📰', descFr: 'Répertoire de revues en accès libre avec contrôle qualité éditorial.', descEn: 'Directory of open access journals with editorial quality control.', href: 'https://doaj.org', categoriesFr: ['Pluridisciplinaire'], categoriesEn: ['Multidisciplinary'], color: '#1B1464' },
-    { nameFr: 'OpenEdition', nameEn: 'OpenEdition', logo: '📚', descFr: 'Portail de ressources numériques en sciences humaines et sociales.', descEn: 'Digital resources portal in humanities and social sciences.', href: 'https://www.openedition.org', categoriesFr: ['SHS', 'Lettres'], categoriesEn: ['HSS', 'Letters'], color: '#8b5cf6' },
-    { nameFr: 'Gallica (BNF)', nameEn: 'Gallica (BNF)', logo: '🗺️', descFr: 'Bibliothèque numérique de la Bibliothèque nationale de France.', descEn: 'Digital library of the National Library of France.', href: 'https://gallica.bnf.fr', categoriesFr: ['Patrimoine', 'Archives'], categoriesEn: ['Heritage', 'Archives'], color: '#7C3AED' },
-    { nameFr: 'HAL Open Archives', nameEn: 'HAL Open Archives', logo: '📖', descFr: "Archive ouverte pluridisciplinaire pour le dépôt et la diffusion d'articles scientifiques.", descEn: 'Multidisciplinary open archive for depositing and disseminating scientific articles.', href: 'https://hal.archives-ouvertes.fr', categoriesFr: ['Recherche', 'Open Access'], categoriesEn: ['Research', 'Open Access'], color: '#10B981' },
-    { nameFr: 'E-Ressources', nameEn: 'E-Resources', logo: '📡', descFr: 'Ressources électroniques classées par discipline (8 domaines : chimie, biologie, arts, environnement...).', descEn: 'Electronic resources classified by discipline (8 areas: chemistry, biology, arts, environment...).', href: '/ressources/electroniques', categoriesFr: ['Pluridisciplinaire', 'Revues'], categoriesEn: ['Multidisciplinary', 'Journals'], color: '#0d9488', internal: true },
-    { nameFr: 'Périodiques électroniques', nameEn: 'Electronic Journals', logo: '📔', descFr: 'Liste complète des périodiques électroniques accessibles à la BC-UYI, classés par discipline.', descEn: 'Complete list of electronic journals accessible at the BC-UYI, classified by discipline.', href: '/periodiques', categoriesFr: ['Revues', 'Journaux'], categoriesEn: ['Journals', 'Newspapers'], color: '#f59e0b', internal: true },
-    { nameFr: 'Archives ouvertes (Open Access)', nameEn: 'Open Access Archives', logo: '🌍', descFr: "Répertoire des plateformes en accès libre : HAL, arXiv, OAPEN, Isidore, TEL, Google Books et plus.", descEn: 'Directory of open access platforms: HAL, arXiv, OAPEN, Isidore, TEL, Google Books and more.', href: '/open-access', categoriesFr: ['Archives', 'Revues', 'Thèses'], categoriesEn: ['Archives', 'Journals', 'Theses'], color: '#0891b2', internal: true },
-  ];
 
   return (
     <Layout>
@@ -1936,7 +2064,21 @@ export function RessourcesPage() {
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
                 >
-                  <div style={{ fontSize: 'clamp(36px, 4vw, 48px)', marginBottom: 12 }}>{db.logo}</div>
+                  {/* Zone logo : image importée OU emoji si pas d'image */}
+                  <div style={{
+                    height: 'clamp(70px, 9vw, 90px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    marginBottom: 14,
+                    padding: db.logo ? '6px 0' : 0,
+                  }}>
+                    <DatabaseLogo
+                      src={db.logo}
+                      emoji={db.emoji}
+                      alt={isEnglish ? db.nameEn : db.nameFr}
+                    />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                     <h3 style={{ fontWeight: 700, fontSize: 'clamp(15px, 1.1vw, 17px)', color: 'var(--bleu-nuit)' }}>{isEnglish ? db.nameEn : db.nameFr}</h3>
                     <ExternalLink size={14} color="var(--texte-muted)" />

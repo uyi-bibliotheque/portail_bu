@@ -17,9 +17,9 @@
   --beige-dark: #EDE9FE;
 
   /* Texte */
-  --texte: #1E293B;
-  --texte-muted: #64748b;
-  --texte-light: #94a3b8;
+  --texte: #0f1114;
+  --texte-muted: #0d0d0e;
+  --texte-light: #d8d8df;
 
   /* UI */
   --border: rgba(27, 20, 100, 0.12);

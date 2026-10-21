@@ -90,7 +90,7 @@ services:
       - ./Documents:/app/Documents
     networks:
       - portail_network
-  # ═══════════════════════════════════════════════════════════════════
+   # ═══════════════════════════════════════════════════════════════════
   # ─── FRONTEND REACT + NGINX REVERSE PROXY ─────────────────────────
   # ═══════════════════════════════════════════════════════════════════
   frontend:
@@ -99,6 +99,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_RECAPTCHA_SITE_KEY=${RECAPTCHA_PUBLIC_KEY}
+        - CACHEBUST=${CACHEBUST:-0}          # ← AJOUTÉ : force la recompilation
 
     container_name: portail_frontend
     restart: always
@@ -114,8 +115,7 @@ services:
 
     networks:
       - portail_network
-
-
+      
 volumes:
   postgres_data:
     driver: local

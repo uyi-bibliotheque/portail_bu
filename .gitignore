@@ -143,3 +143,5 @@ service-account.json
 # ── Backups Git (sauvegardes locales) ───────────────────────
 .git.backup/
 **/.git.backup/
+
+explication.txt

@@ -19,14 +19,14 @@ import heroBg from '../assets/images/bibliotheque_sunset_drone.jpg';
 
 // ── SEO CONSTANTS ──────────────────────────────────────────────
 const SEO = {
-  title: 'Bibliothèque Centrale Universitaire - BCU UYI | Université de Yaoundé I',
-  description: 'Portail de la Bibliothèque Centrale de l\'Université de Yaoundé I. Catalogue, thèses et mémoires, ressources numériques, dépôt institutionnel et services documentaires.',
-  keywords: 'bibliothèque universitaire, BCU UYI, Université de Yaoundé I, catalogue PMB, thèses, mémoires, recherche documentaire, ressources numériques, Research4Life, dépôt institutionnel',
-  author: 'Bibliothèque Centrale Universitaire - UYI',
-  siteName: 'BCU UYI - Bibliothèque Centrale Universitaire',
-  url: 'https://bcu-uyi.cm',
-  image: 'https://bcu-uyi.cm/assets/images/og-image.jpg',
-  twitterHandle: '@BCU_UYI',
+  title: 'Bibliothèque  Universitaire - BUYI | Université de Yaoundé I',
+  description: 'Portail de la Bibliothèque Universitaire de Yaoundé I. Catalogue, thèses et mémoires, ressources numériques, dépôt institutionnel et services documentaires.',
+  keywords: 'bibliothèque universitaire, BUYI, Université de Yaoundé I, catalogue PMB, thèses, mémoires, recherche documentaire, ressources numériques, Research4Life, dépôt institutionnel',
+  author: 'Bibliothèque Universitaire - BUYI',
+  siteName: 'BUYI - Bibliothèque  Universitaire',
+  url: 'https://bu-uyi.cm',
+  image: '../assets',
+  twitterHandle: '@BU_UYI',
 };
 
 // ── FLASH INFOS PAR DÉFAUT (si aucun article "Informations") ─────
@@ -94,11 +94,46 @@ const QUICK_ACCESS = [
 
 // ── SERVICES ─────────────────────────────────────────────────────
 const SERVICES = [
-  { icon: <BookMarked size={22} />, labelFr: 'Consultation', labelEn: 'Consultation', href: '/services/consultation', descFr: 'Accès aux collections', descEn: 'Access to collections' },
-  { icon: <Wifi size={22} />, labelFr: 'WiFi 200 Mbps', labelEn: 'WiFi 200 Mbps', href: '/services/wifi', descFr: 'Connexion haut débit', descEn: 'High-speed connection' },
-  { icon: <FileText size={22} />, labelFr: 'Reliure', labelEn: 'Binding', href: '/services/reliure', descFr: 'Service de reliure', descEn: 'Binding service' },
-  { icon: <Users size={22} />, labelFr: 'Médiation', labelEn: 'Mediation', href: '/services/mediation', descFr: 'Aide à la recherche', descEn: 'Research assistance' },
-  { icon: <GraduationCap size={22} />, labelFr: 'Formation', labelEn: 'Training', href: '/services/formation', descFr: 'Formation documentaire', descEn: 'Documentary training' },
+  {
+    icon: <BookMarked size={22} />,
+    labelFr: 'Consultation',
+    labelEn: 'Consultation',
+    href: '/services/consultation',
+    descFr: 'Accès aux collections',
+    descEn: 'Access to collections'
+  },
+  {
+    icon: <Users size={22} />,
+    labelFr: 'Médiation',
+    labelEn: 'Mediation',
+    href: '/services/mediation',
+    descFr: 'Aide à la recherche',
+    descEn: 'Research assistance'
+  },
+  {
+    icon: <Wifi size={22} />,
+    labelFr: 'WiFi 200 Mbps',
+    labelEn: 'WiFi 200 Mbps',
+    href: '/services/wifi',
+    descFr: 'Connexion haut débit',
+    descEn: 'High-speed connection'
+  },
+  {
+    icon: <GraduationCap size={22} />,
+    labelFr: 'Formation',
+    labelEn: 'Training',
+    href: '/services/formation',
+    descFr: 'Formation documentaire',
+    descEn: 'Documentary training'
+  },
+  {
+    icon: <FileText size={22} />,
+    labelFr: 'Reliure',
+    labelEn: 'Binding',
+    href: '/services/reliure',
+    descFr: 'Service de reliure',
+    descEn: 'Binding service'
+  },
 ];
 
 // ── STATISTIQUES ─────────────────────────────────────────────────
@@ -114,8 +149,8 @@ function getJsonLd() {
   return {
     '@context': 'https://schema.org',
     '@type': 'Library',
-    name: 'Bibliothèque Centrale Universitaire de Yaoundé I',
-    alternateName: 'BCU UYI',
+    name: 'Bibliothèque Universitaire de Yaoundé I',
+    alternateName: 'BUYI',
     description: SEO.description,
     url: SEO.url,
     parentOrganization: {
@@ -131,11 +166,11 @@ function getJsonLd() {
     },
     openingHours: 'Mo-Fr 07:30-15:30, Sa 08:00-13:00',
     telephone: '+237 242 06 47 28',
-    email: 'contact@bcu-uyi.cm',
+    email: 'biblio.Bibliotheque@uy1.uninet.cm',
     sameAs: [
-      'https://www.facebook.com/BCUUYI',
-      'https://twitter.com/BCU_UYI',
-      'https://www.instagram.com/bcu_uyi/',
+      'https://www.facebook.com/BUYI',
+      'https://twitter.com/BUYI',
+      'https://www.instagram.com/buyi/',
     ],
     hasMap: 'https://www.google.com/maps?q=3.8667,11.5050',
     numberOfItems: '85000+',
@@ -147,15 +182,12 @@ function getJsonLd() {
 }
 
 // ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
-// ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
 function getImageUrl(article) {
   if (!article) return null;
 
   const normalizeUrl = (value) => {
     if (!value) return null;
 
-    // Si le backend renvoie une ancienne URL localhost,
-    // on conserve uniquement le chemin /media/...
     if (
       value.startsWith('http://localhost:8000') ||
       value.startsWith('https://localhost:8000') ||
@@ -169,22 +201,18 @@ function getImageUrl(article) {
       }
     }
 
-    // Les URLs externes réelles sont conservées
     if (value.startsWith('http://') || value.startsWith('https://')) {
       return value;
     }
 
-    // Déjà un chemin média correct
     if (value.startsWith('/media/')) {
       return value;
     }
 
-    // Chemin du type news_images/xxx.jpg
     if (value.startsWith('news_images/')) {
       return `/media/${value}`;
     }
 
-    // Normalisation générale
     if (!value.startsWith('/')) {
       value = `/${value}`;
     }
@@ -203,31 +231,27 @@ function getImageUrl(article) {
     null
   );
 }
+
 // ═══════════════════════════════════════════════════════════════════
 // ─── UTILITAIRE : EXTRAIRE LES ARTICLES DE LA RÉPONSE API ────────
-// ✅ Gère plusieurs formats de réponse : {results:[...]}, [...], {data:[...]}
 // ═══════════════════════════════════════════════════════════════════
 function extractArticlesFromResponse(response) {
   if (!response) return [];
 
   const data = response.data;
 
-  // Format 1 : tableau direct
   if (Array.isArray(data)) {
     return data;
   }
 
-  // Format 2 : { results: [...] } (DRF pagination)
   if (data && Array.isArray(data.results)) {
     return data.results;
   }
 
-  // Format 3 : { data: [...] }
   if (data && Array.isArray(data.data)) {
     return data.data;
   }
 
-  // Format 4 : { articles: [...] }
   if (data && Array.isArray(data.articles)) {
     return data.articles;
   }
@@ -237,13 +261,11 @@ function extractArticlesFromResponse(response) {
 
 // ═══════════════════════════════════════════════════════════════════
 // ─── COMPOSANT FLASH INFO ─────────────────────────────────────────
-// ✅ Affiche les articles de type "Informations" / "Annonces" en défilant
 // ═══════════════════════════════════════════════════════════════════
 function FlashInfo({ articles }) {
   const { language } = useLanguage();
   const isEnglish = language === 'en';
 
-  // ✅ Filtrer les articles d'information (catégorie Informations, Annonces, ou is_event)
   const infoArticles = (articles || []).filter(a => {
     if (!a) return false;
     if (a.is_published === false) return false;
@@ -259,8 +281,6 @@ function FlashInfo({ articles }) {
     );
   });
 
-  // Si on a des articles d'info → les afficher
-  // Sinon → utiliser les flashs par défaut
   const flashMessages = infoArticles.length > 0
     ? infoArticles.map(a => {
         const prefix = a.is_event ? '📅' : '📢';
@@ -268,7 +288,6 @@ function FlashInfo({ articles }) {
       })
     : DEFAULT_FLASH;
 
-  // Dupliquer pour un défilement infini
   const items = [...flashMessages, ...flashMessages];
 
   return (
@@ -285,7 +304,6 @@ function FlashInfo({ articles }) {
 
 // ═══════════════════════════════════════════════════════════════════
 // ─── WIDGET ACTUALITÉS HERO ──────────────────────────────────────
-// ✅ Affiche les articles récents avec carousel automatique
 // ═══════════════════════════════════════════════════════════════════
 function HeroNewsWidget({ articles, loading }) {
   const { language } = useLanguage();
@@ -296,7 +314,6 @@ function HeroNewsWidget({ articles, loading }) {
   const [imagesLoaded, setImagesLoaded] = useState({});
   const intervalRef = useRef(null);
 
-  // ✅ On garde TOUS les articles du backend, triés par date
   const finalItems = Array.isArray(articles)
     ? [...articles]
         .filter(a => a && a.is_published !== false)
@@ -304,7 +321,6 @@ function HeroNewsWidget({ articles, loading }) {
         .slice(0, 5)
     : [];
 
-  // ✅ Debug pour tracer les données
   useEffect(() => {
     if (articles) {
       console.log('🔍 HeroNewsWidget — articles reçus:', articles.length);
@@ -324,7 +340,6 @@ function HeroNewsWidget({ articles, loading }) {
     return () => clearInterval(intervalRef.current);
   }, [isPaused, finalItems.length]);
 
-  // Reset index si les articles changent
   useEffect(() => {
     setCurrentIndex(0);
   }, [finalItems.length]);
@@ -339,7 +354,6 @@ function HeroNewsWidget({ articles, loading }) {
     }
   };
 
-  // ─── ÉTAT 1 : CHARGEMENT ───────────────────────────────────────
   if (loading) {
     return (
       <div className="hero-widget" role="status" aria-label={isEnglish ? 'Loading news' : 'Chargement des actualités'}>
@@ -363,7 +377,6 @@ function HeroNewsWidget({ articles, loading }) {
     );
   }
 
-  // ─── ÉTAT 2 : AUCUN ARTICLE ────────────────────────────────────
   if (finalItems.length === 0) {
     return (
       <div className="hero-widget-empty" role="status" aria-label={isEnglish ? 'No news available' : 'Aucune actualité disponible'}>
@@ -387,7 +400,6 @@ function HeroNewsWidget({ articles, loading }) {
     );
   }
 
-  // ─── ÉTAT 3 : ARTICLES DISPONIBLES ─────────────────────────────
   const current = finalItems[currentIndex] ?? finalItems[0];
   if (!current) return null;
 
@@ -527,7 +539,12 @@ function HeroHoursWidget() {
   const { language } = useLanguage();
   const isEnglish = language === 'en';
 
-const hours = [ { day: isEnglish ? 'Monday' : 'Lundi', hours: '12h00 – 22h00', icon: '📖' }, { day: isEnglish ? 'Tuesday – Friday' : 'Mardi – Vendredi', hours: '09h00 – 22h00', icon: '📚' }, { day: isEnglish ? 'Saturday' : 'Samedi', hours: '10h00 – 16h00', icon: '📚' }, { day: isEnglish ? 'Sunday' : 'Dimanche', hours: isEnglish ? 'Closed' : 'Fermé', icon: '🔒' }, ];
+  const hours = [
+    { day: isEnglish ? 'Monday' : 'Lundi', hours: '12h00 – 22h00', icon: '📖' },
+    { day: isEnglish ? 'Tuesday – Friday' : 'Mardi – Vendredi', hours: '09h00 – 22h00', icon: '📚' },
+    { day: isEnglish ? 'Saturday' : 'Samedi', hours: '10h00 – 16h00', icon: '📚' },
+    { day: isEnglish ? 'Sunday' : 'Dimanche', hours: isEnglish ? 'Closed' : 'Fermé', icon: '🔒' },
+  ];
 
   return (
     <div
@@ -694,7 +711,7 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
     onSearch?.(searchValue);
   };
 
-  const heroTitle = isEnglish ? 'Central Library' : 'Bibliothèque';
+  const heroTitle = isEnglish ? 'University Library' : 'Bibliothèque';
   const heroHighlight = isEnglish ? 'University of Yaoundé I' : 'Université de Yaoundé I';
   const heroSubtitle = isEnglish
     ? 'Your gateway to knowledge: catalog, theses, digital resources and institutional repository serving the scientific community.'
@@ -709,7 +726,7 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
       <div className="hero-background">
         <img
           src={heroBg}
-          alt={isEnglish ? 'Central University Library of Yaoundé I - Aerial view' : 'Bibliothèque Centrale Universitaire de Yaoundé I - Vue aérienne'}
+          alt={isEnglish ? 'University Library of Yaoundé I - Aerial view' : 'Bibliothèque Universitaire de Yaoundé I - Vue aérienne'}
           className="hero-bg-image"
           loading="eager"
         />
@@ -724,23 +741,25 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
                 <div className="hero-badge">
                   <Sparkles size={isMobile ? 11 : 14} aria-hidden="true" />
                   {isSmallMobile
-                    ? 'UYI • 1962'
+                    ? 'BIBLIOTHÈQUE UNIV. YAOUNDÉ I'
                     : isMobile
-                      ? 'UNIV. YAOUNDÉ I • 1962'
-                      : (isEnglish ? 'UNIVERSITY OF YAOUNDÉ I — SINCE 1962' : 'UNIVERSITÉ DE YAOUNDÉ I — DEPUIS 1962')}
+                      ? 'BIBLIOTHÈQUE UNIV. YAOUNDÉ I'
+                      : (isEnglish ? 'UNIVERSITY LIBRARY — YAOUNDÉ I' : 'BIBLIOTHÈQUE UNIVERSITAIRE — YAOUNDÉ I')}
                 </div>
 
                 <h1 className="font-serif hero-title">
                   {isMobile ? (
                     <>
-                      {heroTitle}<br />
-                      {isEnglish ? ' ' : 'Centrale'}<br />
+                      {isEnglish ? 'University' : 'Bibliothèque'}<br />
+                      {isEnglish ? 'Library' : 'Universitaire'}<br />
                     </>
                   ) : (
-                    <>{heroTitle} {isEnglish ? '' : 'Centrale'}<br /></>
+                    <>
+                      {isEnglish ? 'University Library' : 'Bibliothèque Universitaire'}<br />
+                    </>
                   )}
                   <span className="hero-title-highlight">
-                    {isMobile ? 'UYI' : heroHighlight}
+                    {isMobile ? 'UNIVERSITÉ DE YAOUNDÉ I' : (isEnglish ? 'University of Yaoundé I' : 'de Yaoundé I')}
                   </span>
                 </h1>
 
@@ -873,7 +892,7 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
           object-fit: cover;
           object-position: center 30%;
           display: block;
-          filter: brightness(0.85) saturate(1.05);
+          filter: brightness(1.05) saturate(1.15) contrast(1.02);
         }
 
         .hero-overlay-light {
@@ -881,9 +900,9 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
           inset: 0;
           background: linear-gradient(
             135deg,
-            rgba(15, 10, 42, 0.55) 0%,
-            rgba(27, 20, 100, 0.35) 50%,
-            rgba(27, 20, 100, 0.15) 100%
+            rgba(15, 10, 42, 0.25) 0%,
+            rgba(27, 20, 100, 0.10) 50%,
+            rgba(27, 20, 100, 0.02) 100%
           );
           z-index: 1;
         }
@@ -920,11 +939,11 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
         .hero-text-container {
           padding: 28px 32px;
           border-radius: 20px;
-          background: rgba(0, 0, 0, 0.30);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 8px 40px rgba(0, 0, 0, 0.20);
+          background: rgba(0, 0, 0, 0.20);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
           transition: all 0.3s ease;
         }
 
@@ -1548,9 +1567,9 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
           .hero-overlay-light {
             background: linear-gradient(
               180deg,
-              rgba(15, 10, 42, 0.65) 0%,
-              rgba(27, 20, 100, 0.50) 60%,
-              rgba(27, 20, 100, 0.35) 100%
+              rgba(15, 10, 42, 0.35) 0%,
+              rgba(27, 20, 100, 0.20) 60%,
+              rgba(27, 20, 100, 0.10) 100%
             );
           }
 
@@ -2030,9 +2049,6 @@ export default function HomePage() {
   const { language } = useLanguage();
   const isEnglish = language === 'en';
 
-  // ═══════════════════════════════════════════════════════════════
-  // ✅ CHARGEMENT DES ARTICLES DEPUIS LE BACKEND
-  // ═══════════════════════════════════════════════════════════════
   useEffect(() => {
     const loadArticles = async () => {
       setLoading(true);
@@ -2040,7 +2056,6 @@ export default function HomePage() {
         console.log('🔄 Chargement des articles depuis l\'API...');
         const response = await getArticles({ limit: 10 });
 
-        // ✅ Utilisation de la fonction utilitaire pour extraire les articles
         const data = extractArticlesFromResponse(response);
 
         console.log('✅ Articles chargés pour la home:', data.length);
@@ -2085,7 +2100,6 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ─── SEO HELMET ──────────────────────────────────────────── */}
       <Helmet>
         <html lang={isEnglish ? 'en' : 'fr-CM'} />
         <title>{SEO.title}</title>
@@ -2124,7 +2138,6 @@ export default function HomePage() {
 
       <Layout>
         <main role="main">
-          {/* ✅ Flash infos avec les vrais articles du backend */}
           <FlashInfo articles={articles} />
 
           <HeroSection
@@ -2402,7 +2415,7 @@ export default function HomePage() {
                   {isEnglish ? 'In numbers' : 'En chiffres'}
                 </div>
                 <h2 id="stats-title" className="font-serif" style={{ fontSize: 36, fontWeight: 400, color: 'white' }}>
-                  {isEnglish ? 'The BCUYI in a few figures' : 'La BCUYI en quelques données'}
+                  {isEnglish ? 'The BUYI in a few figures' : 'La BUYI en quelques données'}
                 </h2>
               </div>
               <Reveal className="reveal-up">
@@ -2558,12 +2571,12 @@ export default function HomePage() {
                       {isEnglish ? 'Opening hours' : 'Horaires d\'ouverture'}
                     </h3>
                     <p style={{ fontSize: 13, color: 'var(--texte-muted)', lineHeight: 1.8 }}>
-                      {isEnglish ? (
-                        <>Monday – Friday: 08h00 – 22h00<br />Saturday: 08h00 – 16h00<br />Sunday: Closed</>
-                      ) : (
-                        <>Lundi – Vendredi : 08h00 – 22h00<br />Samedi : 08h00 – 16h00<br />Dimanche : Fermé</>
-                      )}
-                    </p>
+                    {isEnglish ? (
+                      <>Monday: 12:00 – 22:00<br />Tuesday – Friday: 09:00 – 22:00<br />Saturday: 10:00 – 16:00<br />Sunday: Closed</>
+                    ) : (
+                      <>Lundi : 12h00 – 22h00<br />Mardi – Vendredi : 09h00 – 22h00<br />Samedi : 10h00 – 16h00<br />Dimanche : Fermé</>
+                    )}
+                  </p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '16px', borderRadius: 'var(--radius-sm)', transition: 'all 0.2s' }}

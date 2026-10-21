@@ -1,4 +1,4 @@
-// pages/ActualitesPage.jsx - VERSION COMPLÈTE AVEC BOUTON RETOUR VISIBLE
+// pages/ActualitesPage.jsx - VERSION COMPLÈTE OPTIMISÉE
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Share2, ChevronRight, ArrowLeft, Clock, AlertCircle, Home } from 'lucide-react';
@@ -19,15 +19,12 @@ const CATEGORIES = [
 ];
 
 // ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
-
-// ─── FONCTION POUR OBTENIR L'URL DE L'IMAGE ─────────────────────
 export function getImageUrl(article) {
   if (!article) return null;
 
   const normalizeUrl = (value) => {
     if (!value) return null;
 
-    // Convertit les anciennes URLs localhost en chemins relatifs
     if (
       value.startsWith('http://localhost:8000') ||
       value.startsWith('https://localhost:8000') ||
@@ -41,22 +38,18 @@ export function getImageUrl(article) {
       }
     }
 
-    // URLs externes réelles
     if (value.startsWith('http://') || value.startsWith('https://')) {
       return value;
     }
 
-    // Chemin média déjà correct
     if (value.startsWith('/media/')) {
       return value;
     }
 
-    // Chemin news_images/...
     if (value.startsWith('news_images/')) {
       return `/media/${value}`;
     }
 
-    // Normalisation
     if (!value.startsWith('/')) {
       value = `/${value}`;
     }
@@ -77,7 +70,6 @@ export function getImageUrl(article) {
 }
 
 // ─── COMPOSANT BOUTON RETOUR À L'ACCUEIL ─────────────────────────
-// ✅ Bouton bien visible sur PC et mobile avec traduction
 function BackHomeButton({ variant = 'light' }) {
   const { language } = useLanguage();
   const isEnglish = language === 'en';
@@ -143,7 +135,6 @@ function BackHomeButton({ variant = 'light' }) {
 }
 
 // ─── COMPOSANT CARTE ARTICLE ─────────────────────────────────────
-
 function ArticleCard({ article }) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -155,14 +146,16 @@ function ArticleCard({ article }) {
     <Link
       to={`/actualites/${article.id}`}
       style={{
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'white',
         borderRadius: 12,
         border: '1px solid var(--border)',
         overflow: 'hidden',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         textDecoration: 'none',
-        color: 'inherit'
+        color: 'inherit',
+        height: '100%'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-6px)';
@@ -173,13 +166,19 @@ function ArticleCard({ article }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Image */}
+      {/* Image — affichage COMPLET (contain) sans coupure */}
       <div style={{
-        height: 200,
-        background: hasImage ? 'transparent' : 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
+        height: 220,
+        background: hasImage
+          ? 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)'
+          : 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
         position: 'relative',
         overflow: 'hidden',
-        flexShrink: 0
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: hasImage ? 8 : 0
       }}>
         {hasImage ? (
           <>
@@ -187,7 +186,7 @@ function ArticleCard({ article }) {
               <div style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
+                background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -197,7 +196,7 @@ function ArticleCard({ article }) {
                   width: 60,
                   height: 60,
                   borderRadius: '50%',
-                  background: 'linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%)',
+                  background: 'linear-gradient(90deg, rgba(124,58,237,0.08) 25%, rgba(124,58,237,0.18) 50%, rgba(124,58,237,0.08) 75%)',
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 1.5s ease-in-out infinite'
                 }} />
@@ -207,23 +206,23 @@ function ArticleCard({ article }) {
               src={imageUrl}
               alt={article.title}
               style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                width: 'auto',
+                height: 'auto',
+                objectFit: 'contain',
                 display: 'block',
                 opacity: imageLoading ? 0 : 1,
-                transition: 'opacity 0.4s'
+                transition: 'opacity 0.4s',
+                borderRadius: 6
               }}
-              onLoad={() => {
-                console.log('✅ Image chargée:', imageUrl);
-                setImageLoading(false);
-              }}
+              onLoad={() => setImageLoading(false)}
               onError={() => {
-                console.error('❌ Erreur chargement image:', imageUrl);
                 setImageError(true);
                 setImageLoading(false);
               }}
               loading="lazy"
+              decoding="async"
             />
           </>
         ) : (
@@ -284,7 +283,7 @@ function ArticleCard({ article }) {
       </div>
 
       {/* Contenu */}
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <h2 style={{
           fontWeight: 700,
           fontSize: 16,
@@ -307,7 +306,8 @@ function ArticleCard({ article }) {
           display: '-webkit-box',
           WebkitLineClamp: 3,
           WebkitBoxOrient: 'vertical',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          flexGrow: 1
         }}>
           {article.content?.substring(0, 150).replace(/\*\*/g, '')}…
         </p>
@@ -344,7 +344,6 @@ function ArticleCard({ article }) {
 }
 
 // ─── LISTE DES ARTICLES ─────────────────────────────────────────
-
 function ArticlesList() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -374,7 +373,6 @@ function ArticlesList() {
     loadArticles();
   }, [isEnglish]);
 
-  // Reset category quand la langue change
   useEffect(() => {
     setCategory(isEnglish ? 'All' : 'Toutes');
   }, [isEnglish]);
@@ -497,7 +495,6 @@ function ArticlesList() {
 }
 
 // ─── PAGE DÉTAIL ARTICLE ────────────────────────────────────────
-
 export function ArticleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -604,7 +601,7 @@ export function ArticleDetailPage() {
 
   const articleSchema = {
     headline: article.title,
-    description: article.content?.substring(0, 180).replace(/\s+/g, ' ') || 'Actualité de la Bibliothèque Centrale Universitaire de Yaoundé I.',
+    description: article.content?.substring(0, 180).replace(/\s+/g, ' ') || 'Actualité de la Bibliothèque  Universitaire de Yaoundé I.',
     image: getImageUrl(article) || 'https://bcu-uyi.cm/logo.png',
     datePublished: article.created_at,
     dateModified: article.updated_at || article.created_at,
@@ -628,13 +625,13 @@ export function ArticleDetailPage() {
       <Seo
         title={article.title}
         path={`/actualites/${article.id}`}
-        description={article.content?.substring(0, 155).replace(/\s+/g, ' ') || 'Actualité de la Bibliothèque Centrale Universitaire de Yaoundé I.'}
+        description={article.content?.substring(0, 155).replace(/\s+/g, ' ') || 'Actualité de la Bibliothèque  Universitaire de Yaoundé I.'}
         keywords={article.category ? `${article.category}, actualités, bibliothèque UYI` : 'actualités bibliothèque UYI'}
         canonical={`https://bcu-uyi.cm/actualites/${article.id}`}
         articleSchema={articleSchema}
       />
       <Layout>
-        {/* Header avec bouton retour visible */}
+        {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
           padding: '24px 0'
@@ -708,20 +705,25 @@ export function ArticleDetailPage() {
 
         {/* Contenu */}
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px' }}>
-          {/* Image */}
+          {/* Image — affichage COMPLET sans coupure */}
           {hasImage ? (
             <div style={{
               borderRadius: 12,
               overflow: 'hidden',
               marginBottom: 32,
               boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-              position: 'relative'
+              position: 'relative',
+              background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 12
             }}>
               {imageLoading && (
                 <div style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
+                  background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -731,7 +733,7 @@ export function ArticleDetailPage() {
                     width: 80,
                     height: 80,
                     borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.1)',
+                    background: 'linear-gradient(90deg, rgba(124,58,237,0.08) 25%, rgba(124,58,237,0.18) 50%, rgba(124,58,237,0.08) 75%)',
                     backgroundSize: '200% 100%',
                     animation: 'shimmer 1.5s ease-in-out infinite'
                   }} />
@@ -741,22 +743,23 @@ export function ArticleDetailPage() {
                 src={imageUrl}
                 alt={article.title}
                 style={{
-                  width: '100%',
-                  maxHeight: 400,
-                  objectFit: 'cover',
+                  maxWidth: '100%',
+                  maxHeight: '80vh',
+                  width: 'auto',
+                  height: 'auto',
+                  objectFit: 'contain',
                   display: 'block',
                   opacity: imageLoading ? 0 : 1,
-                  transition: 'opacity 0.4s'
+                  transition: 'opacity 0.4s',
+                  borderRadius: 8
                 }}
-                onLoad={() => {
-                  console.log('✅ Image détail chargée:', imageUrl);
-                  setImageLoading(false);
-                }}
+                onLoad={() => setImageLoading(false)}
                 onError={() => {
-                  console.error('❌ Erreur chargement image détail:', imageUrl);
                   setImageError(true);
                   setImageLoading(false);
                 }}
+                loading="lazy"
+                decoding="async"
               />
             </div>
           ) : (
@@ -978,7 +981,6 @@ export function ArticleDetailPage() {
 }
 
 // ─── PAGE PRINCIPALE ─────────────────────────────────────────────
-
 export default function ActualitesPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -996,13 +998,12 @@ export default function ActualitesPage() {
         canonical="https://bcu-uyi.cm/actualites"
       />
       <Layout>
-        {/* Header avec bouton retour bien visible */}
+        {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, var(--bleu-nuit) 0%, #2D2178 100%)',
           padding: '32px 0 32px'
         }}>
           <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
-            {/* ✅ Bouton retour à l'accueil BIEN VISIBLE */}
             <div style={{ marginBottom: 20 }}>
               <BackHomeButton variant="dark" />
             </div>

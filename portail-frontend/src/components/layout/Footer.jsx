@@ -156,8 +156,8 @@ export default function Footer() {
               }}
             >
               {t(
-                "La Bibliothèque Centrale de l'Université de Yaoundé I est au service de la communauté universitaire depuis 1962.",
-                "The Central Library of the University of Yaoundé I serves the academic community since 1962."
+                "La Bibliothèque  Universitaire de Yaoundé I est au service de la communauté universitaire depuis 1962.",
+                "The Library of the University of Yaoundé I serves the academic community since 1962."
               )}
             </p>
 
@@ -402,8 +402,8 @@ export default function Footer() {
           <span className="footer-copyright">
 
             {t(
-              `© ${year} Bibliothèque Centrale Universitaire – Université de Yaoundé I. Tous droits réservés.`,
-              `© ${year} Central University Library – University of Yaoundé I. All rights reserved.`
+              `© ${year} Bibliothèque Universitaire – Université de Yaoundé I. Tous droits réservés.`,
+              `© ${year} University Library – University of Yaoundé I. All rights reserved.`
             )}
 
           </span>

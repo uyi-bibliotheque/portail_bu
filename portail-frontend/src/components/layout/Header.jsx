@@ -38,13 +38,13 @@ const NAV = [
         href: '/bibliotheque/coordination'
       },
       {
-        labelFr: 'Départements',
-        labelEn: 'Departments',
+        labelFr: 'Nos Départements',
+        labelEn: 'Our Departments',
         href: '/bibliotheque/departements'
       },
       {
-        labelFr: 'Sections & Unités',
-        labelEn: 'Sections & Units',
+        labelFr: 'Nos Sections & Unités',
+        labelEn: 'Our Sections & Units',
         href: '/bibliotheque/sections'
       },
       {
@@ -435,17 +435,17 @@ export default function Header({ onSearch }) {
           >
             <img
               src={logo}
-              alt="BCUYI - Bibliothèque Centrale Universitaire"
+              alt="BUYI - Bibliothèque Universitaire"
               className="logo-img"
             />
 
             <div className="logo-text">
               <span className="logo-text-main">
-                BC<span>UYI</span>
+                B<span>UYI</span>
               </span>
 
               <span className="logo-text-sub">
-                BIBLIOTHÈQUE CENTRALE
+                BIBLIOTHÈQUE UNIVERSITAIRE
               </span>
             </div>
           </Link>
@@ -795,7 +795,7 @@ export default function Header({ onSearch }) {
             <div className="drawer-header">
 
               <span className="drawer-logo">
-                BCU <span>UYI</span>
+                B <span>UYI</span>
               </span>
 
               <button
@@ -1154,7 +1154,7 @@ export default function Header({ onSearch }) {
         ===================================================== */
 
         :root {
-          --header-purple: #7C3AED;
+          --header-purple: #3c1480;
           --header-purple-dark: #6D28D9;
           --header-purple-light: #8B5CF6;
           --header-purple-soft: #DDD6FE;
@@ -1191,6 +1191,20 @@ export default function Header({ onSearch }) {
 
         .language-option:hover {
           color: white;
+        }
+
+        .logo-text-main {
+          font-size: 20px;
+          font-weight: 800;
+          color: white;
+        }
+
+        .logo-text-main span {
+          color: var(--header-purple-soft);
+        }
+
+        .logo-text-sub {
+          font-size: 9px;
           background: rgba(255, 255, 255, 0.10);
         }
 
