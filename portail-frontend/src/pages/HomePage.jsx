@@ -792,17 +792,6 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
                   </div>
                 </form>
 
-                <div style={{ marginTop: 12 }}>
-                  <a
-                    href="http://10.4.2.112/pmb/opac_css/index.php?lvl=etagere_see&id=4"
-                    className="hero-quick-link"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
-                  >
-                    <BookOpen size={14} aria-hidden="true" />
-                    {isEnglish ? 'Digital books' : 'Livres numériques'}
-                  </a>
-                </div>
-
                 <div className="hero-actions">
                   <button
                     onClick={() => setAdv(v => !v)}
@@ -825,6 +814,9 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
                     <Link to="/catalogue" className="hero-quick-link" title={isEnglish ? 'Access the OPAC catalog' : 'Accéder au catalogue OPAC'}>OPAC</Link>
                     <Link to="/archives" className="hero-quick-link" title={isEnglish ? 'Consult theses' : 'Consulter les thèses'}>{isEnglish ? 'Theses' : 'Thèses'}</Link>
                     <Link to="/ressources/electroniques" className="hero-quick-link" title={isEnglish ? 'Access Research4Life' : 'Accéder à Research4Life'}>R4L</Link>
+                    <a href="http://10.4.2.112/pmb/opac_css/index.php?lvl=etagere_see&id=4" className="hero-quick-link">
+                      {isEnglish ? 'Digital books' : 'Livres numériques'}
+                    </a>
                   </div>
                 </div>
 
