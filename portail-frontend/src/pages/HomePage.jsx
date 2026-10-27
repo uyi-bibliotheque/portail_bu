@@ -792,6 +792,17 @@ function HeroSection({ onSearch, searchValue, setSearchValue, articles, loading 
                   </div>
                 </form>
 
+                <div style={{ marginTop: 12 }}>
+                  <a
+                    href="http://10.4.2.112/pmb/opac_css/index.php?lvl=etagere_see&id=4"
+                    className="hero-quick-link"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
+                  >
+                    <BookOpen size={14} aria-hidden="true" />
+                    {isEnglish ? 'Digital books' : 'Livres numériques'}
+                  </a>
+                </div>
+
                 <div className="hero-actions">
                   <button
                     onClick={() => setAdv(v => !v)}

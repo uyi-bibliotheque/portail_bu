@@ -282,6 +282,7 @@ export default function LivresNumeriquesPage() {
           transition: all 0.2s;
           white-space: nowrap;
           font-family: inherit;
+          text-decoration: none;
         }
         .lne-tab:hover {
           background: var(--beige);
@@ -531,6 +532,12 @@ export default function LivresNumeriquesPage() {
             >
               <BookOpen size={15} /> Présentation
             </button>
+            <a
+              className="lne-tab"
+              href="http://10.4.2.112/pmb/opac_css/index.php?lvl=etagere_see&id=4"
+            >
+              <BookOpen size={15} /> Livres numériques
+            </a>
             <button
               className={`lne-tab ${section === 'plateformes' ? 'active' : ''}`}
               onClick={() => setSection('plateformes')}
