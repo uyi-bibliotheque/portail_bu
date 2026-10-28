@@ -5,9 +5,11 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 
 from apps.accounts.models import PortalUser
 from apps.doc_manager.models import DigitalDocument
+from apps.memoires.models import DirectArchiveDocument, Memoire
 
 
 def make_admin(username="stats_admin", email="stats_admin@t.cm", password="p"):
@@ -176,3 +178,73 @@ class StatsDashboardIntegrationTest(APITestCase):
         # Activité récente
         r4 = self.client.get("/api/dashboard/activity/")
         self.assertEqual(r4.status_code, status.HTTP_200_OK)
+
+
+class DashboardArchiveAnalyticsViewTest(APITestCase):
+    def setUp(self):
+        self.url = "/api/dashboard/archive-analytics/"
+        self.admin = make_admin(username="archive_bi_admin", email="archive_bi_admin@t.cm")
+        self.client.force_authenticate(user=self.admin)
+
+    def test_archive_report_groups_types_faculties_and_years_without_duplicates(self):
+        archive_path = "MEMOIRES/FS/2024/FS_MEM_BC_24_0001.pdf"
+        Memoire.objects.create(
+            author=self.admin,
+            title="Mémoire archivé",
+            type_document=Memoire.TypeDocument.MEMOIRE,
+            archive_path=archive_path,
+            document_name="FS_MEM_BC_24_0001",
+            archived_at=timezone.now(),
+            is_archived=True,
+        )
+        DirectArchiveDocument.objects.create(
+            source_path=archive_path,
+            document_name="FS_MEM_BC_24_0001.pdf",
+            title="Mémoire archivé",
+            type_document=DirectArchiveDocument.TypeDocument.MEMOIRE,
+            faculty="FS",
+            year=2024,
+            file_size=100,
+            modified_at=timezone.now(),
+        )
+        DirectArchiveDocument.objects.create(
+            source_path="THESES/ENS/2023/ENS_THESE_BC_23_0001.pdf",
+            document_name="ENS_THESE_BC_23_0001.pdf",
+            title="Thèse archivée",
+            type_document=DirectArchiveDocument.TypeDocument.THESE,
+            faculty="ENS",
+            year=2023,
+            file_size=200,
+            modified_at=timezone.now(),
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["summary"]["total"], 2)
+        self.assertEqual(response.data["summary"]["memoires"], 1)
+        self.assertEqual(response.data["summary"]["theses"], 1)
+        self.assertEqual(response.data["summary"]["archives_directes"], 2)
+        self.assertEqual(
+            [(row["year"], row["total"]) for row in response.data["by_year"]],
+            [(2023, 1), (2024, 1)],
+        )
+        faculty_rows = {row["faculty"]: row for row in response.data["by_faculty"]}
+        self.assertEqual(faculty_rows["FS"]["memoires"], 1)
+        self.assertEqual(faculty_rows["FS"]["theses"], 0)
+        self.assertEqual(faculty_rows["ENS"]["theses"], 1)
+        self.assertEqual(
+            response.data["by_faculty_year"],
+            [
+                {"faculty": "ENS", "year": 2023, "memoires": 0, "theses": 1, "total": 1},
+                {"faculty": "FS", "year": 2024, "memoires": 1, "theses": 0, "total": 1},
+            ],
+        )
+
+    def test_archive_report_requires_admin(self):
+        self.client.force_authenticate(user=None)
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_401_UNAUTHORIZED)
+
+        user = make_user(username="archive_bi_user", email="archive_bi_user@t.cm")
+        self.client.force_authenticate(user=user)
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_403_FORBIDDEN)

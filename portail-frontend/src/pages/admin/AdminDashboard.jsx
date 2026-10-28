@@ -9,7 +9,8 @@ import {
   Shield, ArrowLeft, LogOut, XCircle, Plus, Edit2, Trash2,
   Image, Save, X, Upload, CheckSquare, FileSignature,
   ChevronDown, Package, Send, CheckCheck, Mail, Database,
-  UserCircle, AtSign, BadgeCheck, KeyRound, EyeOff, Lock, Hash
+  UserCircle, AtSign, BadgeCheck, KeyRound, EyeOff, Lock, Hash,
+  GraduationCap, Building2, Archive
 } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -26,7 +27,7 @@ import {
   getRecentActivity, listUsers, createUser, getArticles,
   createArticle, updateArticle, deleteArticle, listMemoires,
   updateMemoireStatus, downloadQuitus, markAsRead, markAllAsRead,
-  updateProfile, changePassword
+  updateProfile, changePassword, getArchiveAnalytics
 } from '../../services/endpoints';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -782,20 +783,26 @@ function ChartCard({ title, subtitle, children, loading, action }) {
 function ActivityItem({ activity, index }) {
   const getIcon = (type) => {
     switch (type) {
-      case 'memoire': return <FileText size={14} color={COLORS.blue} />;
-      case 'user': return <Users size={14} color={COLORS.or} />;
+      case 'memoire':
+      case 'memoire_deposit': return <FileText size={14} color={COLORS.blue} />;
+      case 'user':
+      case 'user_registered': return <Users size={14} color={COLORS.or} />;
       case 'quitus': return <FileCheck size={14} color={COLORS.green} />;
       case 'reject': return <XCircle size={14} color={COLORS.red} />;
+      case 'article_published': return <Newspaper size={14} color={COLORS.green} />;
       default: return <Activity size={14} color={COLORS.texteLight} />;
     }
   };
 
   const getBg = (type) => {
     switch (type) {
-      case 'memoire': return 'rgba(59,130,246,0.1)';
-      case 'user': return 'rgba(124,58,237,0.1)';
+      case 'memoire':
+      case 'memoire_deposit': return 'rgba(59,130,246,0.1)';
+      case 'user':
+      case 'user_registered': return 'rgba(124,58,237,0.1)';
       case 'quitus': return 'rgba(16,185,129,0.1)';
       case 'reject': return 'rgba(239,68,68,0.1)';
+      case 'article_published': return 'rgba(16,185,129,0.1)';
       default: return 'rgba(148,163,184,0.1)';
     }
   };
@@ -822,9 +829,225 @@ function ActivityItem({ activity, index }) {
 // ─── SECTION OVERVIEW ─────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
+function ArchiveReportSection({ analytics, loading, error, onRetry }) {
+  if (error) {
+    return (
+      <section style={{
+        marginBottom: 24, padding: 20, borderRadius: 14,
+        border: '1px solid rgba(239,68,68,0.25)', background: '#fff7f7',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 16, flexWrap: 'wrap',
+      }}>
+        <div>
+          <h2 style={{ margin: '0 0 5px', color: COLORS.bleuNuit, fontSize: 16 }}>
+            Rapport des archives indisponible
+          </h2>
+          <p style={{ margin: 0, color: COLORS.texteMuted, fontSize: 13 }}>
+            Les autres indicateurs restent disponibles. Réessayez pour charger les données détaillées des archives.
+          </p>
+        </div>
+        <button type="button" className="btn btn-ghost" onClick={onRetry}>
+          <RefreshCw size={15} /> Réessayer
+        </button>
+      </section>
+    );
+  }
+
+  const summary = analytics?.summary || {};
+  const byFaculty = analytics?.by_faculty || [];
+  const byYear = analytics?.by_year || [];
+  const byFacultyYear = analytics?.by_faculty_year || [];
+  const years = byYear.map(row => row.year);
+  const facultyYearMap = new Map(
+    byFacultyYear.map(row => [`${row.faculty}-${row.year}`, row]),
+  );
+  const metrics = [
+    { label: 'Documents archivés', value: summary.total, icon: <Archive size={19} />, color: COLORS.bleuNuit, bg: 'rgba(27,20,100,0.07)' },
+    { label: 'Mémoires archivés', value: summary.memoires, icon: <BookOpen size={19} />, color: COLORS.blue, bg: 'rgba(59,130,246,0.1)' },
+    { label: 'Thèses archivées', value: summary.theses, icon: <GraduationCap size={19} />, color: COLORS.or, bg: 'rgba(124,58,237,0.1)' },
+    { label: 'Établissements représentés', value: byFaculty.length, icon: <Building2 size={19} />, color: COLORS.green, bg: 'rgba(16,185,129,0.1)' },
+  ];
+
+  return (
+    <section aria-labelledby="archive-bi-title" style={{ marginBottom: 28 }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+        gap: 16, flexWrap: 'wrap', marginBottom: 16,
+      }}>
+        <div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 7,
+            color: COLORS.or, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}>
+            <Activity size={14} /> Analyse décisionnelle
+          </div>
+          <h2 id="archive-bi-title" style={{
+            margin: 0, color: COLORS.bleuNuit, fontSize: 'clamp(20px, 2.2vw, 26px)',
+            fontWeight: 750, letterSpacing: '-0.03em',
+          }}>
+            Mémoires & thèses archivés
+          </h2>
+          <p style={{ margin: '5px 0 0', color: COLORS.texteMuted, fontSize: 13 }}>
+            Répartition par faculté, type de document et année d’archivage.
+          </p>
+        </div>
+        {analytics && (
+          <span style={{
+            padding: '7px 11px', borderRadius: 9, background: 'white',
+            border: '1px solid var(--border)', color: COLORS.texteMuted, fontSize: 11,
+          }}>
+            {summary.archives_directes || 0} fichiers · {summary.archives_portail || 0} dépôts portail distincts
+          </span>
+        )}
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
+        gap: 12, marginBottom: 16,
+      }}>
+        {metrics.map(metric => (
+          <StatCard key={metric.label} {...metric} loading={loading} />
+        ))}
+      </div>
+
+      {summary.annee_inconnue > 0 && (
+        <p style={{
+          margin: '0 0 16px', padding: '10px 13px', borderRadius: 9,
+          background: '#fff8e8', color: '#8a5a00', fontSize: 12,
+        }}>
+          {summary.annee_inconnue} document{summary.annee_inconnue > 1 ? 's' : ''} sans année d’archivage identifiable
+          {analytics?.by_faculty_year?.length ? ' ; ces documents restent inclus dans les totaux par faculté.' : '.'}
+        </p>
+      )}
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'minmax(0, 1.15fr) minmax(0, 1fr)',
+        gap: 16, marginBottom: 16,
+      }} className="dashboard-archive-charts">
+        <ChartCard
+          title="Volume par faculté"
+          subtitle="Mémoires et thèses archivés, côte à côte"
+          loading={loading}
+        >
+          {byFaculty.length ? (
+            <ResponsiveContainer width="100%" height={Math.max(300, byFaculty.length * 48)}>
+              <BarChart data={byFaculty} layout="vertical" margin={{ top: 4, right: 16, left: 6, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.beigeDark} horizontal={false} />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="faculty" width={76} tick={{ fontSize: 11, fill: COLORS.texteMuted, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12 }}
+                  labelFormatter={faculty => byFaculty.find(row => row.faculty === faculty)?.name || faculty}
+                  formatter={(value, name) => [value, name]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} iconType="circle" />
+                <Bar dataKey="memoires" name="Mémoires" stackId="archives" fill={COLORS.blue} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="theses" name="Thèses" stackId="archives" fill={COLORS.or} radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ minHeight: 240, display: 'grid', placeItems: 'center', color: COLORS.texteMuted, fontSize: 13 }}>
+              Aucune archive disponible pour le moment.
+            </div>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title="Évolution des archives"
+          subtitle="Nombre de documents archivés par année"
+          loading={loading}
+        >
+          {byYear.length ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={byYear} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="archiveMemoiresGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.blue} stopOpacity={0.28} />
+                    <stop offset="95%" stopColor={COLORS.blue} stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="archiveThesesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.or} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={COLORS.or} stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.beigeDark} vertical={false} />
+                <XAxis dataKey="year" tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} iconType="circle" />
+                <Area type="monotone" dataKey="memoires" name="Mémoires" stackId="type" stroke={COLORS.blue} fill="url(#archiveMemoiresGradient)" />
+                <Area type="monotone" dataKey="theses" name="Thèses" stackId="type" stroke={COLORS.or} fill="url(#archiveThesesGradient)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ minHeight: 240, display: 'grid', placeItems: 'center', color: COLORS.texteMuted, fontSize: 13 }}>
+              Les années ne sont pas encore renseignées sur les archives.
+            </div>
+          )}
+        </ChartCard>
+      </div>
+
+      <ChartCard
+        title="Détail faculté × année"
+        subtitle="Effectifs archivés par établissement et année ; les totaux incluent les archives sans année connue."
+        loading={loading}
+      >
+        {byFaculty.length ? (
+          <div className="table-wrap">
+            <table className="archive-bi-table">
+              <thead>
+                <tr>
+                  <th>Faculté / établissement</th>
+                  {years.map(year => <th key={year} style={{ textAlign: 'right' }}>{year}</th>)}
+                  <th style={{ textAlign: 'right' }}>Mémoires</th>
+                  <th style={{ textAlign: 'right' }}>Thèses</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {byFaculty.map(faculty => (
+                  <tr key={faculty.faculty}>
+                    <td>
+                      <strong>{faculty.faculty}</strong>
+                      <span style={{ display: 'block', color: COLORS.texteMuted, fontSize: 11, marginTop: 2 }}>
+                        {faculty.name}
+                      </span>
+                    </td>
+                    {years.map(year => {
+                      const count = facultyYearMap.get(`${faculty.faculty}-${year}`)?.total || 0;
+                      return (
+                        <td key={year} style={{
+                          textAlign: 'right', fontVariantNumeric: 'tabular-nums',
+                          color: count ? COLORS.bleuNuit : COLORS.texteLight,
+                          fontWeight: count ? 700 : 400,
+                        }}>
+                          {count}
+                        </td>
+                      );
+                    })}
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: COLORS.blue }}>{faculty.memoires}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: COLORS.or }}>{faculty.theses}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 800, color: COLORS.bleuNuit }}>{faculty.total}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ padding: 24, textAlign: 'center', color: COLORS.texteMuted, fontSize: 13 }}>
+            Aucun détail d’archive à afficher.
+          </div>
+        )}
+      </ChartCard>
+    </section>
+  );
+}
+
 function OverviewSection({
   stats, memoireStats, chartData, topDocuments, activities,
-  unreadCount, loading, selectedPeriod, setSelectedPeriod
+  unreadCount, loading, selectedPeriod, setSelectedPeriod,
+  archiveAnalytics, archiveAnalyticsError, onRetryArchiveAnalytics, isAdmin
 }) {
   const totalMemoires = memoireStats?.total || 0;
   const enAttente = memoireStats?.en_attente || 0;
@@ -849,21 +1072,17 @@ function OverviewSection({
     { label: 'Total mémoires', value: totalMemoires, icon: <FileText size={20} />, color: COLORS.blue, bg: 'rgba(59,130,246,0.1)', subtitle: `Taux de complétion : ${completionRate}%` },
     { label: 'En attente de validation', value: enAttente, icon: <Clock size={20} />, color: COLORS.amber, bg: 'rgba(245,158,11,0.1)' },
     { label: 'Quitus signés', value: quitusSignes, icon: <FileCheck size={20} />, color: COLORS.green, bg: 'rgba(16,185,129,0.1)' },
-    { label: 'Utilisateurs', value: stats?.users_count || 0, icon: <Users size={20} />, color: COLORS.bleuNuit, bg: 'rgba(27,20,100,0.06)' },
+    { label: 'Utilisateurs', value: stats?.users_count || 0, icon: <Users size={20} />, color: COLORS.bleuNuit, bg: 'rgba(27,20,100,0.06)', subtitle: `${stats?.active_users || 0} comptes actifs` },
     { label: 'Documents', value: stats?.documents_count || 0, icon: <BookOpen size={20} />, color: COLORS.or, bg: 'rgba(124,58,237,0.1)' },
     { label: 'Notifications non lues', value: unreadCount, icon: <Bell size={20} />, color: COLORS.red, bg: 'rgba(239,68,68,0.1)' },
+    { label: 'Nouveaux utilisateurs (7 j)', value: stats?.recent_users || 0, icon: <UserPlus size={20} />, color: COLORS.green, bg: 'rgba(16,185,129,0.1)' },
+    { label: 'Téléchargements cumulés', value: stats?.downloads_count || 0, icon: <Download size={20} />, color: COLORS.or, bg: 'rgba(124,58,237,0.1)' },
+    { label: 'Actualités publiées', value: stats?.published_articles || 0, icon: <Newspaper size={20} />, color: COLORS.blue, bg: 'rgba(59,130,246,0.1)', subtitle: `${stats?.articles_count || 0} articles au total` },
+    { label: 'Réservations actives', value: stats?.active_reservations || 0, icon: <Calendar size={20} />, color: COLORS.amber, bg: 'rgba(245,158,11,0.1)' },
+    { label: 'Messages contact à traiter', value: stats?.unread_contact_messages || 0, icon: <Mail size={20} />, color: COLORS.red, bg: 'rgba(239,68,68,0.1)' },
   ];
 
-  const chartDataSafe = chartData && chartData.length > 0
-    ? chartData
-    : [
-        { month: 'Mai', depots: 0, validations: 0, quitus: 0 },
-        { month: 'Juin', depots: 0, validations: 0, quitus: 0 },
-        { month: 'Juillet', depots: 0, validations: 0, quitus: 0 },
-        { month: 'Août', depots: 0, validations: 0, quitus: 0 },
-        { month: 'Septembre', depots: 0, validations: 0, quitus: 0 },
-        { month: 'Octobre', depots: 0, validations: 0, quitus: 0 },
-      ];
+  const chartDataSafe = Array.isArray(chartData) ? chartData : [];
 
   return (
     <>
@@ -874,11 +1093,20 @@ function OverviewSection({
         ))}
       </div>
 
+      {isAdmin && (
+        <ArchiveReportSection
+          analytics={archiveAnalytics}
+          loading={loading}
+          error={archiveAnalyticsError}
+          onRetry={onRetryArchiveAnalytics}
+        />
+      )}
+
       {/* ═══ GRAPHIQUES PRINCIPAUX ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 24, marginBottom: 24 }} className="dashboard-grid-2-1">
         <ChartCard
-          title="📈 Évolution des dépôts"
-          subtitle="6 derniers mois"
+          title="📈 Dépôts, validations et quitus"
+          subtitle={`Activité des ${selectedPeriod.replace('months', ' derniers mois')}`}
           loading={loading}
           action={
             <select value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, background: 'white', cursor: 'pointer' }}>
@@ -888,24 +1116,30 @@ function OverviewSection({
             </select>
           }
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <ComposedChart data={chartDataSafe} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorDepots" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.bleuNuit} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={COLORS.bleuNuit} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.beigeDark} vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={{ stroke: COLORS.beigeDark }} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }} labelStyle={{ fontWeight: 700, marginBottom: 4 }} />
-              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} iconType="circle" />
-              <Area type="monotone" dataKey="depots" fill="url(#colorDepots)" stroke={COLORS.bleuNuit} strokeWidth={2} name="Dépôts" />
-              <Line type="monotone" dataKey="validations" stroke={COLORS.green} strokeWidth={2.5} dot={{ r: 4, fill: COLORS.green }} activeDot={{ r: 6 }} name="Validations" />
-              <Bar dataKey="quitus" fill={COLORS.or} name="Quitus" radius={[6, 6, 0, 0]} barSize={20} />
-            </ComposedChart>
-          </ResponsiveContainer>
+          {chartDataSafe.length === 0 ? (
+            <div style={{ height: 280, display: 'grid', placeItems: 'center', color: COLORS.texteMuted, fontSize: 13 }}>
+              Aucune donnée d’activité disponible pour cette période.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={280}>
+              <ComposedChart data={chartDataSafe} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorDepots" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.bleuNuit} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={COLORS.bleuNuit} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.beigeDark} vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={{ stroke: COLORS.beigeDark }} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: COLORS.texteMuted }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: 10, border: `1px solid ${COLORS.beigeDark}`, fontSize: 12, background: 'white', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }} labelStyle={{ fontWeight: 700, marginBottom: 4 }} />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 10 }} iconType="circle" />
+                <Area type="monotone" dataKey="depots" fill="url(#colorDepots)" stroke={COLORS.bleuNuit} strokeWidth={2} name="Dépôts" />
+                <Line type="monotone" dataKey="validations" stroke={COLORS.green} strokeWidth={2.5} dot={{ r: 4, fill: COLORS.green }} activeDot={{ r: 6 }} name="Validations" />
+                <Bar dataKey="quitus" fill={COLORS.or} name="Quitus" radius={[6, 6, 0, 0]} barSize={20} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
         </ChartCard>
 
         <ChartCard title="📊 Statut des mémoires" subtitle={`Total : ${totalMemoires} mémoire${totalMemoires > 1 ? 's' : ''}`} loading={loading}>
@@ -1588,6 +1822,8 @@ export default function AdminDashboard() {
 
   const [stats, setStats] = useState(null);
   const [memoireStats, setMemoireStats] = useState(null);
+  const [archiveAnalytics, setArchiveAnalytics] = useState(null);
+  const [archiveAnalyticsError, setArchiveAnalyticsError] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [chartData, setChartData] = useState([]);
   const [topDocuments, setTopDocuments] = useState([]);
@@ -1603,13 +1839,21 @@ export default function AdminDashboard() {
     if (showToast) setRefreshing(true);
 
     try {
-      const [statsRes, memoireRes, unreadRes, chartRes, topDocsRes, activityRes] = await Promise.all([
+      const [statsRes, memoireRes, unreadRes, chartRes, topDocsRes, activityRes, archiveRes] = await Promise.all([
         getDashboardStats().catch(() => ({ data: {} })),
         getMemoireStats().catch(() => ({ data: {} })),
         getUnreadCount().catch(() => ({ data: { count: 0 } })),
         getDashboardChart({ period: selectedPeriod }).catch(() => ({ data: [] })),
         getTopDocuments({ limit: 5 }).catch(() => ({ data: [] })),
-        getRecentActivity({ limit: 10 }).catch(() => ({ data: [] }))
+        getRecentActivity({ limit: 10 }).catch(() => ({ data: [] })),
+        isAdmin
+          ? getArchiveAnalytics()
+            .then(response => ({ data: response.data, error: false }))
+            .catch(error => {
+              console.error('Erreur de chargement du rapport BI des archives:', error);
+              return { data: null, error: true };
+            })
+          : Promise.resolve({ data: null, error: false })
       ]);
 
       setStats(statsRes.data || {});
@@ -1618,8 +1862,17 @@ export default function AdminDashboard() {
       setChartData(chartRes.data || []);
       setTopDocuments(topDocsRes.data || []);
       setActivities(activityRes.data || []);
+      setArchiveAnalytics(archiveRes.data);
+      setArchiveAnalyticsError(archiveRes.error);
 
-      if (showToast) addToast('✅ Données actualisées', 'success');
+      if (showToast) {
+        addToast(
+          archiveRes.error
+            ? 'Données globales actualisées, mais le rapport des archives est indisponible.'
+            : 'Données actualisées',
+          archiveRes.error ? 'error' : 'success',
+        );
+      }
     } catch (error) {
       console.error('Erreur chargement dashboard:', error);
       if (showToast) addToast('❌ Erreur de chargement', 'error');
@@ -1627,7 +1880,7 @@ export default function AdminDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedPeriod, addToast]);
+  }, [selectedPeriod, addToast, isAdmin]);
 
   useEffect(() => {
     if (isStaff) loadData();
@@ -1672,6 +1925,10 @@ export default function AdminDashboard() {
             loading={loading}
             selectedPeriod={selectedPeriod}
             setSelectedPeriod={setSelectedPeriod}
+            archiveAnalytics={archiveAnalytics}
+            archiveAnalyticsError={archiveAnalyticsError}
+            onRetryArchiveAnalytics={() => loadData(true)}
+            isAdmin={isAdmin}
           />
         );
     }
@@ -1852,6 +2109,31 @@ export default function AdminDashboard() {
 
         /* Tables */
         .table-wrap { overflow-x: auto; }
+        .archive-bi-table {
+          width: max-content;
+          min-width: 100%;
+          font-variant-numeric: tabular-nums;
+        }
+        .archive-bi-table th,
+        .archive-bi-table td {
+          white-space: nowrap;
+        }
+        .archive-bi-table th:first-child,
+        .archive-bi-table td:first-child {
+          position: sticky;
+          left: 0;
+          z-index: 1;
+          min-width: 190px;
+          background: white;
+          box-shadow: 5px 0 8px rgba(27,20,100,0.04);
+        }
+        .archive-bi-table th:first-child {
+          z-index: 2;
+          background: #f8f7fc;
+        }
+        .archive-bi-table tbody tr:hover td:first-child {
+          background: ${COLORS.beige};
+        }
         table {
           width: 100%;
           border-collapse: collapse;
@@ -1878,8 +2160,21 @@ export default function AdminDashboard() {
           .dashboard-grid-2-1 {
             grid-template-columns: 1fr !important;
           }
+          .dashboard-archive-charts {
+            grid-template-columns: 1fr !important;
+          }
           .users-grid {
             grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .archive-bi-table th,
+          .archive-bi-table td {
+            padding: 9px 10px;
+          }
+          .archive-bi-table th:first-child,
+          .archive-bi-table td:first-child {
+            min-width: 150px;
           }
         }
       `}</style>

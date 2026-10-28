@@ -698,6 +698,15 @@ export const getDashboardStats = async () => {
   }
 };
 
+export const getArchiveAnalytics = async () => {
+  try {
+    return await api.get('/dashboard/archive-analytics/');
+  } catch (error) {
+    console.error('Erreur rapport BI des archives:', error);
+    throw error;
+  }
+};
+
 export const getDashboardChart = async (params) => {
   try {
     const response = await api.get('/dashboard/chart/', { params });
