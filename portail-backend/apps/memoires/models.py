@@ -532,3 +532,30 @@ class DocumentSequence(models.Model):
         sequence.counter += 1
         sequence.save()
         return sequence.counter
+
+
+class DirectArchiveDocument(models.Model):
+    class TypeDocument(models.TextChoices):
+        MEMOIRE = 'MEMOIRE', 'Mémoire'
+        THESE = 'THESE', 'Thèse'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    source_path = models.CharField(max_length=1024, unique=True)
+    document_name = models.CharField(max_length=255)
+    title = models.CharField(max_length=500)
+    type_document = models.CharField(max_length=10, choices=TypeDocument.choices)
+    faculty = models.CharField(max_length=64, default='AUTRE')
+    year = models.PositiveIntegerField(null=True, blank=True)
+    file_size = models.PositiveBigIntegerField()
+    modified_at = models.DateTimeField()
+    is_available = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-modified_at', 'title']
+        verbose_name = 'Archive ajoutée directement'
+        verbose_name_plural = 'Archives ajoutées directement'
+
+    def __str__(self):
+        return self.title

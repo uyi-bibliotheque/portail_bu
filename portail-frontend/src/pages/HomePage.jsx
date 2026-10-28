@@ -165,7 +165,7 @@ function getJsonLd() {
       addressCountry: 'CM',
     },
     openingHours: 'Mo-Fr 07:30-15:30, Sa 08:00-13:00',
-    telephone: '+237 242 06 47 28',
+    telephone: '+237 620 69 84 99',
     email: 'biblio.Bibliotheque@uy1.uninet.cm',
     sameAs: [
       'https://www.facebook.com/BUYI',

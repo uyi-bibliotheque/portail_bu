@@ -643,7 +643,7 @@ export default function PolitiqueCookies() {
                       <strong>{t.address}:</strong> Campus de l'Université de Yaoundé I, BP 337 Yaoundé, Cameroun
                     </p>
                     <p>
-                      <strong>{t.phone}:</strong> +237 242 06 47 28
+                      <strong>{t.phone}:</strong> +237 620 69 84 99
                     </p>
                   </div>
                 </div>

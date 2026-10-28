@@ -381,7 +381,7 @@ MEMOIRES = {
     'ALLOWED_EXTENSIONS': ['.pdf', '.doc', '.docx'],
 }
 
-DOCUMENTS_ROOT = os.path.join(BASE_DIR.parent, 'Documents')
+DOCUMENTS_ROOT = os.getenv('DOCUMENTS_ROOT', os.path.join(BASE_DIR.parent, 'Documents'))
 THESES_ROOT = os.path.join(DOCUMENTS_ROOT, 'THESES')
 MEMOIRES_ROOT = os.path.join(DOCUMENTS_ROOT, 'MEMOIRES')
 

@@ -1,7 +1,7 @@
 # apps/memoires/serializers.py - VERSION COMPLÈTE AVEC archive_path
 
 from rest_framework import serializers
-from .models import Memoire
+from .models import DirectArchiveDocument, Memoire
 from django.utils import timezone
 
 
@@ -180,6 +180,7 @@ class MemoireSerializer(serializers.ModelSerializer):
 
         return data
 
+
     def create(self, validated_data):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):
@@ -192,6 +193,42 @@ class MemoireSerializer(serializers.ModelSerializer):
         validated_data.setdefault('matricule', user.username)
         
         return super().create(validated_data)
+
+
+class DirectArchiveDocumentSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+    author_full_name = serializers.SerializerMethodField()
+    is_archived = serializers.BooleanField(source='is_available', read_only=True)
+    archived_at = serializers.DateTimeField(source='modified_at', read_only=True)
+    created_at = serializers.DateTimeField(source='modified_at', read_only=True)
+    file_url = serializers.SerializerMethodField()
+    archive_info = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DirectArchiveDocument
+        fields = [
+            'id', 'title', 'type_document', 'document_name',
+            'author_name', 'author_full_name', 'is_archived',
+            'archived_at', 'created_at', 'file_url', 'archive_info',
+        ]
+
+    def get_author_name(self, obj):
+        return 'Auteur non renseigné'
+
+    def get_author_full_name(self, obj):
+        return 'Auteur non renseigné'
+
+    def get_file_url(self, obj):
+        from django.urls import reverse
+
+        return reverse('direct_archive_download', kwargs={'pk': obj.pk})
+
+    def get_archive_info(self, obj):
+        return {
+            'year': obj.year,
+            'document_name': obj.document_name,
+            'faculty': obj.faculty,
+        }
 
 
 class MemoireStatusUpdateSerializer(serializers.Serializer):

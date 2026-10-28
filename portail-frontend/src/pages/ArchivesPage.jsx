@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import {
   Search, User, Calendar, Building2,
   Download, Eye, Grid, List, RefreshCw,
-  ArrowLeft, BookOpen, Award,
+  ArrowLeft, BookOpen, Award, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   Layers, CheckCircle, Filter, X,
   Library, GraduationCap, Sparkles, Share2,
   Printer, ExternalLink, AlertCircle, Globe
@@ -55,7 +55,31 @@ const FACULTY_COLORS = {
 };
 
 const FACULTY_ABBREVIATIONS = Object.keys(FACULTIES);
-const YEARS = Array.from({ length: 15 }, (_, i) => 2020 + i);
+const ARCHIVE_PAGE_SIZE = 12;
+
+function getPaginationItems(currentPage, totalPages) {
+  if (totalPages <= 9) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set([1, totalPages]);
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+
+  for (let page = start; page <= end; page++) pages.add(page);
+  if (currentPage <= 4) [2, 3, 4].forEach(page => pages.add(page));
+  if (currentPage >= totalPages - 3) {
+    [totalPages - 3, totalPages - 2, totalPages - 1].forEach(page => pages.add(page));
+  }
+
+  const orderedPages = [...pages].sort((a, b) => a - b);
+  return orderedPages.flatMap((page, index) => {
+    const previousPage = orderedPages[index - 1];
+    return index > 0 && page - previousPage > 1
+      ? [`ellipsis-${previousPage}-${page}`, page]
+      : [page];
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // ─── API PUBLIQUE ─────────────────────────────────────────────────
@@ -66,6 +90,30 @@ const getPublicArchives = async (params = {}) => {
     params: { limit: params.limit || 500, ...params }
   });
   return response;
+};
+
+const getAllPublicArchives = async () => {
+  const archives = [];
+  const visitedPages = new Set();
+  let response = await getPublicArchives({ limit: 500 });
+
+  while (response) {
+    const data = response.data;
+    const pageResults = Array.isArray(data?.results)
+      ? data.results
+      : Array.isArray(data) ? data : [];
+    archives.push(...pageResults);
+
+    if (!data?.next) break;
+    const nextUrl = new URL(data.next, API_URL || window.location.origin).toString();
+    if (visitedPages.has(nextUrl)) {
+      throw new Error(`L’API des archives a renvoyé une page répétée : ${nextUrl}`);
+    }
+    visitedPages.add(nextUrl);
+    response = await axios.get(nextUrl);
+  }
+
+  return archives;
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -102,6 +150,13 @@ function getFacultyName(abbr) {
   return FACULTIES[abbr]?.name || abbr || 'Faculté';
 }
 
+function getDocumentYear(document) {
+  const archiveYear = Number(document.archive_info?.year);
+  if (Number.isInteger(archiveYear) && archiveYear > 0) return archiveYear;
+  const documentDate = new Date(document.archived_at || document.created_at);
+  return Number.isNaN(documentDate.getTime()) ? null : documentDate.getFullYear();
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // ─── CARTE D'ARCHIVE ────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
@@ -119,7 +174,9 @@ function ArchiveCard({ document }) {
 
   const cleanApiBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
   const archivePath = document.archive_path || document.archive_info?.archive_path || null;
-  const getDocumentUrl = () => archivePath ? `${cleanApiBase}/api/documents/archive/${archivePath}/` : null;
+  const getDocumentUrl = () => document.file_url
+    ? `${cleanApiBase}${document.file_url}`
+    : archivePath ? `${cleanApiBase}/api/documents/archive/${archivePath}/` : null;
 
   const handleView = (e) => {
     e.preventDefault(); e.stopPropagation();
@@ -132,17 +189,24 @@ function ArchiveCard({ document }) {
     e.preventDefault(); e.stopPropagation();
     const url = getDocumentUrl();
     if (!url) return alert("Ce document n'est pas disponible en téléchargement.");
+    if (document.file_url) {
+      const downloadUrl = new URL(url, window.location.origin);
+      downloadUrl.searchParams.set('download', '1');
+      window.open(downloadUrl.toString(), '_blank', 'noopener,noreferrer');
+      return;
+    }
+
     try {
       const response = await fetch(url, { headers: { 'Accept': 'application/pdf' } });
       if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
       const blob = await response.blob();
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = window.document.createElement('a');
       link.href = downloadUrl;
       link.download = `${docName}.pdf`;
-      document.body.appendChild(link);
+      window.document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      window.document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('❌ Erreur téléchargement:', error);
@@ -293,12 +357,46 @@ function ArchiveListItem({ document }) {
 
   const cleanApiBase = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
   const archivePath = document.archive_path || document.archive_info?.archive_path || null;
-  const getDocumentUrl = () => archivePath ? `${cleanApiBase}/api/documents/archive/${archivePath}/` : null;
+  const getDocumentUrl = () => document.file_url
+    ? `${cleanApiBase}${document.file_url}`
+    : archivePath ? `${cleanApiBase}/api/documents/archive/${archivePath}/` : null;
 
   const handleView = (e) => {
     e.preventDefault();
     const url = getDocumentUrl();
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownload = (e) => {
+    e.preventDefault();
+    const url = getDocumentUrl();
+    if (!url) return;
+    if (document.file_url) {
+      const downloadUrl = new URL(url, window.location.origin);
+      downloadUrl.searchParams.set('download', '1');
+      window.open(downloadUrl.toString(), '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    fetch(url, { headers: { Accept: 'application/pdf' } })
+      .then(response => {
+        if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+        return response.blob();
+      })
+      .then(blob => {
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = window.document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${document.document_name || document.title || 'document'}.pdf`;
+        window.document.body.appendChild(link);
+        link.click();
+        window.document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+      })
+      .catch(error => {
+        console.error('Erreur téléchargement archive:', error);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      });
   };
 
   return (
@@ -362,6 +460,17 @@ function ArchiveListItem({ document }) {
           }}
         >
           <Eye size={13} /> Voir
+        </button>
+        <button
+          onClick={handleDownload}
+          aria-label="Télécharger le document"
+          style={{
+            padding: '6px 10px', borderRadius: 6,
+            background: 'var(--beige)', border: '1px solid var(--border)',
+            cursor: 'pointer', color: 'var(--texte)'
+          }}
+        >
+          <Download size={13} />
         </button>
       </div>
     </div>
@@ -485,8 +594,7 @@ export default function ArchivesPage() {
   const [filterYear, setFilterYear] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('date_desc');
-  const [showFilters, setShowFilters] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     document.title = 'Archives des Mémoires & Thèses - BCUY1';
@@ -496,25 +604,44 @@ export default function ArchivesPage() {
   const loadArchives = async () => {
     setLoading(true);
     try {
-      const response = await getPublicArchives({ limit: 500 });
-      const allData = response.data?.results || response.data || [];
-      const archived = allData.filter(d => d.is_archived === true);
-      setDocuments(archived);
-      setTotalCount(archived.length);
-    } catch (error) {
-      console.warn('⚠️ API archives indisponible — les répertoires officiels restent accessibles.');
-      setDocuments([]);
+      const [existingResult, directResult] = await Promise.allSettled([
+        getAllPublicArchives(),
+        axios.get(`${API_URL}/api/archives/public/direct/`),
+      ]);
+
+      const existingArchives = existingResult.status === 'fulfilled'
+        ? existingResult.value
+          .filter(document => document.is_archived === true)
+        : [];
+      const directArchives = directResult.status === 'fulfilled'
+        ? (directResult.value.data?.results || [])
+        : [];
+
+      if (existingResult.status === 'rejected') {
+        console.error('Erreur de chargement des archives existantes:', existingResult.reason);
+      }
+      if (directResult.status === 'rejected') {
+        console.error('Erreur de synchronisation des archives ajoutées directement:', directResult.reason);
+      }
+
+      const allArchives = [...existingArchives, ...directArchives];
+      setDocuments(allArchives);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredDocs = useMemo(() => {
+  const years = useMemo(
+    () => [...new Set(documents.map(getDocumentYear).filter(Boolean))].sort((a, b) => b - a),
+    [documents],
+  );
+
+  const matchingDocs = useMemo(() => {
     return documents.filter(doc => {
       const searchLower = searchTerm.toLowerCase();
       const facultyAbbr = getFacultyAbbr(doc);
       const facultyName = getFacultyName(facultyAbbr);
-      const year = doc.archive_info?.year || new Date(doc.archived_at || doc.created_at).getFullYear();
+      const year = getDocumentYear(doc);
       const docName = doc.document_name || doc.archive_info?.document_name || '';
 
       const matchesSearch =
@@ -526,13 +653,17 @@ export default function ArchivesPage() {
         docName.toLowerCase().includes(searchLower) ||
         (doc.keywords || '').toLowerCase().includes(searchLower);
 
-      const matchesFaculty = filterFaculty === 'all' || facultyAbbr === filterFaculty;
       const matchesYear = filterYear === 'all' || year === parseInt(filterYear);
       const matchesType = filterType === 'all' || doc.type_document === filterType;
 
-      return matchesSearch && matchesFaculty && matchesYear && matchesType;
+      return matchesSearch && matchesYear && matchesType;
     });
-  }, [documents, searchTerm, filterFaculty, filterYear, filterType]);
+  }, [documents, searchTerm, filterYear, filterType]);
+
+  const filteredDocs = useMemo(
+    () => matchingDocs.filter(doc => filterFaculty === 'all' || getFacultyAbbr(doc) === filterFaculty),
+    [matchingDocs, filterFaculty],
+  );
 
   const sortedDocs = useMemo(() => {
     return [...filteredDocs].sort((a, b) => {
@@ -541,8 +672,9 @@ export default function ArchivesPage() {
         case 'title_desc': return (b.title || '').localeCompare(a.title || '');
         case 'author_asc': return (a.author_full_name || a.author_name || '').localeCompare(b.author_full_name || b.author_name || '');
         case 'author_desc': return (b.author_full_name || b.author_name || '').localeCompare(a.author_full_name || a.author_name || '');
-        case 'year_asc': return (a.archive_info?.year || 0) - (b.archive_info?.year || 0);
-        case 'year_desc': return (b.archive_info?.year || 0) - (a.archive_info?.year || 0);
+        case 'faculty_asc': return getFacultyName(getFacultyAbbr(a)).localeCompare(getFacultyName(getFacultyAbbr(b))) || (a.title || '').localeCompare(b.title || '');
+        case 'year_asc': return (getDocumentYear(a) || 0) - (getDocumentYear(b) || 0) || (a.title || '').localeCompare(b.title || '');
+        case 'year_desc': return (getDocumentYear(b) || 0) - (getDocumentYear(a) || 0) || (a.title || '').localeCompare(b.title || '');
         case 'date_asc': return new Date(a.archived_at || a.created_at) - new Date(b.archived_at || b.created_at);
         case 'date_desc':
         default: return new Date(b.archived_at || b.created_at) - new Date(a.archived_at || a.created_at);
@@ -550,23 +682,38 @@ export default function ArchivesPage() {
     });
   }, [filteredDocs, sortBy]);
 
-  const stats = useMemo(() => {
-    const facultyStats = {};
-    const typeStats = { MEMOIRE: 0, THESE: 0 };
-    documents.forEach(doc => {
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterFaculty, filterYear, filterType, sortBy]);
+
+  const totalPages = Math.ceil(sortedDocs.length / ARCHIVE_PAGE_SIZE);
+  const displayedPage = Math.min(currentPage, totalPages || 1);
+  const firstVisibleDocument = (displayedPage - 1) * ARCHIVE_PAGE_SIZE;
+  const visibleDocs = sortedDocs.slice(
+    firstVisibleDocument,
+    firstVisibleDocument + ARCHIVE_PAGE_SIZE,
+  );
+  const paginationItems = getPaginationItems(displayedPage, totalPages);
+
+  const facultyStats = useMemo(() => {
+    const byFaculty = Object.fromEntries(
+      FACULTY_ABBREVIATIONS.map(abbr => [abbr, { total: 0, memoires: 0, theses: 0 }]),
+    );
+    matchingDocs.forEach(doc => {
       const abbr = getFacultyAbbr(doc);
-      facultyStats[abbr] = (facultyStats[abbr] || 0) + 1;
-      if (doc.type_document === 'MEMOIRE') typeStats.MEMOIRE++;
-      else if (doc.type_document === 'THESE') typeStats.THESE++;
+      const faculty = byFaculty[abbr] || byFaculty.AUTRE;
+      faculty.total++;
+      if (doc.type_document === 'MEMOIRE') faculty.memoires++;
+      else if (doc.type_document === 'THESE') faculty.theses++;
     });
-    return {
-      total: documents.length,
-      memoires: typeStats.MEMOIRE,
-      theses: typeStats.THESE,
-      faculties: Object.keys(facultyStats).length,
-      facultyStats,
-    };
-  }, [documents]);
+    return byFaculty;
+  }, [matchingDocs]);
+
+  const resultStats = useMemo(() => filteredDocs.reduce((counts, doc) => {
+    if (doc.type_document === 'MEMOIRE') counts.memoires++;
+    if (doc.type_document === 'THESE') counts.theses++;
+    return counts;
+  }, { total: filteredDocs.length, memoires: 0, theses: 0 }), [filteredDocs]);
 
   const hasActiveFilters = searchTerm || filterFaculty !== 'all' || filterYear !== 'all' || filterType !== 'all';
 
@@ -723,6 +870,98 @@ export default function ArchivesPage() {
       {/* ═══ CONTENU ═══ */}
       <main className="container" style={{ padding: '32px 20px 48px' }}>
 
+        <section
+          aria-labelledby="archive-summary-title"
+          style={{
+            marginBottom: 36,
+            padding: 'clamp(20px, 3vw, 30px)',
+            background: 'white',
+            border: '1px solid var(--border)',
+            borderRadius: 18,
+            boxShadow: '0 8px 28px rgba(27,20,100,0.06)',
+          }}
+        >
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 18,
+          }}>
+            <div>
+              <p style={{
+                margin: '0 0 6px', color: 'var(--or)', fontSize: 11,
+                fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                {isEnglish ? 'INTERNAL DIGITAL COLLECTION' : 'COLLECTION NUMÉRIQUE INTERNE'}
+              </p>
+              <h2 id="archive-summary-title" className="font-serif" style={{
+                margin: 0, color: 'var(--bleu-nuit)',
+                fontSize: 'clamp(21px, 2.5vw, 28px)', fontWeight: 400,
+              }}>
+                {isEnglish ? 'Archives by institution' : 'Archives par établissement'}
+              </h2>
+            </div>
+            <span style={{
+              padding: '8px 14px', borderRadius: 10,
+              background: 'var(--beige)', color: 'var(--bleu-nuit)',
+              fontSize: 13, fontWeight: 700,
+            }}>
+              {loading
+                ? (isEnglish ? 'Loading…' : 'Chargement…')
+                : `${documents.length} ${isEnglish ? 'documents' : `document${documents.length > 1 ? 's' : ''}`}`}
+            </span>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+            gap: 12,
+          }}>
+            {FACULTY_ABBREVIATIONS.map(abbr => {
+              const counts = facultyStats[abbr];
+              const selected = filterFaculty === abbr;
+              return (
+                <button
+                  key={abbr}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setFilterFaculty(selected ? 'all' : abbr)}
+                  style={{
+                    padding: 16,
+                    textAlign: 'left',
+                    borderRadius: 12,
+                    border: `1px solid ${selected ? FACULTIES[abbr].color : 'var(--border)'}`,
+                    borderLeft: `4px solid ${FACULTIES[abbr].color}`,
+                    background: selected ? `${FACULTIES[abbr].color}0d` : 'white',
+                    color: 'var(--texte)',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'background 0.2s, border-color 0.2s',
+                  }}
+                >
+                  <span style={{
+                    display: 'block', marginBottom: 10, color: 'var(--bleu-nuit)',
+                    fontSize: 13, fontWeight: 700, lineHeight: 1.4, minHeight: 36,
+                  }}>
+                    {getFacultyName(abbr)}
+                  </span>
+                  <span style={{
+                    display: 'flex', flexWrap: 'wrap', gap: '6px 12px',
+                    color: 'var(--texte-muted)', fontSize: 11,
+                  }}>
+                    <span><strong style={{ color: FACULTIES[abbr].color }}>{counts.memoires}</strong> {isEnglish ? 'dissertations' : `mémoire${counts.memoires > 1 ? 's' : ''}`}</span>
+                    <span><strong style={{ color: FACULTIES[abbr].color }}>{counts.theses}</strong> {isEnglish ? 'theses' : `thèse${counts.theses > 1 ? 's' : ''}`}</span>
+                  </span>
+                  <span style={{
+                    display: 'block', marginTop: 9, color: FACULTIES[abbr].color,
+                    fontSize: 12, fontWeight: 800,
+                  }}>
+                    {counts.total} {isEnglish ? 'documents' : `document${counts.total > 1 ? 's' : ''}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ── RÉPERTOIRES OFFICIELS ── */}
         <section aria-label="Répertoires officiels" style={{ marginBottom: 48 }}>
           <div style={{ marginBottom: 24 }}>
@@ -806,28 +1045,42 @@ export default function ArchivesPage() {
                 fontSize: 'clamp(20px, 2.4vw, 26px)',
                 color: 'var(--bleu-nuit)', fontWeight: 400, margin: 0
               }}>
-                {isEnglish ? 'Recently archived documents' : 'Documents récemment archivés'}
+                {isEnglish ? 'Search the internal archive' : 'Rechercher dans les archives internes'}
               </h2>
               <span style={{
                 fontSize: 12, padding: '4px 12px', borderRadius: 50,
                 background: 'rgba(16,185,129,0.10)', color: '#059669',
                 fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
               }}>
-                <Sparkles size={12} /> {documents.length} document{documents.length > 1 ? 's' : ''}
+                <Sparkles size={12} />
+                {isEnglish
+                  ? `${resultStats.total} results (${resultStats.memoires} dissertations, ${resultStats.theses} theses)`
+                  : `${resultStats.total} résultat${resultStats.total > 1 ? 's' : ''} (${resultStats.memoires} mémoires, ${resultStats.theses} thèses)`}
               </span>
             </div>
 
-            {/* Barre de recherche */}
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
-              <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
+              gap: 10,
+              marginBottom: 16,
+              padding: 14,
+              background: '#f8f7fc',
+              border: '1px solid var(--border)',
+              borderRadius: 14,
+            }}>
+              <label htmlFor="archive-search" style={{ gridColumn: '1 / -1', position: 'relative' }}>
                 <Search size={18} style={{
                   position: 'absolute', left: 14, top: '50%',
                   transform: 'translateY(-50%)', color: 'var(--texte-light)'
                 }} />
                 <input
+                  id="archive-search"
+                  type="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={isEnglish ? 'Search...' : 'Rechercher...'}
+                  placeholder={isEnglish ? 'Search by title, author or keyword…' : 'Rechercher par titre, auteur ou mot-clé…'}
+                  aria-label={isEnglish ? 'Search the archive' : 'Rechercher dans les archives'}
                   style={{
                     width: '100%', padding: '10px 14px 10px 44px',
                     border: '2px solid var(--border)', borderRadius: 12,
@@ -835,20 +1088,120 @@ export default function ArchivesPage() {
                     fontFamily: 'inherit'
                   }}
                 />
-              </div>
-              <div style={{ display: 'flex', gap: 2, border: '2px solid var(--border)', borderRadius: 10, overflow: 'hidden', background: 'white' }}>
-                <button onClick={() => setViewMode('grid')} style={{
-                  padding: '8px 12px',
-                  background: viewMode === 'grid' ? 'var(--bleu-nuit)' : 'transparent',
-                  color: viewMode === 'grid' ? 'white' : 'var(--texte-muted)',
-                  border: 'none', cursor: 'pointer'
-                }}><Grid size={16} /></button>
-                <button onClick={() => setViewMode('list')} style={{
-                  padding: '8px 12px',
-                  background: viewMode === 'list' ? 'var(--bleu-nuit)' : 'transparent',
-                  color: viewMode === 'list' ? 'white' : 'var(--texte-muted)',
-                  border: 'none', cursor: 'pointer'
-                }}><List size={16} /></button>
+              </label>
+
+              {[
+                {
+                  id: 'archive-faculty',
+                  value: filterFaculty,
+                  onChange: setFilterFaculty,
+                  label: isEnglish ? 'Institution' : 'Établissement',
+                  options: FACULTY_ABBREVIATIONS.map(abbr => [abbr, getFacultyName(abbr)]),
+                  allLabel: isEnglish ? 'All institutions' : 'Tous les établissements',
+                },
+                {
+                  id: 'archive-year',
+                  value: filterYear,
+                  onChange: setFilterYear,
+                  label: isEnglish ? 'Year' : 'Année',
+                  options: years.map(year => [String(year), String(year)]),
+                  allLabel: isEnglish ? 'All years' : 'Toutes les années',
+                },
+                {
+                  id: 'archive-type',
+                  value: filterType,
+                  onChange: setFilterType,
+                  label: isEnglish ? 'Document type' : 'Type de document',
+                  options: [
+                    ['MEMOIRE', isEnglish ? 'Dissertations' : 'Mémoires'],
+                    ['THESE', isEnglish ? 'Theses' : 'Thèses'],
+                  ],
+                  allLabel: isEnglish ? 'All documents' : 'Tous les documents',
+                },
+                {
+                  id: 'archive-sort',
+                  value: sortBy,
+                  onChange: setSortBy,
+                  label: isEnglish ? 'Sort by' : 'Trier par',
+                  options: [
+                    ['date_desc', isEnglish ? 'Most recent' : 'Plus récents'],
+                    ['date_asc', isEnglish ? 'Oldest' : 'Plus anciens'],
+                    ['faculty_asc', isEnglish ? 'Institution (A–Z)' : 'Établissement (A–Z)'],
+                    ['year_desc', isEnglish ? 'Year (newest first)' : 'Année (plus récente)'],
+                    ['year_asc', isEnglish ? 'Year (oldest first)' : 'Année (plus ancienne)'],
+                    ['title_asc', isEnglish ? 'Title (A–Z)' : 'Titre (A–Z)'],
+                    ['author_asc', isEnglish ? 'Author (A–Z)' : 'Auteur (A–Z)'],
+                  ],
+                },
+              ].map(control => (
+                <label key={control.id} htmlFor={control.id} style={{
+                  display: 'flex', flexDirection: 'column', gap: 5,
+                  color: 'var(--texte-muted)', fontSize: 11, fontWeight: 700,
+                }}>
+                  {control.label}
+                  <select
+                    id={control.id}
+                    value={control.value}
+                    onChange={event => control.onChange(event.target.value)}
+                    style={{
+                      width: '100%', minHeight: 42, padding: '9px 11px',
+                      border: '1px solid var(--border)', borderRadius: 9,
+                      background: 'white', color: 'var(--bleu-nuit)',
+                      fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
+                    }}
+                  >
+                    {control.allLabel && <option value="all">{control.allLabel}</option>}
+                    {control.options.map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+
+              <div style={{
+                display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+                gap: 8, gridColumn: '1 / -1', flexWrap: 'wrap',
+              }}>
+                <div style={{ display: 'flex', gap: 2, border: '1px solid var(--border)', borderRadius: 9, overflow: 'hidden', background: 'white' }}>
+                  <button
+                    type="button"
+                    aria-label={isEnglish ? 'Grid view' : 'Affichage en grille'}
+                    aria-pressed={viewMode === 'grid'}
+                    onClick={() => setViewMode('grid')}
+                    style={{
+                      padding: '9px 12px',
+                      background: viewMode === 'grid' ? 'var(--bleu-nuit)' : 'white',
+                      color: viewMode === 'grid' ? 'white' : 'var(--texte-muted)',
+                      border: 'none', cursor: 'pointer',
+                    }}
+                  ><Grid size={16} /></button>
+                  <button
+                    type="button"
+                    aria-label={isEnglish ? 'List view' : 'Affichage en liste'}
+                    aria-pressed={viewMode === 'list'}
+                    onClick={() => setViewMode('list')}
+                    style={{
+                      padding: '9px 12px',
+                      background: viewMode === 'list' ? 'var(--bleu-nuit)' : 'white',
+                      color: viewMode === 'list' ? 'white' : 'var(--texte-muted)',
+                      border: 'none', cursor: 'pointer',
+                    }}
+                  ><List size={16} /></button>
+                </div>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    style={{
+                      padding: '9px 14px', border: '1px solid var(--border)',
+                      borderRadius: 9, background: 'white', color: 'var(--bleu-nuit)',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                    }}
+                  >
+                    <X size={14} /> {isEnglish ? 'Clear filters' : 'Effacer les filtres'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -869,12 +1222,70 @@ export default function ArchivesPage() {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: 20
               }}>
-                {sortedDocs.map((doc, i) => <ArchiveCard key={doc.id || i} document={doc} />)}
+                {visibleDocs.map((doc, i) => <ArchiveCard key={doc.id || i} document={doc} />)}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {sortedDocs.map((doc, i) => <ArchiveListItem key={doc.id || i} document={doc} />)}
+                {visibleDocs.map((doc, i) => <ArchiveListItem key={doc.id || i} document={doc} />)}
               </div>
+            )}
+
+            {totalPages > 1 && (
+              <nav className="archive-pagination" aria-label={isEnglish ? 'Archive pages' : 'Pages des archives'}>
+                <p className="archive-pagination-summary" aria-live="polite">
+                  {isEnglish
+                    ? `Showing ${firstVisibleDocument + 1}–${Math.min(firstVisibleDocument + ARCHIVE_PAGE_SIZE, sortedDocs.length)} of ${sortedDocs.length} documents`
+                    : `Affichage de ${firstVisibleDocument + 1} à ${Math.min(firstVisibleDocument + ARCHIVE_PAGE_SIZE, sortedDocs.length)} sur ${sortedDocs.length} documents`}
+                </p>
+                <div className="archive-pagination-controls">
+                  <button
+                    type="button"
+                    className="archive-page-button"
+                    aria-label={isEnglish ? 'Go to first page' : 'Aller à la première page'}
+                    title={isEnglish ? 'First page' : 'Première page'}
+                    disabled={displayedPage === 1}
+                    onClick={() => setCurrentPage(1)}
+                  ><ChevronsLeft size={16} /></button>
+                  <button
+                    type="button"
+                    className="archive-page-button"
+                    aria-label={isEnglish ? 'Previous page' : 'Page précédente'}
+                    title={isEnglish ? 'Previous page' : 'Page précédente'}
+                    disabled={displayedPage === 1}
+                    onClick={() => setCurrentPage(displayedPage - 1)}
+                  ><ChevronLeft size={16} /></button>
+                  {paginationItems.map(item => typeof item === 'number' ? (
+                    <button
+                      key={item}
+                      type="button"
+                      className={`archive-page-button${item === displayedPage ? ' active' : ''}`}
+                      aria-label={isEnglish ? `Page ${item}` : `Page ${item}`}
+                      aria-current={item === displayedPage ? 'page' : undefined}
+                      onClick={() => setCurrentPage(item)}
+                    >
+                      {item}
+                    </button>
+                  ) : (
+                    <span key={item} className="archive-pagination-ellipsis" aria-hidden="true">…</span>
+                  ))}
+                  <button
+                    type="button"
+                    className="archive-page-button"
+                    aria-label={isEnglish ? 'Next page' : 'Page suivante'}
+                    title={isEnglish ? 'Next page' : 'Page suivante'}
+                    disabled={displayedPage === totalPages}
+                    onClick={() => setCurrentPage(displayedPage + 1)}
+                  ><ChevronRight size={16} /></button>
+                  <button
+                    type="button"
+                    className="archive-page-button"
+                    aria-label={isEnglish ? 'Go to last page' : 'Aller à la dernière page'}
+                    title={isEnglish ? 'Last page' : 'Dernière page'}
+                    disabled={displayedPage === totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                  ><ChevronsRight size={16} /></button>
+                </div>
+              </nav>
             )}
           </section>
         )}

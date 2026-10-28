@@ -1,17 +1,22 @@
 """Tests unitaires et d'intégration - Application memoires."""
 import io
+import tempfile
 import uuid
+from pathlib import Path
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.utils import override_settings
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.models import PortalUser
-from apps.memoires.models import Memoire, DocumentSequence
+from apps.memoires.models import DirectArchiveDocument, Memoire, DocumentSequence
+from apps.memoires.archive_index import synchronize_direct_archives
 from apps.memoires.serializers import (
     MemoireSerializer, MemoireStatusUpdateSerializer,
     MemoireSearchSerializer, MemoireVerifySerializer,
@@ -409,3 +414,88 @@ class MemoiresIntegrationTest(APITestCase):
         r = self.client.get(reverse("memoire_search"), {"matricule": "int_stu"})
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertEqual(len(r.data["depots"]), 1)
+
+
+class DirectArchiveDocumentsTest(APITestCase):
+    def setUp(self):
+        self.temporary_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary_directory.cleanup)
+        self.settings_override = override_settings(DOCUMENTS_ROOT=self.temporary_directory.name)
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+        self.documents_root = Path(self.temporary_directory.name)
+        (self.documents_root / "MEMOIRES").mkdir()
+        (self.documents_root / "THESES").mkdir()
+        self.document_path = self.documents_root / "MEMOIRES" / "FALSH" / "2023" / "document_test.PDF"
+        self.document_path.parent.mkdir(parents=True)
+        self.document_path.write_bytes(b"%PDF-1.4 test document")
+
+    def test_public_list_indexes_documents_from_folders(self):
+        response = self.client.get(reverse("public_direct_archives_list"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["added"], 1)
+        document = response.data["results"][0]
+        self.assertEqual(document["type_document"], "MEMOIRE")
+        self.assertEqual(document["archive_info"]["faculty"], "FALSH")
+        self.assertEqual(document["archive_info"]["year"], 2023)
+        self.assertEqual(document["title"], "document test")
+        self.assertTrue(document["file_url"].endswith(f"{document['id']}/"))
+
+    def test_sync_is_idempotent_and_indexes_new_files(self):
+        self.assertEqual(synchronize_direct_archives(), 1)
+        self.assertEqual(synchronize_direct_archives(), 0)
+
+        new_document = self.documents_root / "THESES" / "FS" / "2022" / "new_thesis.pdf"
+        new_document.parent.mkdir(parents=True)
+        new_document.write_bytes(b"%PDF-1.4 new document")
+
+        response = self.client.get(reverse("public_direct_archives_list"))
+
+        self.assertEqual(response.data["count"], 2)
+        self.assertEqual(response.data["added"], 1)
+        self.assertTrue(
+            DirectArchiveDocument.objects.filter(
+                source_path="THESES/FS/2022/new_thesis.pdf",
+                type_document="THESE",
+            ).exists()
+        )
+
+    def test_public_download_streams_pdf_and_supports_attachment(self):
+        synchronize_direct_archives()
+        archive = DirectArchiveDocument.objects.get()
+        url = reverse("direct_archive_download", kwargs={"pk": archive.pk})
+
+        inline_response = self.client.get(url)
+        self.assertEqual(inline_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(inline_response["Content-Type"], "application/pdf")
+        self.assertEqual(b"".join(inline_response.streaming_content), b"%PDF-1.4 test document")
+
+        download_response = self.client.get(url, {"download": "1"})
+        self.assertIn("attachment", download_response["Content-Disposition"])
+
+    def test_download_rejects_database_paths_outside_document_folders(self):
+        archive = DirectArchiveDocument.objects.create(
+            source_path="MEMOIRES/../../private.pdf",
+            document_name="private.pdf",
+            title="private",
+            type_document=DirectArchiveDocument.TypeDocument.MEMOIRE,
+            file_size=1,
+            modified_at=timezone.now(),
+        )
+
+        response = self.client.get(
+            reverse("direct_archive_download", kwargs={"pk": archive.pk})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_deleted_files_are_removed_from_public_listing(self):
+        synchronize_direct_archives()
+        self.document_path.unlink()
+
+        response = self.client.get(reverse("public_direct_archives_list"))
+
+        self.assertEqual(response.data["count"], 0)
+        self.assertFalse(DirectArchiveDocument.objects.get().is_available)

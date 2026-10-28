@@ -24,7 +24,7 @@ const SUBJECTS = [
 // Plus Code Google Maps : VG42+VM6 Yaoundé
 // Adresse : Campus principal Ngoa-Ekelle, Université de Yaoundé I
 // BP 1312, Yaoundé, Cameroun
-// Tél : +237 242 06 47 28
+// Tél : +237 620 69 84 99
 // ═══════════════════════════════════════════════════════════════════
 const BCU_COORDS = {
   lat: 3.8667,
@@ -291,7 +291,7 @@ export default function ContactPage() {
 
   const contactItems = [
     { Icon: MapPin, title: tr.address, content: tr.addressContent },
-    { Icon: Phone, title: tr.phone, content: '+237 242 06 47 28' },
+    { Icon: Phone, title: tr.phone, content: '+237 620 69 84 99' },
     { Icon: Mail, title: tr.email, content: 'biblio.Bibliotheque@uy1.uninet.cm' },
     { Icon: Clock, title: tr.hours, content: tr.hoursContent },
   ];

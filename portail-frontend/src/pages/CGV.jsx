@@ -224,7 +224,7 @@ export default function CGV() {
                     <p style={{ marginBottom: 8, fontSize: 'clamp(13px, 0.9vw, 14px)', wordBreak: 'break-word' }}><strong>{isEnglish ? 'Central University Library of Yaoundé I' : 'Bibliothèque Centrale Universitaire de Yaoundé I'}</strong></p>
                     <p style={{ marginBottom: 8, fontSize: 'clamp(13px, 0.9vw, 14px)', wordBreak: 'break-word' }}><strong>{isEnglish ? 'Address' : 'Adresse'} :</strong> Campus de l'Université de Yaoundé I, BP 337 Yaoundé, Cameroun</p>
                     <p style={{ marginBottom: 8, fontSize: 'clamp(13px, 0.9vw, 14px)', wordBreak: 'break-word' }}><strong>Email :</strong>{' '}<a href="mailto:biblio.Bibliotheque@uy1.uninet.cm" style={{ color: 'var(--or)', wordBreak: 'break-all' }}>biblio.Bibliotheque@uy1.uninet.cm</a></p>
-                    <p style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', wordBreak: 'break-word' }}><strong>{isEnglish ? 'Phone' : 'Téléphone'} :</strong> +237 242 06 47 28</p>
+                    <p style={{ fontSize: 'clamp(13px, 0.9vw, 14px)', wordBreak: 'break-word' }}><strong>{isEnglish ? 'Phone' : 'Téléphone'} :</strong> +237 620 69 84 99</p>
                   </div>
                 </div>
 

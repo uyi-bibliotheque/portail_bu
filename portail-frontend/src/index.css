@@ -878,6 +878,74 @@ tbody td {
   cursor: not-allowed;
 }
 
+.archive-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff 0%, #faf9ff 100%);
+  box-shadow: 0 4px 16px rgba(27, 20, 100, 0.05);
+}
+.archive-pagination-summary {
+  margin: 0;
+  color: var(--texte-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.archive-pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.archive-page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: white;
+  color: var(--bleu-nuit);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.18s;
+}
+.archive-page-button:hover:not(:disabled) {
+  border-color: var(--bleu-nuit);
+  background: #f3f1ff;
+  transform: translateY(-1px);
+}
+.archive-page-button.active {
+  border-color: var(--bleu-nuit);
+  background: var(--bleu-nuit);
+  color: white;
+  box-shadow: 0 3px 8px rgba(27, 20, 100, 0.2);
+}
+.archive-page-button:disabled {
+  color: #a7a5b1;
+  cursor: not-allowed;
+  background: #f7f6f9;
+}
+.archive-page-button:focus-visible {
+  outline: 3px solid rgba(124, 58, 237, 0.35);
+  outline-offset: 2px;
+}
+.archive-pagination-ellipsis {
+  padding: 0 3px;
+  color: var(--texte-muted);
+}
+
 /* ── Modal ────────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed;
@@ -1221,6 +1289,23 @@ tbody td {
     width: 32px;
     height: 32px;
     font-size: 12px;
+  }
+  .archive-pagination {
+    justify-content: center;
+    padding: 14px 12px;
+  }
+  .archive-pagination-summary {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+  }
+  .archive-pagination-controls {
+    gap: 4px;
+  }
+  .archive-page-button {
+    min-width: 34px;
+    height: 36px;
+    padding: 0 6px;
   }
 
   /* Empty state */

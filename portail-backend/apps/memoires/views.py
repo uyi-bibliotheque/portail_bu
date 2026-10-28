@@ -2,6 +2,7 @@
 
 import os
 import mimetypes
+from pathlib import Path, PurePosixPath
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,8 +16,9 @@ from django.conf import settings
 from urllib.parse import quote as url_quoter
 from django.views.decorators.cache import cache_control
 from django.utils.decorators import method_decorator
-from .models import Memoire
+from .models import DirectArchiveDocument, Memoire
 from .serializers import (
+    DirectArchiveDocumentSerializer,
     MemoireSerializer, 
     MemoireStatusUpdateSerializer,
     MemoireSearchSerializer,
@@ -24,6 +26,7 @@ from .serializers import (
     MemoireDepotSerializer
 )
 from .permissions import IsOwnerOrStaff, IsStaffOnly
+from .archive_index import synchronize_direct_archives
 from apps.notifications.services import EmailService
 from datetime import timedelta
 import logging
@@ -952,3 +955,69 @@ class ArchivedDocumentView(APIView):
             return Response({
                 'error': 'Erreur lors du chargement du document'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PublicDirectArchivesListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        try:
+            added_count = synchronize_direct_archives()
+        except OSError:
+            logger.exception('Échec de la synchronisation des archives ajoutées directement')
+            return Response(
+                {'detail': "Les dossiers d'archives ne sont pas accessibles."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        documents = DirectArchiveDocument.objects.filter(is_available=True)
+        results = DirectArchiveDocumentSerializer(
+            documents,
+            many=True,
+            context={'request': request},
+        ).data
+        return Response({
+            'count': len(results),
+            'added': added_count,
+            'results': results,
+        })
+
+
+class PublicDirectArchiveDownloadView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        archive = get_object_or_404(
+            DirectArchiveDocument,
+            pk=pk,
+            is_available=True,
+        )
+        documents_root = Path(settings.DOCUMENTS_ROOT).resolve()
+        relative_path = PurePosixPath(archive.source_path)
+        if (
+            relative_path.is_absolute()
+            or not relative_path.parts
+            or relative_path.parts[0] not in {'MEMOIRES', 'THESES'}
+            or relative_path.suffix.lower() != '.pdf'
+        ):
+            logger.error('Chemin d’archive invalide en base pour le document %s', archive.pk)
+            raise Http404('Document introuvable')
+
+        try:
+            file_path = (documents_root / Path(*relative_path.parts)).resolve(strict=True)
+            file_path.relative_to(documents_root)
+            if not file_path.is_file():
+                raise Http404('Document introuvable')
+            file_handle = file_path.open('rb')
+        except (FileNotFoundError, ValueError):
+            DirectArchiveDocument.objects.filter(pk=archive.pk).update(is_available=False)
+            raise Http404('Document introuvable') from None
+
+        response = FileResponse(
+            file_handle,
+            content_type='application/pdf',
+            as_attachment=request.query_params.get('download') == '1',
+            filename=archive.document_name,
+        )
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response

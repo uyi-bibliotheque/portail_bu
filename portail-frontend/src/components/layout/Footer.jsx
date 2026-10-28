@@ -319,7 +319,7 @@ export default function Footer() {
                 />
 
                 <span>
-                  + 237 242 06 47 28
+                  +237 620 69 84 99
                 </span>
 
               </li>
@@ -715,5 +715,4 @@ export default function Footer() {
     </footer>
   );
 }
-
 

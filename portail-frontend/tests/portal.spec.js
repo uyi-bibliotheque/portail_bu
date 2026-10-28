@@ -161,6 +161,127 @@ test.describe('Portail frontend – Navigation & Routes publiques', () => {
     await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 10000 });
   });
 
+  test('filtre et compte les mémoires et thèses par établissement et année', async ({ page }) => {
+    const archiveDocuments = [
+      {
+        id: 'memoire-fs-2023', title: 'Mémoire sciences 2023', type_document: 'MEMOIRE',
+        is_archived: true, document_name: 'FS_MEM_2023.pdf', archived_at: '2023-06-01T00:00:00Z',
+        archive_info: { faculty: 'FS', year: 2023, document_name: 'FS_MEM_2023.pdf' },
+      },
+      {
+        id: 'these-fs-2022', title: 'Thèse sciences 2022', type_document: 'THESE',
+        is_archived: true, document_name: 'FS_THESE_2022.pdf', archived_at: '2022-06-01T00:00:00Z',
+        archive_info: { faculty: 'FS', year: 2022, document_name: 'FS_THESE_2022.pdf' },
+      },
+    ];
+
+    await page.route('**/api/archives/public/?*', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ results: archiveDocuments }),
+    }));
+    await page.route('**/api/archives/public/direct/', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ results: [] }),
+    }));
+
+    await page.goto('/archives', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText(/1 mémoire/).first()).toBeVisible();
+    await expect(page.getByText(/1 thèse/).first()).toBeVisible();
+
+    await page.locator('#archive-year').selectOption('2022');
+    await expect(page.locator('h3').filter({ hasText: 'Thèse sciences 2022' })).toBeVisible();
+    await expect(page.locator('h3').filter({ hasText: 'Mémoire sciences 2023' })).toHaveCount(0);
+
+    await page.locator('#archive-sort').selectOption('faculty_asc');
+    await page.locator('#archive-faculty').selectOption('FS');
+    await expect(page.getByText(/1 résultat.*0 mémoire, 1 thèse/)).toBeVisible();
+  });
+
+  test('affiche les archives par pages avec accès direct au début et à la fin', async ({ page }) => {
+    const archiveDocuments = Array.from({ length: 25 }, (_, index) => ({
+      id: `memoire-${index + 1}`,
+      title: `Archive paginée ${index + 1}`,
+      type_document: 'MEMOIRE',
+      is_archived: true,
+      archived_at: new Date(Date.UTC(2024, 0, index + 1)).toISOString(),
+      archive_info: { faculty: 'FS', year: 2024 },
+    }));
+
+    await page.route('**/api/archives/public/?*', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ results: archiveDocuments }),
+    }));
+    await page.route('**/api/archives/public/direct/', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ results: [] }),
+    }));
+
+    await page.goto('/archives', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 25' })).toBeVisible();
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 13' })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Page 2' }).click();
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 13' })).toBeVisible();
+    await page.getByRole('button', { name: 'Page suivante' }).click();
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 1' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Page précédente' }).click();
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 13' })).toBeVisible();
+    await page.getByRole('button', { name: 'Aller à la première page' }).click();
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 25' })).toBeVisible();
+    await page.getByRole('button', { name: 'Aller à la dernière page' }).click();
+    await expect(page.locator('h3').filter({ hasText: 'Archive paginée 1' })).toBeVisible();
+  });
+
+  test('charge aussi les pages suivantes de l’API des archives', async ({ page }) => {
+    const firstPage = Array.from({ length: 12 }, (_, index) => ({
+      id: `archive-api-${index + 1}`,
+      title: `Archive API ${index + 1}`,
+      type_document: 'THESE',
+      is_archived: true,
+      archived_at: new Date(Date.UTC(2023, 0, index + 1)).toISOString(),
+      archive_info: { faculty: 'FS', year: 2023 },
+    }));
+    const secondPage = [{
+      id: 'archive-api-13',
+      title: 'Archive API page suivante',
+      type_document: 'THESE',
+      is_archived: true,
+      archived_at: '2022-01-01T00:00:00Z',
+      archive_info: { faculty: 'FS', year: 2023 },
+    }];
+
+    await page.route('**/api/archives/public/**', route => {
+      const requestUrl = new URL(route.request().url());
+      if (requestUrl.pathname.endsWith('/direct/')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ results: [] }),
+        });
+      }
+
+      const isSecondPage = requestUrl.searchParams.get('page') === '2';
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          results: isSecondPage ? secondPage : firstPage,
+          next: isSecondPage ? null : `${requestUrl.origin}/api/archives/public/?page=2`,
+        }),
+      });
+    });
+
+    await page.goto('/archives', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText(/13 résultat/).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Page 2' }).click();
+    await expect(page.locator('h3').filter({ hasText: 'Archive API page suivante' })).toBeVisible();
+  });
+
   test('la page Connexion affiche un formulaire de saisie', async ({ page }) => {
     await page.goto('/connexion', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('input').first()).toBeVisible({ timeout: 10000 });

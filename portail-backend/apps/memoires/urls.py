@@ -22,6 +22,8 @@ from .views import (
     TestArchiveView,
     PublicArchivesListView,
     PublicArchiveDetailView,
+    PublicDirectArchivesListView,
+    PublicDirectArchiveDownloadView,
 )
 
 # ─── ROUTE DE TEST ──────────────────────────────────────────────────
@@ -45,6 +47,12 @@ urlpatterns = [
     
     # Liste publique des archives
     path('archives/public/', PublicArchivesListView.as_view(), name='public_archives_list'),
+    path('archives/public/direct/', PublicDirectArchivesListView.as_view(), name='public_direct_archives_list'),
+    path(
+        'archives/public/files/<uuid:pk>/',
+        PublicDirectArchiveDownloadView.as_view(),
+        name='direct_archive_download',
+    ),
     
     # Détail public d'une archive
     path('archives/public/<uuid:id>/', PublicArchiveDetailView.as_view(), name='public_archive_detail'),
