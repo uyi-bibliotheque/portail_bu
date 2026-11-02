@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test.utils import override_settings
 from django.utils import timezone
 from rest_framework import status
@@ -17,6 +18,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.accounts.models import PortalUser
 from apps.memoires.models import DirectArchiveDocument, Memoire, DocumentSequence
 from apps.memoires.archive_index import synchronize_direct_archives
+from apps.memoires.pdf_metadata import extract_pdf_metadata
 from apps.memoires.serializers import (
     MemoireSerializer, MemoireStatusUpdateSerializer,
     MemoireSearchSerializer, MemoireVerifySerializer,
@@ -431,7 +433,11 @@ class DirectArchiveDocumentsTest(APITestCase):
         self.document_path.write_bytes(b"%PDF-1.4 test document")
 
     def test_public_list_indexes_documents_from_folders(self):
-        response = self.client.get(reverse("public_direct_archives_list"))
+        with patch(
+            'apps.memoires.archive_index.extract_pdf_metadata',
+            side_effect=AssertionError('La requête publique ne doit pas lire les PDF.'),
+        ):
+            response = self.client.get(reverse("public_direct_archives_list"))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["count"], 1)
@@ -442,6 +448,7 @@ class DirectArchiveDocumentsTest(APITestCase):
         self.assertEqual(document["archive_info"]["year"], 2023)
         self.assertEqual(document["title"], "document test")
         self.assertTrue(document["file_url"].endswith(f"{document['id']}/"))
+        self.assertFalse(DirectArchiveDocument.objects.get().metadata_extracted)
 
     def test_sync_is_idempotent_and_indexes_new_files(self):
         self.assertEqual(synchronize_direct_archives(), 1)
@@ -460,6 +467,245 @@ class DirectArchiveDocumentsTest(APITestCase):
                 source_path="THESES/FS/2022/new_thesis.pdf",
                 type_document="THESE",
             ).exists()
+        )
+
+    def test_sync_sanitizes_nul_characters_from_pdf_metadata(self):
+        synchronize_direct_archives()
+        archive = DirectArchiveDocument.objects.get()
+        archive.metadata_extracted = False
+        archive.save(update_fields=['metadata_extracted'])
+
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {
+                '/Title': 'Titre\x00 mémoire',
+                '/Author': 'Auteur\x00 test',
+            }
+
+            self.assertEqual(synchronize_direct_archives(), 0)
+
+        archive = DirectArchiveDocument.objects.get()
+        self.assertEqual(archive.title, 'Titre mémoire')
+        self.assertEqual(archive.author_name, 'Auteur test')
+        self.assertEqual(archive.author_full_name, 'Auteur test')
+
+    def test_sync_uses_csv_metadata_without_reparsing_pdfs(self):
+        csv_path = self.documents_root / 'archives.csv'
+        csv_path.write_text(
+            'source_path;title;author_name;author_full_name\n'
+            'MEMOIRES/FALSH/2023/document_test.PDF;Titre complet extrait;Nom complet;Nom complet\n',
+            encoding='utf-8',
+        )
+        output = io.StringIO()
+        with patch(
+            'apps.memoires.archive_index.extract_pdf_metadata',
+            side_effect=AssertionError('Le CSV devrait fournir les métadonnées.'),
+        ):
+            call_command('sync_archive_metadata', '--csv', str(csv_path), stdout=output)
+            response = self.client.get(reverse('public_direct_archives_list'))
+
+        archive = DirectArchiveDocument.objects.get()
+        self.assertEqual(archive.title, 'Titre complet extrait')
+        self.assertEqual(archive.author_full_name, 'Nom complet')
+        self.assertTrue(archive.metadata_extracted)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['results'][0]['title'], 'Titre complet extrait')
+        self.assertEqual(response.data['results'][0]['author_full_name'], 'Nom complet')
+
+    def test_sync_does_not_reparse_unchanged_archive_metadata(self):
+        synchronize_direct_archives()
+
+        with patch(
+            'apps.memoires.archive_index.extract_pdf_metadata',
+            side_effect=AssertionError('Les métadonnées inchangées doivent être réutilisées.'),
+        ):
+            self.assertEqual(synchronize_direct_archives(), 0)
+
+    def test_pdf_metadata_extracts_full_author_and_title_from_cover_text(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'Thème : L’INCLUSION SCOLAIRE DES ENFANTS EN SITUATION DE HANDICAP\n'
+            'Présenté par :\n'
+            'KAMENI YAMDJEU SIDO Armand\n'
+            'Licencié en Psychologie\n'
+            'Sous la direction de Pr. Exemple'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(
+            metadata['title'],
+            'L’INCLUSION SCOLAIRE DES ENFANTS EN SITUATION DE HANDICAP',
+        )
+        self.assertEqual(metadata['author_name'], 'KAMENI YAMDJEU SIDO Armand')
+        self.assertEqual(metadata['author_full_name'], 'KAMENI YAMDJEU SIDO Armand')
+        self.assertEqual(metadata['title_source'], 'pdf_text')
+        self.assertEqual(metadata['author_source'], 'pdf_text_presented_by')
+
+    def test_pdf_metadata_keeps_single_word_final_title_line(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'THE QUEST FOR DURABLE SOLUTIONS TO THE\n'
+            'PLIGHT OF REFUGEES IN CAMEROON, 1972-2019:\n'
+            'THE NEED FOR COMPREHENSIVE POLICIES AND\n'
+            'REFORMS'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(
+            metadata['title'],
+            'THE QUEST FOR DURABLE SOLUTIONS TO THE PLIGHT OF REFUGEES IN CAMEROON, 1972-2019: THE NEED FOR COMPREHENSIVE POLICIES AND REFORMS',
+        )
+
+    def test_pdf_metadata_extracts_sentence_case_title_after_cover_year(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'Mémoire présenté en vue de l’obtention du diplôme\n'
+            'Présenté par\n'
+            'Viviane Edmonde ABESSOLO\n'
+            '2022-2023\n'
+            'THE UNIVERSITY OF YAOUNDE I\n'
+            'DEPARTMENT OF SOCIOLOGY\n'
+            'Rénovation viaire et contestation sociale à Yaoundé :\n'
+            'comprendre les rapports sociaux d’acteurs autour du\n'
+            'projet d’aménagement de la route de Mimboman III-\n'
+            'Nkolo'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(
+            metadata['title'],
+            'Rénovation viaire et contestation sociale à Yaoundé : comprendre les rapports sociaux d’acteurs autour du projet d’aménagement de la route de Mimboman III-Nkolo',
+        )
+        self.assertEqual(metadata['author_name'], 'Viviane Edmonde ABESSOLO')
+
+    def test_pdf_metadata_ignores_jury_names_after_a_par_label(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'Mémoire présenté en vue de l’obtention du diplôme\n'
+            'Par\n'
+            'Président de Jury : Vérissaint MBAIHOYAL AMBANG Zachéé (Pr)\n'
+            'Titulaire d’une licence en planification scolaire'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(metadata['author_name'], '')
+
+    def test_pdf_metadata_skips_multilingual_cover_headings_before_title(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'Juillet 2022\n'
+            'UNIVERSITE DE YAOUNDE I\n'
+            'CENTRE DE RECHERCHE ET DE\n'
+            'FORMATION DOCTORALE EN\n'
+            'SCIENCES HUMAINES, SOCIALES ET\n'
+            'EDUCATIVES\n'
+            'UNITE DE RECHERCHE ET DE\n'
+            'FORMATION EN SCIENCES DE\n'
+            'L’EDUCATION ET DE L’INGENIERIE\n'
+            'EDUCATIVE\n'
+            'POST GRATUATE SCHOOL FOR\n'
+            'SOCIAL AND EDUCATIONAL\n'
+            'SCIENCES\n'
+            'RESEARCH AND DOCTORAL\n'
+            'TRAINING UNIT FOR SCIENCE OF\n'
+            'EDUCATION AND EDUCATIONAL\n'
+            'ENGINEERING\n'
+            'ADDICTION AUX SUBSTANCES PSYCHOACTIVES (SPA)\n'
+            'ET STRATÉGIES DE PRISE EN CHARGE CHEZ LES\n'
+            'JEUNES DE 15-25ANS : Cas de la ville de Goré(Tchad)\n'
+            'E F\n'
+            'S'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(
+            metadata['title'],
+            'ADDICTION AUX SUBSTANCES PSYCHOACTIVES (SPA) ET STRATÉGIES DE PRISE EN CHARGE CHEZ LES JEUNES DE 15-25ANS : Cas de la ville de Goré(Tchad)',
+        )
+        self.assertEqual(metadata['author_name'], '')
+
+    def test_pdf_metadata_keeps_historical_year_range_in_complete_title(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'JANUARY 2023\n'
+            'UNIVERSITY OF YAOUNDE 1\n'
+            'FACULTY OF ARTS, LETTERS AND SOCIAL SCIENCES\n'
+            'THE MAMFOR AND WOMEN IN THE DEVELOPMENT OF THE\n'
+            'BAFUT FONDOM: 1907-2007\n'
+            'UNIVERSITE DE YAOUNDE 1'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(
+            metadata['title'],
+            'THE MAMFOR AND WOMEN IN THE DEVELOPMENT OF THE BAFUT FONDOM: 1907-2007',
+        )
+
+    def test_pdf_metadata_preserves_full_author_without_degree_or_affiliation(self):
+        examples = (
+            (
+                'Par\nM. OLOUMOU Prodige Audrey\nMatricule : 16J553\n'
+                'Licencié en Philosophie',
+                'M. OLOUMOU Prodige Audrey',
+            ),
+            (
+                'By: Eric Tala Tebue Department of Physics, Faculty of Science',
+                'Eric Tala Tebue',
+            ),
+        )
+        for text, expected_author in examples:
+            with self.subTest(expected_author=expected_author):
+                page = MagicMock()
+                page.extract_text.return_value = text
+                with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+                    pdf_reader.return_value.metadata = {}
+                    pdf_reader.return_value.pages = [page]
+
+                    metadata = extract_pdf_metadata(self.document_path)
+
+                self.assertEqual(metadata['author_full_name'], expected_author)
+
+    def test_pdf_metadata_keeps_short_final_sentence_case_title_line(self):
+        page = MagicMock()
+        page.extract_text.return_value = (
+            'Thesis presented and defended on the 24th of January 2023 for the Master’s Degree\n'
+            'Specialisation: Curriculum Development and Evaluation\n'
+            'The effects of continuous professional development on\n'
+            'teachers’ effectiveness in public primary schools in\n'
+            'Yaounde municipality'
+        )
+        with patch('apps.memoires.pdf_metadata.PdfReader') as pdf_reader:
+            pdf_reader.return_value.metadata = {}
+            pdf_reader.return_value.pages = [page]
+
+            metadata = extract_pdf_metadata(self.document_path)
+
+        self.assertEqual(
+            metadata['title'],
+            'The effects of continuous professional development on teachers’ effectiveness in public primary schools in Yaounde municipality',
         )
 
     def test_public_download_streams_pdf_and_supports_attachment(self):

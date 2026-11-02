@@ -213,10 +213,10 @@ class DirectArchiveDocumentSerializer(serializers.ModelSerializer):
         ]
 
     def get_author_name(self, obj):
-        return 'Auteur non renseigné'
+        return obj.author_name or obj.author_full_name or 'Auteur non renseigné'
 
     def get_author_full_name(self, obj):
-        return 'Auteur non renseigné'
+        return obj.author_full_name or obj.author_name or 'Auteur non renseigné'
 
     def get_file_url(self, obj):
         from django.urls import reverse

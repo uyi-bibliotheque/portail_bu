@@ -219,15 +219,15 @@ function ArchiveCard({ document }) {
       className="archive-card"
       style={{
         background: 'white',
-        borderRadius: 16,
+        borderRadius: 20,
         border: `1px solid ${isHovered ? facultyColor : 'var(--border)'}`,
         overflow: 'hidden',
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: isHovered ? '0 20px 60px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
-        transform: isHovered ? 'translateY(-6px)' : 'translateY(0)',
+        boxShadow: isHovered ? '0 18px 42px rgba(27,20,100,0.13)' : '0 4px 14px rgba(27,20,100,0.045)',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
         position: 'relative'
       }}
       onMouseEnter={() => setIsHovered(true)}
@@ -235,7 +235,7 @@ function ArchiveCard({ document }) {
     >
       {/* Bannière */}
       <div style={{
-        height: 120,
+        height: 132,
         background: `linear-gradient(135deg, ${facultyColor} 0%, ${facultySecondary} 100%)`,
         position: 'relative',
         display: 'flex',
@@ -285,25 +285,25 @@ function ArchiveCard({ document }) {
       </div>
 
       {/* Corps */}
-      <div style={{ padding: '18px 20px 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <h3 style={{
-          fontSize: 15, fontWeight: 700, color: 'var(--bleu-nuit)',
-          marginBottom: 8, lineHeight: 1.4,
-          display: '-webkit-box', WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 42
+      <div className="archive-card-content" style={{ padding: '20px 20px 18px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <h3 className="archive-card-title" title={document.title || ''} style={{
+          fontSize: 16, fontWeight: 700, color: 'var(--bleu-nuit)',
+          marginBottom: 12, lineHeight: 1.45,
+          display: '-webkit-box', WebkitLineClamp: 3,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 69
         }}>
           {document.title || 'Document sans titre'}
         </h3>
 
-        <div style={{ fontSize: 12, color: 'var(--texte-muted)', marginBottom: 10, flex: 1 }}>
+        <div className="archive-card-metadata" style={{ fontSize: 12, color: 'var(--texte-muted)', marginBottom: 10, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <User size={13} color="var(--texte-light)" /> <span>{authorName}</span>
+            <User size={13} color="#73718a" /> <span title={authorName}>{authorName}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <Building2 size={13} color="var(--texte-light)" /> <span>{facultyName}</span>
+            <Building2 size={13} color="#73718a" /> <span title={facultyName}>{facultyName}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Calendar size={13} color="var(--texte-light)" /> <span>{year}</span>
+            <Calendar size={13} color="#73718a" /> <span>{year}</span>
           </div>
         </div>
 
@@ -314,10 +314,10 @@ function ArchiveCard({ document }) {
           <button
             onClick={handleView}
             style={{
-              flex: 1, padding: '8px 14px', borderRadius: 8,
+              flex: 1, padding: '10px 14px', borderRadius: 10,
               background: `linear-gradient(135deg, ${facultyColor}, ${facultySecondary})`,
               color: 'white', border: 'none', cursor: 'pointer',
-              fontSize: 12, fontWeight: 600,
+              fontSize: 13, fontWeight: 700,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               boxShadow: `0 2px 8px ${facultyColor}30`
             }}
@@ -327,7 +327,7 @@ function ArchiveCard({ document }) {
           <button
             onClick={handleDownload}
             style={{
-              padding: '8px 14px', borderRadius: 8,
+              padding: '9px 13px', borderRadius: 10,
               background: 'var(--beige)', border: '1px solid var(--border)',
               cursor: 'pointer', fontSize: 12, fontWeight: 500,
               display: 'flex', alignItems: 'center', gap: 6, color: 'var(--texte)'
@@ -402,18 +402,19 @@ function ArchiveListItem({ document }) {
   return (
     <div
       style={{
-        background: 'white', borderRadius: 12,
+        background: 'white', borderRadius: 16,
         border: `1px solid ${isHovered ? facultyColor : 'var(--border)'}`,
-        padding: '16px 20px',
+        padding: '18px 20px',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12,
-        boxShadow: isHovered ? '0 4px 20px rgba(0,0,0,0.06)' : 'none'
+        boxShadow: isHovered ? '0 10px 28px rgba(27,20,100,0.09)' : '0 2px 8px rgba(27,20,100,0.035)',
+        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div style={{
-        width: 44, height: 44, borderRadius: 10,
+        width: 52, height: 52, borderRadius: 14,
         background: `linear-gradient(135deg, ${facultyColor}, ${facultySecondary})`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 20, flexShrink: 0, color: 'white'
@@ -421,12 +422,12 @@ function ArchiveListItem({ document }) {
         {isMemoire ? '📚' : '🎓'}
       </div>
 
-      <div style={{ flex: 1, minWidth: 180 }}>
-        <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--bleu-nuit)', marginBottom: 4, lineHeight: 1.3 }}>
+      <div className="archive-list-content" style={{ flex: 1, minWidth: 180 }}>
+        <h4 className="archive-list-title" title={document.title || ''} style={{ fontSize: 15, fontWeight: 700, color: 'var(--bleu-nuit)', marginBottom: 7, lineHeight: 1.4 }}>
           {document.title || 'Document sans titre'}
         </h4>
-        <div style={{
-          fontSize: 12, color: 'var(--texte-muted)',
+        <div className="archive-list-metadata" style={{
+          fontSize: 12, color: '#5e5c70',
           display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center'
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -868,7 +869,7 @@ export default function ArchivesPage() {
       </header>
 
       {/* ═══ CONTENU ═══ */}
-      <main className="container" style={{ padding: '32px 20px 48px' }}>
+      <main className="container archive-page" style={{ padding: 'clamp(20px, 3vw, 32px) 20px 48px' }}>
 
         <section
           aria-labelledby="archive-summary-title"
@@ -1059,22 +1060,23 @@ export default function ArchivesPage() {
               </span>
             </div>
 
-            <div style={{
+            <div className="archive-filter-panel" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
               gap: 10,
               marginBottom: 16,
               padding: 14,
-              background: '#f8f7fc',
+              background: 'linear-gradient(145deg, #faf9ff 0%, #f5f3fc 100%)',
               border: '1px solid var(--border)',
-              borderRadius: 14,
+              borderRadius: 18,
             }}>
               <label htmlFor="archive-search" style={{ gridColumn: '1 / -1', position: 'relative' }}>
                 <Search size={18} style={{
                   position: 'absolute', left: 14, top: '50%',
-                  transform: 'translateY(-50%)', color: 'var(--texte-light)'
+                  transform: 'translateY(-50%)', color: '#77758a'
                 }} />
                 <input
+                  className="archive-search-input"
                   id="archive-search"
                   type="search"
                   value={searchTerm}
@@ -1083,9 +1085,10 @@ export default function ArchivesPage() {
                   aria-label={isEnglish ? 'Search the archive' : 'Rechercher dans les archives'}
                   style={{
                     width: '100%', padding: '10px 14px 10px 44px',
-                    border: '2px solid var(--border)', borderRadius: 12,
+                    border: '1px solid var(--border)', borderRadius: 12,
                     fontSize: 14, background: 'white', outline: 'none',
-                    fontFamily: 'inherit'
+                    fontFamily: 'inherit',
+                    boxShadow: 'inset 0 1px 2px rgba(27,20,100,0.03)',
                   }}
                 />
               </label>
@@ -1158,7 +1161,7 @@ export default function ArchivesPage() {
                 </label>
               ))}
 
-              <div style={{
+              <div className="archive-view-controls" style={{
                 display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
                 gap: 8, gridColumn: '1 / -1', flexWrap: 'wrap',
               }}>
@@ -1169,7 +1172,7 @@ export default function ArchivesPage() {
                     aria-pressed={viewMode === 'grid'}
                     onClick={() => setViewMode('grid')}
                     style={{
-                      padding: '9px 12px',
+                      padding: '9px 12px', minWidth: 44, minHeight: 44,
                       background: viewMode === 'grid' ? 'var(--bleu-nuit)' : 'white',
                       color: viewMode === 'grid' ? 'white' : 'var(--texte-muted)',
                       border: 'none', cursor: 'pointer',
@@ -1181,7 +1184,7 @@ export default function ArchivesPage() {
                     aria-pressed={viewMode === 'list'}
                     onClick={() => setViewMode('list')}
                     style={{
-                      padding: '9px 12px',
+                      padding: '9px 12px', minWidth: 44, minHeight: 44,
                       background: viewMode === 'list' ? 'var(--bleu-nuit)' : 'white',
                       color: viewMode === 'list' ? 'white' : 'var(--texte-muted)',
                       border: 'none', cursor: 'pointer',
@@ -1206,7 +1209,7 @@ export default function ArchivesPage() {
             </div>
 
             {sortedDocs.length === 0 ? (
-              <div style={{
+              <div className="archive-empty-state" style={{
                 textAlign: 'center', padding: '40px 24px',
                 background: 'white', borderRadius: 16,
                 border: '1px solid var(--border)'
@@ -1217,15 +1220,15 @@ export default function ArchivesPage() {
                 </p>
               </div>
             ) : viewMode === 'grid' ? (
-              <div style={{
+              <div className="archive-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 20
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 270px), 1fr))',
+                gap: 18
               }}>
                 {visibleDocs.map((doc, i) => <ArchiveCard key={doc.id || i} document={doc} />)}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="archive-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {visibleDocs.map((doc, i) => <ArchiveListItem key={doc.id || i} document={doc} />)}
               </div>
             )}

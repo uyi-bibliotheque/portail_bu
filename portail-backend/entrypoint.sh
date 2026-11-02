@@ -46,6 +46,21 @@ python manage.py migrate --noinput
 
 echo "✅ Migrations terminées"
 
+# ═══════════════════════════════════════════════════════════════════
+# SYNCHRONISATION DES MÉTADONNÉES DES ARCHIVES
+# ═══════════════════════════════════════════════════════════════════
+
+if [ -n "${ARCHIVE_METADATA_CSV:-}" ]; then
+    if [ ! -f "$ARCHIVE_METADATA_CSV" ]; then
+        echo "❌ CSV des métadonnées introuvable : $ARCHIVE_METADATA_CSV" >&2
+        exit 1
+    fi
+
+    echo "📚 Synchronisation des métadonnées des archives depuis $ARCHIVE_METADATA_CSV..."
+    python manage.py sync_archive_metadata --csv "$ARCHIVE_METADATA_CSV"
+    echo "✅ Métadonnées des archives synchronisées"
+fi
+
 
 # ═══════════════════════════════════════════════════════════════════
 # CRÉATION / VÉRIFICATION ADMINISTRATEUR
@@ -100,4 +115,3 @@ echo "✅ Structure d'archivage initialisée"
 echo "🚀 Démarrage du serveur Django / Gunicorn..."
 
 exec "$@"
-

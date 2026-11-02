@@ -65,6 +65,7 @@ services:
       - DB_PASSWORD=Buccird2009
       - DB_HOST=db
       - DB_PORT=5432
+      - ARCHIVE_METADATA_CSV=/app/Documents/archives_final.csv
       # Frontend
       - FRONTEND_URL=http://bcuy1
       # WebService PMB

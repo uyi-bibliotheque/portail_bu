@@ -2538,3 +2538,108 @@ tbody td {
     transform-origin: bottom left !important;
   }
 }
+
+/* ── Archive page: readable cards, controls and responsive layout ── */
+.archive-page :is(a, button, input, select):focus-visible {
+  outline: 3px solid rgba(124, 58, 237, 0.42) !important;
+  outline-offset: 3px;
+}
+
+.archive-card-title {
+  overflow-wrap: anywhere;
+  letter-spacing: -0.015em;
+}
+
+.archive-card-metadata > div {
+  min-width: 0;
+  line-height: 1.55;
+}
+
+.archive-card-metadata > div > svg {
+  flex: 0 0 auto;
+}
+
+.archive-card-metadata > div > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.archive-list-title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+  letter-spacing: -0.01em;
+}
+
+.archive-list-metadata {
+  line-height: 1.6;
+}
+
+.archive-list-metadata > span {
+  min-width: 0;
+}
+
+.archive-filter-panel {
+  box-shadow: 0 5px 18px rgba(27, 20, 100, 0.045);
+}
+
+.archive-search-input::placeholder {
+  color: #77758a;
+  opacity: 1;
+}
+
+.archive-search-input:focus-visible {
+  border-color: var(--or) !important;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12) !important;
+}
+
+.archive-grid > *,
+.archive-list > * {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .archive-page {
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+  }
+
+  .archive-filter-panel {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .archive-filter-panel > label:first-child {
+    grid-column: auto !important;
+  }
+
+  .archive-view-controls {
+    align-items: center !important;
+  }
+
+  .archive-list > div {
+    align-items: flex-start !important;
+    padding: 16px !important;
+  }
+
+  .archive-list-content {
+    min-width: calc(100% - 68px) !important;
+  }
+
+  .archive-list > div > div:last-child {
+    margin-left: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-card,
+  .archive-page button {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms !important;
+  }
+}

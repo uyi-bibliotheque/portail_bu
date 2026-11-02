@@ -962,7 +962,7 @@ class PublicDirectArchivesListView(APIView):
 
     def get(self, request):
         try:
-            added_count = synchronize_direct_archives()
+            added_count = synchronize_direct_archives(extract_metadata=False)
         except OSError:
             logger.exception('Échec de la synchronisation des archives ajoutées directement')
             return Response(
