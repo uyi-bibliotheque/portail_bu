@@ -511,6 +511,24 @@ class DirectArchiveDocumentsTest(APITestCase):
         self.assertEqual(response.data['results'][0]['title'], 'Titre complet extrait')
         self.assertEqual(response.data['results'][0]['author_full_name'], 'Nom complet')
 
+    def test_sync_rebuilds_titles_with_unquoted_commas_from_excel_csv(self):
+        csv_path = self.documents_root / 'archives.csv'
+        csv_path.write_text(
+            'id_correspondance,source_path,type_document,faculty,year,title,author_name,'
+            'author_full_name,title_source,author_source,file_size\n'
+            'DOC_1,MEMOIRES/FALSH/2023/document_test.PDF,MEMOIRE,FALSH,2023,'
+            'Titre avant virgule, suite du titre,Nom complet,Nom complet,'
+            'pdf_text,pdf_text_presented_by,1234\n',
+            encoding='utf-8',
+        )
+
+        call_command('sync_archive_metadata', '--csv', str(csv_path), stdout=io.StringIO())
+
+        archive = DirectArchiveDocument.objects.get()
+        self.assertEqual(archive.title, 'Titre avant virgule, suite du titre')
+        self.assertEqual(archive.author_name, 'Nom complet')
+        self.assertEqual(archive.author_full_name, 'Nom complet')
+
     def test_sync_does_not_reparse_unchanged_archive_metadata(self):
         synchronize_direct_archives()
 

@@ -72,6 +72,11 @@ const RESOURCES = [
     href: 'https://www.openedition.org',
     ext: true
   },
+  {
+    label: 'DICAMES',
+    href: 'https://dicames.online/jspui/handle/20.500.12177/3651',
+    ext: true
+  },
 ];
 
 export default function Footer() {
@@ -715,4 +720,3 @@ export default function Footer() {
     </footer>
   );
 }
-

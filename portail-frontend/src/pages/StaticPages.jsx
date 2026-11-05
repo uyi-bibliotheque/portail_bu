@@ -921,7 +921,7 @@ const SERVICES_DATA = {
 
           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <strong style={{ color: 'var(--bleu-nuit)' }}>{isEnglish ? 'Consult our catalogue' : 'Consulter notre catalogue'}</strong>
-            <a href="http://10.4.3.254:8080/pmb/opac_css/" target="_blank" rel="noreferrer">
+            <a href="http://10.4.2.112/pmb/opac_css/" target="_blank" rel="noreferrer">
               <img src={pmbImage} alt="PMB" style={{ width: 110, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
             </a>
           </div>
@@ -944,7 +944,7 @@ const SERVICES_DATA = {
 
           <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <strong style={{ color: 'var(--bleu-nuit)' }}>{isEnglish ? 'Consult the dissertations and theses available at the BC-UYI' : 'Consulter les mémoires et thèses disponibles à la BC-UYI'}</strong>
-            <a href="http://10.4.3.254:8080/pmb/opac_css/" target="_blank" rel="noreferrer">
+            <a href="http://10.4.2.112/pmb/opac_css/" target="_blank" rel="noreferrer">
               <img src={memoiresCatalogImage} alt={isEnglish ? 'BC-UYI Dissertations' : 'Mémoires BC-UYI'} style={{ width: 110, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
             </a>
           </div>
