@@ -2602,6 +2602,11 @@ tbody td {
   min-width: 0;
 }
 
+.physical-archive-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.45fr);
+}
+
 @media (max-width: 640px) {
   .archive-page {
     padding-right: 16px !important;
@@ -2633,6 +2638,11 @@ tbody td {
 
   .archive-list > div > div:last-child {
     margin-left: auto;
+  }
+
+  .physical-archive-result {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px !important;
   }
 }
 

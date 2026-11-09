@@ -2,10 +2,82 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from rest_framework.pagination import PageNumberPagination
+from catalog.models import PhysicalArchiveRecord, normalize_search_text
 from catalog.services import CatalogService
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class PhysicalArchivePagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
+class PhysicalArchiveSearchView(APIView):
+    """Recherche publique dans les notices de documents conservés en magasin."""
+
+    permission_classes = [permissions.AllowAny]
+    pagination_class = PhysicalArchivePagination
+
+    def get(self, request):
+        query = request.query_params.get('q', '').strip()
+        if len(query) < 2:
+            return Response(
+                {'success': False, 'detail': 'Saisissez au moins 2 caractères.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(query) > 120:
+            return Response(
+                {'success': False, 'detail': 'La recherche est limitée à 120 caractères.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tokens = normalize_search_text(query).split()
+        if not tokens:
+            return Response(
+                {'success': False, 'detail': 'La recherche doit contenir des lettres ou des chiffres.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if len(tokens) > 15:
+            return Response(
+                {'success': False, 'detail': 'La recherche est limitée à 15 termes.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        queryset = PhysicalArchiveRecord.objects.filter(is_active=True)
+        document_type = request.query_params.get('type', '').strip()
+        if document_type:
+            queryset = queryset.filter(document_type__iexact=document_type)
+        for token in tokens:
+            queryset = queryset.filter(search_text__contains=token)
+        queryset = queryset.order_by('title', 'author', 'shelfmark', 'pk')
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        results = [
+            {
+                'id': record.pk,
+                'document_type': record.document_type,
+                'title': record.title,
+                'author': record.author,
+                'director': record.director,
+                'publication_info': record.publication_info,
+                'degree_department': record.degree_department,
+                'keywords': record.keywords,
+                'language': record.language,
+                'copy_count': record.copy_count,
+                'copy_number': record.copy_number,
+                'shelfmark': record.shelfmark,
+            }
+            for record in page
+        ]
+        response = paginator.get_paginated_response(results)
+        response.data['success'] = True
+        response.data['query'] = query
+        return response
 
 
 class SearchCatalogView(APIView):

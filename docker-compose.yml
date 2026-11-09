@@ -66,6 +66,7 @@ services:
       - DB_HOST=db
       - DB_PORT=5432
       - ARCHIVE_METADATA_CSV=/app/Documents/archives_final.csv
+      - 'PHYSICAL_ARCHIVE_FILES=["/app/Documents/Fichier_Description_Theses & Mémoires_V2 (Enregistré automatiquement).xlsx"]'
       # Frontend
       - FRONTEND_URL=http://bcuy1
       # WebService PMB

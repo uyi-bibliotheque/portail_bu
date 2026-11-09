@@ -148,6 +148,9 @@ export const searchCatalog = async (params) => {
   }
 };
 
+export const searchPhysicalArchives = (params) =>
+  api.get('/catalog/physical-archives/', { params });
+
 export const getNotice = async (id) => {
   try {
     const response = await api.get(`/catalog/notice/${id}/`);

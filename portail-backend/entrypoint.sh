@@ -61,6 +61,16 @@ if [ -n "${ARCHIVE_METADATA_CSV:-}" ]; then
     echo "✅ Métadonnées des archives synchronisées"
 fi
 
+# ═══════════════════════════════════════════════════════════════════
+# IMPORT DU CATALOGUE DES MÉMOIRES ET THÈSES PHYSIQUES
+# ═══════════════════════════════════════════════════════════════════
+
+if [ -n "${PHYSICAL_ARCHIVE_FILES:-}" ]; then
+    echo "📚 Import du catalogue des archives physiques..."
+    python manage.py import_physical_archives --files-json "$PHYSICAL_ARCHIVE_FILES"
+    echo "✅ Catalogue des archives physiques importé"
+fi
+
 
 # ═══════════════════════════════════════════════════════════════════
 # CRÉATION / VÉRIFICATION ADMINISTRATEUR

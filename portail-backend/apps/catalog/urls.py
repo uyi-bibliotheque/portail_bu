@@ -2,12 +2,18 @@
 from django.urls import path
 from catalog.views import (
     SearchCatalogView, NoticeDetailView, SuggestView,
-    UserAccountView, AddReviewView, SuggestPurchaseView
+    UserAccountView, AddReviewView, SuggestPurchaseView,
+    PhysicalArchiveSearchView,
 )
 
 urlpatterns = [
     # Recherche
     path('catalog/search/', SearchCatalogView.as_view(), name='catalog_search'),
+    path(
+        'catalog/physical-archives/',
+        PhysicalArchiveSearchView.as_view(),
+        name='physical_archive_search',
+    ),
     path('catalog/notice/<str:notice_id>/', NoticeDetailView.as_view(), name='notice_detail'),
     path('catalog/suggest/', SuggestView.as_view(), name='catalog_suggest'),
     

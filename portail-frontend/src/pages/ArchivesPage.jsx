@@ -8,12 +8,13 @@ import {
   ArrowLeft, BookOpen, Award, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   Layers, CheckCircle, Filter, X,
   Library, GraduationCap, Sparkles, Share2,
-  Printer, ExternalLink, AlertCircle, Globe
+  Printer, ExternalLink, AlertCircle, Globe, MapPin, Copy, Tag
 } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { searchPhysicalArchives } from '../services/endpoints';
 import axios from 'axios';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -577,6 +578,342 @@ function SkeletonLoader({ count = 6, viewMode = 'grid' }) {
   );
 }
 
+function PhysicalArchivesSearch({ isEnglish }) {
+  const [query, setQuery] = useState('');
+  const [searchedQuery, setSearchedQuery] = useState('');
+  const [records, setRecords] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
+  const pageSize = 20;
+
+  const executeSearch = async (term, pageNumber = 1) => {
+    const cleanQuery = term.trim();
+    if (cleanQuery.length < 2) {
+      setError(isEnglish ? 'Enter at least 2 characters.' : 'Saisissez au moins 2 caractères.');
+      setRecords([]);
+      setTotal(0);
+      setHasSearched(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setHasSearched(true);
+    setSearchedQuery(cleanQuery);
+    setPage(pageNumber);
+    try {
+      const response = await searchPhysicalArchives({
+        q: cleanQuery,
+        page: pageNumber,
+        page_size: pageSize,
+      });
+      setRecords(response.data?.results || []);
+      setTotal(response.data?.count || 0);
+    } catch (requestError) {
+      console.error('Erreur de recherche dans les archives physiques:', requestError);
+      setRecords([]);
+      setTotal(0);
+      setError(
+        requestError.response?.data?.detail
+        || (isEnglish
+          ? 'The physical collection search is temporarily unavailable.'
+          : 'La recherche dans le fonds physique est momentanément indisponible.')
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  return (
+    <section
+      id="fonds-physique"
+      aria-labelledby="physical-archives-title"
+      style={{
+        marginBottom: 48,
+        padding: 'clamp(20px, 3vw, 30px)',
+        background: 'linear-gradient(145deg, #f8fafc 0%, #ffffff 68%)',
+        border: '1px solid var(--border)',
+        borderRadius: 20,
+        boxShadow: '0 10px 30px rgba(27,20,100,0.06)',
+      }}
+    >
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 20,
+      }}>
+        <div style={{ maxWidth: 760 }}>
+          <p style={{
+            margin: '0 0 7px', color: '#0f766e', fontSize: 11,
+            fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+          }}>
+            {isEnglish ? 'PHYSICAL COLLECTION · LIBRARY STACKS' : 'FONDS PHYSIQUE · MAGASIN'}
+          </p>
+          <h2 id="physical-archives-title" className="font-serif" style={{
+            margin: 0, color: 'var(--bleu-nuit)',
+            fontSize: 'clamp(21px, 2.5vw, 28px)', fontWeight: 400,
+          }}>
+            {isEnglish ? 'Find a thesis or dissertation in the stacks' : 'Retrouver un mémoire ou une thèse en magasin'}
+          </h2>
+          <p style={{
+            margin: '9px 0 0', color: 'var(--texte-muted)',
+            fontSize: 13, lineHeight: 1.65,
+          }}>
+            {isEnglish
+              ? 'Search titles, authors, keywords, copy numbers or shelfmarks. The shelfmark and copy number help library staff locate the physical document.'
+              : 'Recherchez par titre, auteur, mots-clés, numéro d’exemplaire ou cote. La cote et le numéro d’exemplaire permettent au personnel de retrouver le document.'}
+          </p>
+        </div>
+        <span style={{
+          padding: '8px 13px', borderRadius: 10,
+          background: '#ecfdf5', color: '#047857',
+          fontSize: 12, fontWeight: 700,
+        }}>
+          {isEnglish ? 'Physical records' : 'Notices de documents physiques'}
+        </span>
+      </div>
+
+      <form
+        onSubmit={event => {
+          event.preventDefault();
+          executeSearch(query);
+        }}
+        style={{
+          display: 'flex', gap: 10, flexWrap: 'wrap',
+          marginBottom: 14,
+        }}
+      >
+        <label htmlFor="physical-archive-search" style={{
+          position: 'relative', flex: '1 1 360px',
+        }}>
+          <Search size={18} aria-hidden="true" style={{
+            position: 'absolute', left: 14, top: '50%',
+            transform: 'translateY(-50%)', color: '#77758a',
+          }} />
+          <input
+            id="physical-archive-search"
+            type="search"
+            value={query}
+            maxLength={120}
+            onChange={event => setQuery(event.target.value)}
+            placeholder={isEnglish
+              ? 'Title, author, keyword, copy number or shelfmark…'
+              : 'Titre, auteur, mot-clé, numéro d’exemplaire ou cote…'}
+            style={{
+              width: '100%', minHeight: 48, padding: '11px 14px 11px 44px',
+              border: '1px solid var(--border)', borderRadius: 12,
+              fontSize: 14, background: 'white', outline: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={loading || query.trim().length < 2}
+          style={{
+            minHeight: 48, padding: '0 22px', borderRadius: 12,
+            border: 'none', background: '#0f766e', color: 'white',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            opacity: loading || query.trim().length < 2 ? 0.6 : 1,
+          }}
+        >
+          {loading
+            ? (isEnglish ? 'Searching…' : 'Recherche…')
+            : (isEnglish ? 'Search the stacks' : 'Rechercher en magasin')}
+        </button>
+      </form>
+
+      {error && (
+        <p role="alert" style={{ color: '#b42318', fontSize: 13, margin: '0 0 14px' }}>
+          {error}
+        </p>
+      )}
+      {!hasSearched && !error && (
+        <p style={{ color: 'var(--texte-muted)', fontSize: 12, margin: 0 }}>
+          {isEnglish
+            ? 'The physical collection is distinct from the digital archives above and from the live PMB catalogue.'
+            : 'Ce fonds physique est distinct des archives numériques et du catalogue PMB consulté en direct.'}
+        </p>
+      )}
+      {hasSearched && !loading && (
+        <p aria-live="polite" style={{
+          color: 'var(--texte-muted)', fontSize: 12, margin: '0 0 14px',
+        }}>
+          {isEnglish
+            ? `${total} result${total === 1 ? '' : 's'} for “${searchedQuery}”`
+            : `${total} résultat${total > 1 ? 's' : ''} pour « ${searchedQuery} »`}
+        </p>
+      )}
+
+      {loading && (
+        <div role="status" style={{ color: 'var(--texte-muted)', fontSize: 13, padding: 18 }}>
+          {isEnglish ? 'Searching the physical collection…' : 'Recherche dans le fonds physique…'}
+        </div>
+      )}
+
+      {!loading && hasSearched && records.length === 0 && !error && (
+        <div style={{
+          padding: 22, textAlign: 'center', background: 'white',
+          border: '1px dashed var(--border)', borderRadius: 14,
+          color: 'var(--texte-muted)', fontSize: 13,
+        }}>
+          {isEnglish
+            ? 'No matching physical record was found.'
+            : 'Aucune notice du fonds physique ne correspond à cette recherche.'}
+        </div>
+      )}
+
+      {!loading && records.length > 0 && (
+        <div style={{ display: 'grid', gap: 12 }}>
+          {records.map(record => (
+            <article key={record.id} className="physical-archive-result" style={{
+              padding: '18px 20px', background: 'white',
+              border: '1px solid var(--border)', borderRadius: 14,
+              gap: 18, alignItems: 'center',
+            }}>
+              <div>
+                <div style={{
+                  display: 'flex', flexWrap: 'wrap', alignItems: 'center',
+                  gap: 8, marginBottom: 8,
+                }}>
+                  <span style={{
+                    padding: '4px 9px', borderRadius: 30,
+                    background: '#ecfdf5', color: '#047857',
+                    fontSize: 10, fontWeight: 800,
+                  }}>
+                    {record.document_type || (isEnglish ? 'Physical document' : 'Document')}
+                  </span>
+                  {record.language && (
+                    <span style={{ color: 'var(--texte-muted)', fontSize: 11 }}>
+                      {record.language}
+                    </span>
+                  )}
+                </div>
+                <h3 style={{
+                  margin: '0 0 7px', color: 'var(--bleu-nuit)',
+                  fontSize: 16, lineHeight: 1.45,
+                }}>
+                  {record.title}
+                </h3>
+                <p style={{
+                  margin: 0, color: 'var(--texte-muted)', fontSize: 13,
+                }}>
+                  <User size={14} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: 5 }} />
+                  {record.author || (isEnglish ? 'Author not listed' : 'Auteur non renseigné')}
+                </p>
+                {record.keywords && (
+                  <p style={{
+                    margin: '10px 0 0', color: '#475569',
+                    fontSize: 12, lineHeight: 1.55,
+                  }}>
+                    <Tag size={13} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: 5, color: '#0f766e' }} />
+                    {record.keywords}
+                  </p>
+                )}
+              </div>
+
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr',
+                gap: 9, alignSelf: 'stretch',
+              }}>
+                <div style={{
+                  gridColumn: '1 / -1', padding: '11px 12px',
+                  borderRadius: 10, background: '#f0fdfa',
+                  border: '1px solid #ccfbf1',
+                }}>
+                  <span style={{
+                    display: 'block', marginBottom: 4, color: '#0f766e',
+                    fontSize: 10, fontWeight: 800, textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}>
+                    <MapPin size={12} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: 4 }} />
+                    {isEnglish ? 'Shelfmark' : 'Cote'}
+                  </span>
+                  <strong style={{
+                    color: '#134e4a', fontSize: 14, overflowWrap: 'anywhere',
+                  }}>
+                    {record.shelfmark || (isEnglish ? 'Not listed' : 'Non renseignée')}
+                  </strong>
+                </div>
+                <div style={{
+                  padding: '10px 11px', borderRadius: 10,
+                  background: '#f8fafc', border: '1px solid #e2e8f0',
+                }}>
+                  <span style={{
+                    display: 'block', marginBottom: 4, color: '#64748b',
+                    fontSize: 10, fontWeight: 700,
+                  }}>
+                    <Copy size={12} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: 4 }} />
+                    {isEnglish ? 'Copy number' : 'N° exemplaire'}
+                  </span>
+                  <strong style={{ color: 'var(--bleu-nuit)', fontSize: 13, overflowWrap: 'anywhere' }}>
+                    {record.copy_number || (isEnglish ? 'Not listed' : 'Non renseigné')}
+                  </strong>
+                </div>
+                <div style={{
+                  padding: '10px 11px', borderRadius: 10,
+                  background: '#f8fafc', border: '1px solid #e2e8f0',
+                }}>
+                  <span style={{
+                    display: 'block', marginBottom: 4, color: '#64748b',
+                    fontSize: 10, fontWeight: 700,
+                  }}>
+                    {isEnglish ? 'Copies' : 'Exemplaires'}
+                  </span>
+                  <strong style={{ color: 'var(--bleu-nuit)', fontSize: 13 }}>
+                    {record.copy_count || '—'}
+                  </strong>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {!loading && totalPages > 1 && (
+        <div style={{
+          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          gap: 12, marginTop: 18,
+        }}>
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => executeSearch(searchedQuery, page - 1)}
+            style={{
+              padding: '8px 13px', borderRadius: 9,
+              border: '1px solid var(--border)', background: 'white',
+              color: 'var(--bleu-nuit)', cursor: page <= 1 ? 'not-allowed' : 'pointer',
+              opacity: page <= 1 ? 0.5 : 1,
+            }}
+          >
+            {isEnglish ? 'Previous' : 'Précédent'}
+          </button>
+          <span style={{ color: 'var(--texte-muted)', fontSize: 12 }}>
+            {isEnglish ? `Page ${page} of ${totalPages}` : `Page ${page} sur ${totalPages}`}
+          </span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => executeSearch(searchedQuery, page + 1)}
+            style={{
+              padding: '8px 13px', borderRadius: 9,
+              border: '1px solid var(--border)', background: 'white',
+              color: 'var(--bleu-nuit)', cursor: page >= totalPages ? 'not-allowed' : 'pointer',
+              opacity: page >= totalPages ? 0.5 : 1,
+            }}
+          >
+            {isEnglish ? 'Next' : 'Suivant'}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // ─── PAGE PRINCIPALE ─────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
@@ -962,6 +1299,8 @@ export default function ArchivesPage() {
             })}
           </div>
         </section>
+
+        <PhysicalArchivesSearch isEnglish={isEnglish} />
 
         {/* ── RÉPERTOIRES OFFICIELS ── */}
         <section aria-label="Répertoires officiels" style={{ marginBottom: 48 }}>

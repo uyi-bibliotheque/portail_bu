@@ -750,6 +750,8 @@ function NoticeCard({ notice, view, isFavorite, onToggleFavorite }) {
 export default function CataloguePage() {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const { language } = useLanguage();
+  const isEnglish = language === 'en';
   const [params, setParams] = useSearchParams();
   
   const [results, setResults] = useState([]);
@@ -1101,6 +1103,19 @@ export default function CataloguePage() {
               >
                 Rechercher dans l’OPAC PMB
               </a>
+              <Link
+                to="/archives#fonds-physique"
+                style={{
+                  color: 'white',
+                  fontSize: 12,
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 3,
+                }}
+              >
+                {isEnglish
+                  ? 'Find a thesis or dissertation in the stacks (shelfmark, copy number)'
+                  : 'Rechercher un mémoire ou une thèse en magasin (cote, exemplaire)'}
+              </Link>
             </div>
           </form>
 
