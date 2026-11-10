@@ -3,10 +3,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions, generics
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from django.conf import settings
 from apps.accounts.serializers import (
     LoginSerializer, PortalUserSerializer,
     PortalUserCreateSerializer, StaffUserCreateSerializer,
+    AdminUserUpdateSerializer,
     StudentRegistrationSerializer,
     ProfileUpdateSerializer, PasswordChangeSerializer, PreferencesSerializer,
 )
@@ -207,15 +210,22 @@ class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:
-            data = self.request.data
-            if data.get('role') in [
-                PortalUser.Role.ADMIN,
-                PortalUser.Role.BIBLIO,
-                PortalUser.Role.AIDE_BIBLIO,
-            ]:
-                return StaffUserCreateSerializer
-            return PortalUserCreateSerializer
+            return AdminUserUpdateSerializer
         return PortalUserSerializer
+
+    def perform_destroy(self, instance):
+        if instance.pk == self.request.user.pk:
+            raise PermissionDenied("Vous ne pouvez pas supprimer votre propre compte.")
+        if instance.is_superuser:
+            raise PermissionDenied("Le superutilisateur ne peut pas être supprimé depuis cette page.")
+        if instance.role == PortalUser.Role.ADMIN and instance.is_active:
+            other_active_admins = PortalUser.objects.filter(
+                role=PortalUser.Role.ADMIN,
+                is_active=True,
+            ).exclude(pk=instance.pk).count()
+            if other_active_admins == 0:
+                raise PermissionDenied("Impossible de supprimer le dernier administrateur actif.")
+        instance.delete()
 
 
 class StaffOnlyView(APIView):
@@ -246,31 +256,14 @@ class AideBiblioDashboardView(APIView):
                 'title': 'Tableau de bord - Aide-Bibliothécaire',
                 'sections': [
                     {
-                        'id': 'cataloguer',
-                        'title': 'Cataloguer un ouvrage',
-                        'description': 'Ajouter ou modifier des ouvrages dans le catalogue PMB',
-                        'icon': '📚',
-                        'action': 'open_pmb_catalog',
-                        'url': '/pmb/catalog/new'
-                    },
-                    {
-                        'id': 'rechercher',
-                        'title': 'Rechercher un ouvrage',
-                        'description': 'Rechercher des ouvrages dans le catalogue PMB',
-                        'icon': '🔍',
-                        'action': 'search_pmb_catalog',
-                        'url': '/pmb/catalog/search'
-                    },
-                    {
-                        'id': 'modifier',
-                        'title': 'Modifier un ouvrage',
-                        'description': "Modifier les informations d'un ouvrage existant",
-                        'icon': '✏️',
-                        'action': 'edit_pmb_catalog',
-                        'url': '/pmb/catalog/edit'
+                        'id': 'catalogue',
+                        'title': 'Accéder à PMB',
+                        'description': 'Ouvrir le catalogue et utiliser les fonctionnalités accessibles à votre compte.',
+                        'action': 'catalogue',
+                        'url': settings.PMB_BASE_URL,
                     }
                 ],
-                'pmb_url': 'https://pmb.bcu-uyi.cm'
+                'pmb_url': settings.PMB_BASE_URL,
             }
         }, status=status.HTTP_200_OK)
 
@@ -280,23 +273,20 @@ class AideBiblioCatalogRedirectView(APIView):
     permission_classes = [IsAideBiblio]
 
     def post(self, request):
-        action = request.data.get('action', 'new')
-
-        pmb_urls = {
-            'new': 'https://pmb.bcu-uyi.cm/index.php?lvl=notice_add',
-            'search': 'https://pmb.bcu-uyi.cm/index.php?lvl=search',
-            'edit': 'https://pmb.bcu-uyi.cm/index.php?lvl=notice_edit',
-        }
-
-        pmb_url = pmb_urls.get(action, pmb_urls['new'])
+        action = request.data.get('action', 'catalogue')
+        if not isinstance(action, str) or action not in {'catalogue', 'new', 'search', 'edit'}:
+            return Response(
+                {'success': False, 'detail': 'Action PMB non prise en charge.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         logger.info(f"Aide-Bibliothécaire {request.user.username} redirigé vers PMB: {action}")
 
         return Response({
             'success': True,
-            'redirect_url': pmb_url,
+            'redirect_url': settings.PMB_BASE_URL,
             'action': action,
-            'message': f'Redirection vers PMB pour {action}',
+            'message': 'Ouverture de l’interface PMB.',
         }, status=status.HTTP_200_OK)
 
 
@@ -306,14 +296,9 @@ class AideBiblioStatsView(APIView):
 
     def get(self, request):
         return Response({
-            'success': True,
-            'stats': {
-                'total_ouvrages': 15234,
-                'ouvrages_ajoutes_mois': 43,
-                'ouvrages_modifies_mois': 87,
-                'derniere_action': '2026-08-10 14:30:00'
-            }
-        }, status=status.HTTP_200_OK)
+            'success': False,
+            'detail': 'Les statistiques PMB ne sont pas disponibles : aucune source fiable n’est configurée.',
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 # ═══════════════════════════════════════════════════════════════════

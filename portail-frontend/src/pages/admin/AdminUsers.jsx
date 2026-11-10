@@ -1,11 +1,14 @@
 // pages/admin/AdminUsers.jsx - VERSION COMPLÈTE CORRIGÉE
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, RefreshCw, UserPlus, Shield, BookOpen, UserCheck } from 'lucide-react';
+import {
+  ArrowLeft, Users, RefreshCw, UserPlus, Shield, BookOpen, UserCheck,
+  Trash2, UserX, Check,
+} from 'lucide-react';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { listUsers, createUser } from '../../services/endpoints';
+import { listUsers, createUser, updateUser, deleteUser } from '../../services/endpoints';
 
 const COLORS = {
   bleuNuit: '#1B1464',
@@ -22,6 +25,14 @@ const AVAILABLE_ROLES = [
   { value: 'ADMIN', label: '⚙️ Administrateur', description: 'Accès complet au système' },
 ];
 
+const MANAGEABLE_ROLES = [
+  { value: 'ETUDIANT', label: 'Étudiant' },
+  { value: 'ENSEIGNANT', label: 'Enseignant' },
+  { value: 'AIDE_BIBLIO', label: 'Aide-bibliothécaire' },
+  { value: 'BIBLIO', label: 'Bibliothécaire' },
+  { value: 'ADMIN', label: 'Administrateur' },
+];
+
 export default function AdminUsers() {
   const { user, loading: authLoading, isAdmin } = useAuth();
   const { addToast } = useToast();
@@ -35,6 +46,7 @@ export default function AdminUsers() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [userActionId, setUserActionId] = useState(null);
 
   const loadUsers = async () => {
     setLoadingData(true);
@@ -82,6 +94,60 @@ export default function AdminUsers() {
       addToast('❌ ' + (typeof msg === 'string' ? msg : 'Erreur'), 'error');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleRoleChange = async (account, role) => {
+    if (role === account.role || !window.confirm(
+      `Confirmer le changement de rôle de ${account.username} vers « ${MANAGEABLE_ROLES.find(item => item.value === role)?.label} » ?`
+    )) return;
+    setUserActionId(account.id);
+    try {
+      await updateUser(account.id, { role });
+      addToast('Rôle utilisateur mis à jour', 'success');
+      await loadUsers();
+    } catch (err) {
+      const message = err.response?.data?.role?.[0]
+        || err.response?.data?.detail
+        || err.response?.data?.non_field_errors?.[0]
+        || 'Impossible de modifier le rôle.';
+      addToast(message, 'error');
+    } finally {
+      setUserActionId(null);
+    }
+  };
+
+  const handleToggleActive = async (account) => {
+    const nextStatus = !account.is_active;
+    const action = nextStatus ? 'réactivation' : 'désactivation';
+    if (!window.confirm(`Confirmer la ${action} du compte ${account.username} ?`)) return;
+    setUserActionId(account.id);
+    try {
+      await updateUser(account.id, { is_active: nextStatus });
+      addToast(nextStatus ? 'Compte réactivé' : 'Compte désactivé', 'success');
+      await loadUsers();
+    } catch (err) {
+      const message = err.response?.data?.detail
+        || err.response?.data?.non_field_errors?.[0]
+        || 'Impossible de modifier le statut.';
+      addToast(message, 'error');
+    } finally {
+      setUserActionId(null);
+    }
+  };
+
+  const handleDelete = async (account) => {
+    if (!window.confirm(`Supprimer définitivement le compte ${account.username} ? Cette action est irréversible.`)) return;
+    setUserActionId(account.id);
+    try {
+      await deleteUser(account.id);
+      setUsers(current => current.filter(item => item.id !== account.id));
+      addToast('Compte utilisateur supprimé', 'success');
+    } catch (err) {
+      const message = err.response?.data?.detail || 'Impossible de supprimer ce compte.';
+      addToast(message, 'error');
+    } finally {
+      setUserActionId(null);
     }
   };
 
@@ -199,6 +265,8 @@ export default function AdminUsers() {
                       <th>Nom</th>
                       <th>Email</th>
                       <th>Rôle</th>
+                      <th>Statut</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -211,12 +279,62 @@ export default function AdminUsers() {
                           {u.email || '-'}
                         </td>
                         <td>
-                          <span className={`badge ${getRoleBadge(u.role)}`} style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4
-                          }}>
-                            {getRoleIcon(u.role)}
-                            {u.role_display || u.role || 'Utilisateur'}
+                          {u.id === user?.id || u.is_superuser ? (
+                            <span className={`badge ${getRoleBadge(u.role)}`} style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4
+                            }}>
+                              {getRoleIcon(u.role)}
+                              {u.role_display || u.role || 'Utilisateur'}
+                            </span>
+                          ) : (
+                            <select
+                              className="form-select"
+                              aria-label={`Modifier le rôle de ${u.username}`}
+                              value={u.role}
+                              disabled={userActionId === u.id}
+                              onChange={event => handleRoleChange(u, event.target.value)}
+                              style={{ minWidth: 150, padding: '6px 8px', fontSize: 12 }}
+                            >
+                              {MANAGEABLE_ROLES.map(role => (
+                                <option key={role.value} value={role.value}>{role.label}</option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                        <td>
+                          <span className={`badge ${u.is_active ? 'badge-green' : 'badge-red'}`}>
+                            {u.is_active ? 'Actif' : 'Désactivé'}
                           </span>
+                        </td>
+                        <td>
+                          {u.id === user?.id || u.is_superuser ? (
+                            <span style={{ color: COLORS.texteMuted, fontSize: 12 }}>Protégé</span>
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                aria-label={`${u.is_active ? 'Désactiver' : 'Réactiver'} ${u.username}`}
+                                title={u.is_active ? 'Désactiver le compte' : 'Réactiver le compte'}
+                                disabled={userActionId === u.id}
+                                onClick={() => handleToggleActive(u)}
+                                style={{ color: u.is_active ? '#b45309' : '#047857' }}
+                              >
+                                {u.is_active ? <UserX size={15} /> : <Check size={15} />}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                aria-label={`Supprimer ${u.username}`}
+                                title="Supprimer le compte"
+                                disabled={userActionId === u.id}
+                                onClick={() => handleDelete(u)}
+                                style={{ color: '#b91c1c' }}
+                              >
+                                {userActionId === u.id ? <RefreshCw size={15} className="spin" /> : <Trash2 size={15} />}
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

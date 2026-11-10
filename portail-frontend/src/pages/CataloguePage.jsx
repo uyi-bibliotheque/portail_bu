@@ -203,7 +203,12 @@ function SearchAutocomplete({ value, onChange, onSearch, placeholder = "Recherch
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => value.length >= 2 && suggestions.length > 0 && setIsOpen(true)}
+          onFocus={(e) => {
+            if (value.length >= 2 && suggestions.length > 0) {
+              setIsOpen(true);
+            }
+            e.currentTarget.style.borderColor = 'var(--or)';
+          }}
           placeholder={placeholder}
           disabled={disabled}
           style={{
@@ -216,7 +221,6 @@ function SearchAutocomplete({ value, onChange, onSearch, placeholder = "Recherch
             transition: 'all 0.2s',
             outline: 'none'
           }}
-          onFocus={e => e.currentTarget.style.borderColor = 'var(--or)'}
           onBlur={e => e.currentTarget.style.borderColor = 'var(--border)'}
         />
         {loading && (

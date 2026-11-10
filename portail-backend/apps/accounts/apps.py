@@ -20,17 +20,21 @@ class AccountsConfig(AppConfig):
         from django.contrib.auth import get_user_model
         from django.apps import apps
         
+        import os
         def create_default_admin(sender, **kwargs):
             """Crée l'administrateur par défaut après les migrations."""
             try:
                 User = get_user_model()
                 PortalUser = apps.get_model('accounts', 'PortalUser')
-                
+                admin_password = os.environ.get('ADMIN_BCU_PASSWORD')
+                if not admin_password:
+                    logger.error("ADMIN_BCU_PASSWORD environment variable is not set. Cannot create default admin user.")
+                    return
                 if not User.objects.filter(username='admin_bcu').exists():
                     admin = User.objects.create_superuser(
                         username='admin_bcu',
                         email='admin@bcu-uyi.cm',
-                        password='AdminBCU2025!',
+                        password=admin_password,
                         first_name='Administrateur',
                         last_name='BCU',
                         role=PortalUser.Role.ADMIN,

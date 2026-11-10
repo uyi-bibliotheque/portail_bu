@@ -64,6 +64,7 @@ class PhysicalArchiveSearchView(APIView):
                 'title': record.title,
                 'author': record.author,
                 'director': record.director,
+                'address': record.publication_info,
                 'publication_info': record.publication_info,
                 'degree_department': record.degree_department,
                 'keywords': record.keywords,

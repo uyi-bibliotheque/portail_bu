@@ -1,7 +1,7 @@
 """Tests unitaires et d'intégration - Application accounts."""
 import uuid
 from unittest.mock import patch
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -270,6 +270,57 @@ class UserProfileViewTest(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class AideBiblioViewsTest(APITestCase):
+    def setUp(self):
+        self.user = PortalUser.objects.create_user(
+            username="aide_biblio_test",
+            email="aide_biblio_test@test.cm",
+            password="testpass",
+            role=PortalUser.Role.AIDE_BIBLIO,
+            auth_source=PortalUser.AuthSource.LOCAL,
+        )
+        self.client.force_authenticate(user=self.user)
+
+    @override_settings(PMB_BASE_URL="http://10.4.2.112/pmb/")
+    def test_dashboard_uses_configured_pmb_url(self):
+        response = self.client.get(reverse("aide_biblio_dashboard"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["dashboard"]["pmb_url"], "http://10.4.2.112/pmb/")
+        self.assertEqual(
+            response.data["dashboard"]["sections"][0]["url"],
+            "http://10.4.2.112/pmb/",
+        )
+
+    @override_settings(PMB_BASE_URL="http://10.4.2.112/pmb/")
+    def test_catalog_redirect_opens_configured_pmb_root(self):
+        response = self.client.post(
+            reverse("aide_biblio_catalog"),
+            {"action": "search"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["redirect_url"], "http://10.4.2.112/pmb/")
+
+    def test_catalog_redirect_rejects_unsupported_action(self):
+        response = self.client.post(
+            reverse("aide_biblio_catalog"),
+            {"action": "loans"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(response.data["success"])
+
+    def test_stats_endpoint_does_not_return_mock_values(self):
+        response = self.client.get(reverse("aide_biblio_stats"))
+
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertFalse(response.data["success"])
+        self.assertNotIn("stats", response.data)
+
+
 class StudentRegistrationViewTest(APITestCase):
     def setUp(self):
         self.url = reverse("auth_register")
@@ -357,6 +408,61 @@ class AdminUserListCreateViewTest(APITestCase):
             "password": "pass1234", "role": PortalUser.Role.ETUDIANT,
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
+
+
+    def test_admin_can_change_user_role_and_staff_access(self):
+        aide = PortalUser.objects.create_user(
+            username="aide_to_biblio",
+            email="aide_to_biblio@test.cm",
+            password="testpass",
+            role=PortalUser.Role.AIDE_BIBLIO,
+            is_staff=True,
+        )
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.patch(
+            reverse("admin_users_detail", kwargs={"id": aide.id}),
+            {"role": PortalUser.Role.BIBLIO},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        aide.refresh_from_db()
+        self.assertEqual(aide.role, PortalUser.Role.BIBLIO)
+        self.assertTrue(aide.is_staff)
+
+    def test_admin_can_change_user_active_status(self):
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.patch(
+            reverse("admin_users_detail", kwargs={"id": self.student.id}),
+            {"is_active": False},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.student.refresh_from_db()
+        self.assertFalse(self.student.is_active)
+
+    def test_admin_can_delete_user(self):
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.delete(
+            reverse("admin_users_detail", kwargs={"id": self.student.id})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(PortalUser.objects.filter(pk=self.student.pk).exists())
+
+    def test_admin_cannot_delete_own_account(self):
+        self.client.force_authenticate(user=self.admin)
+
+        response = self.client.delete(
+            reverse("admin_users_detail", kwargs={"id": self.admin.id})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(PortalUser.objects.filter(pk=self.admin.pk).exists())
 
 
 class StaffOnlyViewTest(APITestCase):

@@ -66,37 +66,6 @@ export const updatePreferences = async (preferences) => {
   }
 };
 
-// ─── AIDE-BIBLIOTHÉCAIRE ────────────────────────────────────────
-export const getAideBiblioDashboard = async () => {
-  try {
-    const response = await api.get('/auth/aide-dashboard/');
-    return response;
-  } catch (error) {
-    console.error('Erreur récupération dashboard aide-bibliothécaire:', error);
-    return { data: { success: false, dashboard: null } };
-  }
-};
-
-export const redirectToPMB = async (action = 'new') => {
-  try {
-    const response = await api.post('/auth/aide-catalog/', { action });
-    return response;
-  } catch (error) {
-    console.error('Erreur redirection PMB:', error);
-    return { data: { success: false, redirect_url: null } };
-  }
-};
-
-export const getAideBiblioStats = async () => {
-  try {
-    const response = await api.get('/auth/aide-stats/');
-    return response;
-  } catch (error) {
-    console.error('Erreur récupération stats aide-bibliothécaire:', error);
-    return { data: { success: false, stats: null } };
-  }
-};
-
 // ─── INSCRIPTION ────────────────────────────────────────────────
 export const register = async (data) => {
   try {
@@ -806,7 +775,7 @@ export const listUsers = async (params) => {
     return response;
   } catch (error) {
     console.error('Erreur liste utilisateurs:', error);
-    return { data: { results: [] } };
+    throw error;
   }
 };
 
@@ -885,9 +854,6 @@ export default {
   // ✅ Profile Self-Service
   updateProfile, updateFullProfile, changePassword, updatePreferences,
   updateUserProfile,
-
-  // Aide-Bibliothécaire
-  getAideBiblioDashboard, redirectToPMB, getAideBiblioStats,
 
   // Catalogue
   searchCatalog, getNotice, getSearchSuggestions, getFacetedSearch,

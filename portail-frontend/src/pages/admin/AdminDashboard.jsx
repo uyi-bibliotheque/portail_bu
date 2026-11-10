@@ -24,7 +24,7 @@ import { useToast } from '../../contexts/ToastContext';
 import {
   getDashboardStats, getMemoireStats, getNotifications,
   getUnreadCount, getDashboardChart, getTopDocuments,
-  getRecentActivity, listUsers, createUser, getArticles,
+  getRecentActivity, listUsers, createUser, updateUser, deleteUser, getArticles,
   createArticle, updateArticle, deleteArticle, listMemoires,
   updateMemoireStatus, downloadQuitus, markAsRead, markAllAsRead,
   updateProfile, changePassword, getArchiveAnalytics
@@ -82,6 +82,14 @@ const AVAILABLE_ROLES = [
   { value: 'BIBLIO', label: '📚 Bibliothécaire', description: 'Gestion des mémoires et quitus' },
   { value: 'AIDE_BIBLIO', label: '🤝 Aide-Bibliothécaire', description: 'Catalogage et gestion du PMB' },
   { value: 'ADMIN', label: '⚙️ Administrateur', description: 'Accès complet au système' },
+];
+
+const USER_MANAGEMENT_ROLES = [
+  { value: 'ETUDIANT', label: 'Étudiant' },
+  { value: 'ENSEIGNANT', label: 'Enseignant' },
+  { value: 'AIDE_BIBLIO', label: 'Aide-bibliothécaire' },
+  { value: 'BIBLIO', label: 'Bibliothécaire' },
+  { value: 'ADMIN', label: 'Administrateur' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1597,9 +1605,11 @@ function ActualitesSection() {
 
 function UsersSection() {
   const { addToast } = useToast();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [userActionId, setUserActionId] = useState(null);
   const [form, setForm] = useState({ username: '', email: '', first_name: '', last_name: '', role: 'BIBLIO', password: '', confirm_password: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -1646,10 +1656,56 @@ function UsersSection() {
     }
   };
 
+  const handleRoleChange = async (account, role) => {
+    if (role === account.role || !window.confirm(
+      `Confirmer le changement de rôle de ${account.username} vers « ${USER_MANAGEMENT_ROLES.find(item => item.value === role)?.label} » ?`
+    )) return;
+    setUserActionId(account.id);
+    try {
+      await updateUser(account.id, { role });
+      addToast('Rôle utilisateur mis à jour', 'success');
+      await loadUsers();
+    } catch (err) {
+      addToast(
+        err.response?.data?.role?.[0] || err.response?.data?.detail || 'Impossible de modifier le rôle.',
+        'error',
+      );
+    } finally { setUserActionId(null); }
+  };
+
+  const handleToggleActive = async (account) => {
+    const nextStatus = !account.is_active;
+    const action = nextStatus ? 'réactivation' : 'désactivation';
+    if (!window.confirm(`Confirmer la ${action} du compte ${account.username} ?`)) return;
+    setUserActionId(account.id);
+    try {
+      await updateUser(account.id, { is_active: nextStatus });
+      addToast(nextStatus ? 'Compte réactivé' : 'Compte désactivé', 'success');
+      await loadUsers();
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Impossible de modifier le statut.', 'error');
+    } finally { setUserActionId(null); }
+  };
+
+  const handleDelete = async (account) => {
+    if (!window.confirm(`Supprimer définitivement le compte ${account.username} ? Cette action est irréversible.`)) return;
+    setUserActionId(account.id);
+    try {
+      await deleteUser(account.id);
+      setUsers(current => current.filter(item => item.id !== account.id));
+      addToast('Compte utilisateur supprimé', 'success');
+    } catch (err) {
+      addToast(err.response?.data?.detail || 'Impossible de supprimer ce compte.', 'error');
+    } finally { setUserActionId(null); }
+  };
+
   return (
     <div className="users-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 24 }}>
       <div style={{ background: 'white', borderRadius: 12, border: '1px solid var(--border)', padding: 20 }}>
-        <h3 style={{ fontWeight: 700, marginBottom: 16 }}>Utilisateurs ({users.length})</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+          <h3 style={{ fontWeight: 700 }}>Utilisateurs ({users.length})</h3>
+          <Link to="/admin/utilisateurs" className="btn btn-ghost btn-sm">Gestion complète</Link>
+        </div>
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: 40, borderRadius: 8 }} />)}
@@ -1663,14 +1719,66 @@ function UsersSection() {
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>Nom</th><th>Email</th><th>Rôle</th></tr>
+                <tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 {users.map(u => (
                   <tr key={u.id || u.username}>
                     <td>{u.first_name ? `${u.first_name} ${u.last_name}` : u.username}</td>
                     <td>{u.email || '-'}</td>
-                    <td><span className={`badge ${getRoleBadge(u.role)}`}>{u.role_display || u.role}</span></td>
+                    <td>
+                      {u.id === currentUser?.id || u.is_superuser ? (
+                        <span className={`badge ${getRoleBadge(u.role)}`}>{u.role_display || u.role}</span>
+                      ) : (
+                        <select
+                          className="form-select"
+                          aria-label={`Modifier le rôle de ${u.username}`}
+                          value={u.role}
+                          disabled={userActionId === u.id}
+                          onChange={event => handleRoleChange(u, event.target.value)}
+                          style={{ minWidth: 150, padding: '6px 8px', fontSize: 12 }}
+                        >
+                          {USER_MANAGEMENT_ROLES.map(role => (
+                            <option key={role.value} value={role.value}>{role.label}</option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`badge ${u.is_active ? 'badge-green' : 'badge-red'}`}>
+                        {u.is_active ? 'Actif' : 'Désactivé'}
+                      </span>
+                    </td>
+                    <td>
+                      {u.id === currentUser?.id || u.is_superuser ? (
+                        <span style={{ color: COLORS.texteMuted, fontSize: 12 }}>Protégé</span>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            aria-label={`${u.is_active ? 'Désactiver' : 'Réactiver'} ${u.username}`}
+                            title={u.is_active ? 'Désactiver le compte' : 'Réactiver le compte'}
+                            disabled={userActionId === u.id}
+                            onClick={() => handleToggleActive(u)}
+                            style={{ color: u.is_active ? COLORS.amber : COLORS.green }}
+                          >
+                            {u.is_active ? <XCircle size={15} /> : <CheckCircle size={15} />}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            aria-label={`Supprimer ${u.username}`}
+                            title="Supprimer le compte"
+                            disabled={userActionId === u.id}
+                            onClick={() => handleDelete(u)}
+                            style={{ color: COLORS.red }}
+                          >
+                            {userActionId === u.id ? <RefreshCw size={15} className="spin" /> : <Trash2 size={15} />}
+                          </button>
+                        </div>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

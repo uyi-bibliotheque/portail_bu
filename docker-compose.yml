@@ -71,6 +71,7 @@ services:
       - FRONTEND_URL=http://bcuy1
       # WebService PMB
       - PMB_WS_URL=${PMB_WS_URL}
+      - PMB_BASE_URL=${PMB_BASE_URL:-http://10.4.2.112/pmb/}
       # Sécurité (désactivée en dev)
       - SECURE_SSL_REDIRECT=False
       - SESSION_COOKIE_SECURE=False

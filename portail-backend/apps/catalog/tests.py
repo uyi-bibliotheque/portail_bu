@@ -95,6 +95,7 @@ class PhysicalArchiveTests(APITestCase):
             document_type='Mémoire',
             title='Étude sur le développement durable',
             author='KAMENI, Alice',
+            publication_info='Université de Yaoundé I: Faculté des sciences, 1997',
             keywords='Gestion forestière; conservation',
             copy_number='D.42001',
             shelfmark='333.7/F2/K1',
@@ -122,6 +123,10 @@ class PhysicalArchiveTests(APITestCase):
         result = response.data['results'][0]
         self.assertEqual(result['title'], 'Étude sur le développement durable')
         self.assertEqual(result['author'], 'KAMENI, Alice')
+        self.assertEqual(
+            result['address'],
+            'Université de Yaoundé I: Faculté des sciences, 1997',
+        )
         self.assertEqual(result['copy_number'], 'D.42001')
         self.assertEqual(result['shelfmark'], '333.7/F2/K1')
 
@@ -221,5 +226,35 @@ class PhysicalArchiveTests(APITestCase):
                 )
                 self.assertEqual(
                     PhysicalArchiveRecord.objects.filter(is_active=False).count(),
+                    1,
+                )
+
+    def test_reimport_keeps_unchanged_source_rows_active(self):
+        with tempfile.TemporaryDirectory() as documents_root:
+            with override_settings(DOCUMENTS_ROOT=documents_root):
+                csv_path = Path(documents_root) / 'notices.csv'
+                csv_path.write_text(
+                    'Titre;Auteur;Cote\n'
+                    'Notice de test;Auteur test;001/A1\n',
+                    encoding='utf-8',
+                )
+                call_command(
+                    'import_physical_archives',
+                    '--file',
+                    str(csv_path),
+                    stdout=io.StringIO(),
+                )
+                call_command(
+                    'import_physical_archives',
+                    '--file',
+                    str(csv_path),
+                    stdout=io.StringIO(),
+                )
+
+                self.assertEqual(
+                    PhysicalArchiveRecord.objects.filter(
+                        source_file='notices.csv',
+                        is_active=True,
+                    ).count(),
                     1,
                 )

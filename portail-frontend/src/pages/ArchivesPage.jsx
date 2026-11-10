@@ -31,7 +31,7 @@ const EXTERNAL_LINKS = {
 // ─── CONSTANTES ──────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL || ''; 
 
 const FACULTIES = {
   'FS':      { name: 'Faculté des Sciences', abbr: 'FS', color: '#0d4a28' },
@@ -657,7 +657,7 @@ function PhysicalArchivesSearch({ isEnglish }) {
             margin: 0, color: 'var(--bleu-nuit)',
             fontSize: 'clamp(21px, 2.5vw, 28px)', fontWeight: 400,
           }}>
-            {isEnglish ? 'Find a dissertation or thesis in stock available for on-site consultation at the library  ' : 'Retrouver un mémoire ou une thèse en magasin consultable sur place a la bibliotheque'}
+            {isEnglish ? 'Find a dissertation or thesis in stock available for on-site consultation at the library  ' : 'Retrouver un mémoire ou une thèse en magasin consultable sur place a la bibliothèque'}
           </h2>
           <p style={{
             margin: '9px 0 0', color: 'var(--texte-muted)',
@@ -805,6 +805,25 @@ function PhysicalArchivesSearch({ isEnglish }) {
                   <User size={14} aria-hidden="true" style={{ verticalAlign: 'text-bottom', marginRight: 5 }} />
                   {record.author || (isEnglish ? 'Author not listed' : 'Auteur non renseigné')}
                 </p>
+                {(record.address || record.publication_info) && (
+                  <p style={{
+                    margin: '9px 0 0',
+                    color: '#475569',
+                    fontSize: 12,
+                    lineHeight: 1.55,
+                    overflowWrap: 'anywhere',
+                  }}>
+                    <MapPin size={13} aria-hidden="true" style={{
+                      verticalAlign: 'text-bottom',
+                      marginRight: 5,
+                      color: '#0f766e',
+                    }} />
+                    <strong style={{ color: 'var(--bleu-nuit)' }}>
+                      {isEnglish ? 'Address: ' : 'Adresse : '}
+                    </strong>
+                    {record.address || record.publication_info}
+                  </p>
+                )}
                 {record.keywords && (
                   <p style={{
                     margin: '10px 0 0', color: '#475569',

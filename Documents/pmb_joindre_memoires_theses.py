@@ -64,6 +64,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from difflib import SequenceMatcher, get_close_matches
+from functools import lru_cache
 from pathlib import Path
 
 VERSION = "3.0"
@@ -646,32 +647,10 @@ def read_pmb_config(path):
     txt = Path(path).read_text(errors="replace")
 
     def g(name):
-        # PMB déclare ses paramètres avec define('NOM', 'valeur')
-        pattern = (
-            r"define\s*\(\s*['\"]" + re.escape(name) +
-            r"['\"]\s*,\s*(['\"])(.*?)\1\s*\)"
-        )
-        m = re.search(pattern, txt, re.S)
-        if m:
-            return m.group(2)
+        m = re.search(r"\$" + name + r"\s*=\s*['\"]([^'\"]*)['\"]", txt)
+        return m.group(1) if m else None
 
-        # Compatibilité avec les anciennes configurations utilisant $variable
-        pattern = (
-            r"\$" + re.escape(name) +
-            r"\s*=\s*(['\"])(.*?)\1\s*;"
-        )
-        m = re.search(pattern, txt, re.S)
-        return m.group(2) if m else None
-
-    return {
-        "host": g("SQL_SERVER"),
-        "user": g("USER_NAME"),
-        "password": g("USER_PASS"),
-        "db": g("DATA_BASE"),
-    }
-
-
-_DB_PASSWORD_CACHE = {}
+    return {"host": g("SQL_SERVER"), "user": g("USER_NAME"), "password": g("USER_PASS"), "db": g("DBNom")}
 
 
 def connect(args):
@@ -687,9 +666,7 @@ def connect(args):
         if a:
             cfg[k] = a
     if cfg["password"] is None:
-        if "pw" not in _DB_PASSWORD_CACHE:
-            _DB_PASSWORD_CACHE["pw"] = os.environ.get("PMB_DB_PASS") or getpass.getpass("Mot de passe MySQL : ")
-        cfg["password"] = _DB_PASSWORD_CACHE["pw"]
+        cfg["password"] = os.environ.get("PMB_DB_PASS") or getpass.getpass("Mot de passe MySQL : ")
     if not cfg["user"] or not cfg["db"]:
         sys.exit("Paramètres base manquants : utilisez --pmb-config ou --db-user/--db-name.")
     return pymysql.connect(host=cfg["host"], port=args.db_port, user=cfg["user"], password=cfg["password"],
@@ -702,8 +679,14 @@ def chunks(seq, n):
         yield seq[i:i + n]
 
 
+def sql_identifier(name):
+    if not re.fullmatch(r"[A-Za-z0-9_]+", name):
+        raise ValueError("Nom de table invalide")
+    return "`" + name.replace("`", "``") + "`"
+
+
 def table_columns(cur, table):
-    cur.execute(f"SHOW COLUMNS FROM `{table}`")
+    cur.execute("SHOW COLUMNS FROM " + sql_identifier(table))
     return {r["Field"]: r for r in cur.fetchall()}
 
 
@@ -729,8 +712,13 @@ def db_load_notices(args, with_authors):
     """with_authors=True : toutes les notices + auteurs (pour le rapprochement par métadonnées)."""
     conn = connect(args)
     cur = conn.cursor()
-    where = "" if with_authors else "WHERE lien IS NOT NULL AND lien <> ''"
-    cur.execute(f"SELECT notice_id, tit1, lien, eformat FROM notices {where}")
+    if with_authors:
+        query = "SELECT notice_id, tit1, lien, eformat FROM notices"
+        params = ()
+    else:
+        query = "SELECT notice_id, tit1, lien, eformat FROM notices WHERE lien IS NOT NULL AND lien <> ''"
+        params = ()
+    cur.execute(query, params)
     notices = {int(r["notice_id"]): Notice(int(r["notice_id"]), r["tit1"] or "", r["lien"] or "", r["eformat"] or "")
                for r in cur.fetchall()}
     if with_authors:
@@ -747,8 +735,10 @@ def db_load_notices(args, with_authors):
 def db_enrich(cur, results, mode, args, multi_root):
     ids = [r.notice.id for r in results if r.statut in STATUTS_OK]
     notices = {}
+    notice_query = ("SELECT notice_id, lien, eformat FROM notices WHERE notice_id IN (" +
+                    ",".join(["%s"] * 1000) + ")")
     for ch in chunks(ids, 1000):
-        cur.execute("SELECT notice_id, lien, eformat FROM notices WHERE notice_id IN (%s)" % ",".join(["%s"] * len(ch)), ch)
+        cur.execute(notice_query, ch + [None] * (1000 - len(ch)))
         for row in cur.fetchall():
             notices[row["notice_id"]] = row
     attached = defaultdict(set)
@@ -938,8 +928,14 @@ def apply_changes(results, args, outdir, multi_root):
                     vals["explnum_data"] = f.path.read_bytes()
                 row = fill_required(cols, {k: v for k, v in vals.items() if k in cols})
                 names = list(row.keys())
-                cur.execute("INSERT INTO explnum (%s) VALUES (%s)" % (
-                    ",".join(f"`{n}`" for n in names), ",".join(["%s"] * len(names))), [row[n] for n in names])
+                if not all(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", n) for n in names):
+                    raise ValueError("Nom de colonne explnum invalide")
+                columns_sql = ",".join(f"`{n}`" for n in names)
+                placeholders = ",".join(["%s"] * len(names))
+                cur.execute(
+                    f"INSERT INTO `explnum` ({columns_sql}) VALUES ({placeholders})",
+                    [row[n] for n in names],
+                )
                 new_id = cur.lastrowid
                 conn.commit()
                 rollback.write(f"DELETE FROM explnum WHERE explnum_id={new_id};\n")

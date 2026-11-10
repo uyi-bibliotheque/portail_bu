@@ -356,11 +356,6 @@ class Command(BaseCommand):
                             source_sheet=sheet_name,
                         )
                     }
-                    PhysicalArchiveRecord.objects.filter(
-                        source_file=source_file,
-                        source_sheet=sheet_name,
-                    ).update(is_active=False)
-
                     to_create = []
                     to_update = []
                     update_fields = [

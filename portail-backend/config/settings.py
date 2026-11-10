@@ -26,6 +26,7 @@ sys.path.insert(0, str(BASE_DIR / 'apps'))
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key-pour-le-dev')
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+PMB_BASE_URL = os.getenv('PMB_BASE_URL', 'http://10.4.2.112/pmb/').rstrip('/') + '/'
 
 # ═══════════════════════════════════════════════════════════════════
 # ─── APPLICATIONS DJANGO ───────────────────────────────────────────

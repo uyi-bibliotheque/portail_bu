@@ -295,6 +295,66 @@ class StaffUserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
+class AdminUserUpdateSerializer(serializers.ModelSerializer):
+    """Fields that administrators may safely change on an existing account."""
+
+    class Meta:
+        model = PortalUser
+        fields = ['email', 'first_name', 'last_name', 'role', 'is_active']
+        extra_kwargs = {
+            'email': {'required': False},
+            'first_name': {'required': False, 'allow_blank': True},
+            'last_name': {'required': False, 'allow_blank': True},
+            'role': {'required': False},
+            'is_active': {'required': False},
+        }
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+        if PortalUser.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé par un autre compte.")
+        return email
+
+    def validate(self, attrs):
+        user = self.instance
+        request = self.context.get('request')
+        protected_changes = {'role', 'is_active'} & attrs.keys()
+
+        if user.is_superuser and protected_changes:
+            raise serializers.ValidationError(
+                "Le rôle et le statut du superutilisateur ne peuvent pas être modifiés ici."
+            )
+        if request and user.pk == request.user.pk and protected_changes:
+            raise serializers.ValidationError(
+                "Vous ne pouvez pas modifier votre propre rôle ou statut depuis cette page."
+            )
+        if user.role == PortalUser.Role.ADMIN and (
+            attrs.get('role', user.role) != PortalUser.Role.ADMIN
+            or attrs.get('is_active', user.is_active) is False
+        ):
+            other_active_admins = PortalUser.objects.filter(
+                role=PortalUser.Role.ADMIN,
+                is_active=True,
+            ).exclude(pk=user.pk).count()
+            if other_active_admins == 0:
+                raise serializers.ValidationError(
+                    "Impossible de désactiver ou rétrograder le dernier administrateur actif."
+                )
+        return attrs
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        if 'role' in validated_data:
+            instance.is_staff = instance.role in {
+                PortalUser.Role.ADMIN,
+                PortalUser.Role.BIBLIO,
+                PortalUser.Role.AIDE_BIBLIO,
+            }
+        instance.save()
+        return instance
+
+
 class StudentRegistrationSerializer(serializers.ModelSerializer):
     """Serializer pour l'inscription des étudiants sans compte PMB."""
     matricule = serializers.CharField(required=True, write_only=True)
