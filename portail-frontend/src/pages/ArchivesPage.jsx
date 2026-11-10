@@ -657,7 +657,7 @@ function PhysicalArchivesSearch({ isEnglish }) {
             margin: 0, color: 'var(--bleu-nuit)',
             fontSize: 'clamp(21px, 2.5vw, 28px)', fontWeight: 400,
           }}>
-            {isEnglish ? 'Find a thesis or dissertation in the stacks' : 'Retrouver un mémoire ou une thèse en magasin'}
+            {isEnglish ? 'Find a dissertation or thesis in stock available for on-site consultation at the library  ' : 'Retrouver un mémoire ou une thèse en magasin consultable sur place a la bibliotheque'}
           </h2>
           <p style={{
             margin: '9px 0 0', color: 'var(--texte-muted)',

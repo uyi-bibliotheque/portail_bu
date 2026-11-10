@@ -8,7 +8,8 @@ import { getAllCookieConfigs } from '../utils/cookieUtils';
 export default function CookieConsent() {
   const {
     preferences,
-    consentGiven,
+    hasConsentChoice,
+    isLoading,
     acceptAll,
     acceptNecessary,
     savePreferences,
@@ -28,7 +29,11 @@ export default function CookieConsent() {
 
   // Gérer l'affichage de la bannière
   useEffect(() => {
-    if (!consentGiven) {
+    if (isLoading) {
+      return undefined;
+    }
+
+    if (!hasConsentChoice) {
       const timer = setTimeout(() => {
         setShowBanner(true);
       }, 1000);
@@ -37,7 +42,7 @@ export default function CookieConsent() {
       setShowBanner(false);
       setShowSettings(false);
     }
-  }, [consentGiven]);
+  }, [hasConsentChoice, isLoading]);
 
   // Écouter l'événement d'ouverture des paramètres
   useEffect(() => {
@@ -89,8 +94,8 @@ export default function CookieConsent() {
 
   const cookieConfigs = getAllCookieConfigs();
 
-  // Si l'utilisateur a déjà consenti et que la bannière est fermée
-  if (consentGiven && !showSettings) {
+  // Hide the banner after either acceptance or refusal has been saved.
+  if (isLoading || (hasConsentChoice && !showSettings)) {
     return null;
   }
 

@@ -2,10 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getCookiePreferences,
-  getCookieConsent,
+  hasCookieChoice,
   saveCookiePreferences,
   clearCookiePreferences,
-  hasConsented,
   revokeConsent,
   DEFAULT_COOKIE_PREFERENCES,
   COOKIE_TYPES
@@ -13,19 +12,19 @@ import {
 
 export function useCookieConsent() {
   const [preferences, setPreferences] = useState(DEFAULT_COOKIE_PREFERENCES);
-  const [consentGiven, setConsentGiven] = useState(false);
+  const [hasConsentChoice, setHasConsentChoice] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const hasChoice = hasCookieChoice();
     const savedPrefs = getCookiePreferences();
-    const hasConsent = getCookieConsent();
     
-    if (savedPrefs && hasConsent) {
+    if (savedPrefs && hasChoice) {
       setPreferences(savedPrefs);
-      setConsentGiven(true);
+      setHasConsentChoice(true);
     } else {
       setPreferences(DEFAULT_COOKIE_PREFERENCES);
-      setConsentGiven(false);
+      setHasConsentChoice(false);
     }
     setIsLoading(false);
   }, []);
@@ -38,7 +37,7 @@ export function useCookieConsent() {
       marketing: true
     };
     setPreferences(allEnabled);
-    setConsentGiven(true);
+    setHasConsentChoice(true);
     saveCookiePreferences(allEnabled);
     applyCookieSettings(allEnabled);
   }, []);
@@ -51,7 +50,7 @@ export function useCookieConsent() {
       marketing: false
     };
     setPreferences(necessaryOnly);
-    setConsentGiven(true);
+    setHasConsentChoice(true);
     saveCookiePreferences(necessaryOnly);
     applyCookieSettings(necessaryOnly);
   }, []);
@@ -59,7 +58,7 @@ export function useCookieConsent() {
   const savePreferences = useCallback((newPreferences) => {
     const validated = { ...DEFAULT_COOKIE_PREFERENCES, ...newPreferences };
     setPreferences(validated);
-    setConsentGiven(true);
+    setHasConsentChoice(true);
     saveCookiePreferences(validated);
     applyCookieSettings(validated);
   }, []);
@@ -81,7 +80,7 @@ export function useCookieConsent() {
       marketing: false
     };
     setPreferences(necessaryOnly);
-    setConsentGiven(false);
+    setHasConsentChoice(true);
     revokeConsent();
     applyCookieSettings(necessaryOnly);
   }, []);
@@ -94,7 +93,7 @@ export function useCookieConsent() {
       marketing: false
     };
     setPreferences(necessaryOnly);
-    setConsentGiven(false);
+    setHasConsentChoice(true);
     revokeConsent();
     applyCookieSettings(necessaryOnly);
   }, []);
@@ -102,7 +101,7 @@ export function useCookieConsent() {
   const reset = useCallback(() => {
     clearCookiePreferences();
     setPreferences(DEFAULT_COOKIE_PREFERENCES);
-    setConsentGiven(false);
+    setHasConsentChoice(false);
   }, []);
 
   const isEnabled = useCallback((type) => {
@@ -158,7 +157,7 @@ export function useCookieConsent() {
 
   return {
     preferences,
-    consentGiven,
+    hasConsentChoice,
     isLoading,
     acceptAll,
     acceptNecessary,

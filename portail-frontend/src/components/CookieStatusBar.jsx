@@ -7,20 +7,21 @@ import { CheckCircle, AlertCircle, XCircle, Settings } from 'lucide-react';
  * Barre de statut des cookies (optionnelle)
  */
 export default function CookieStatusBar() {
-  const { preferences, consentGiven } = useCookieContext();
+  const { preferences, hasConsentChoice } = useCookieContext();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Afficher la barre de statut après 5 secondes si l'utilisateur a consenti
-    if (consentGiven) {
+    // Afficher la barre de statut après 5 secondes si un choix a été enregistré
+    if (hasConsentChoice) {
       const timer = setTimeout(() => {
         setVisible(true);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [consentGiven]);
+    setVisible(false);
+  }, [hasConsentChoice]);
 
-  if (!visible || !consentGiven) {
+  if (!visible || !hasConsentChoice) {
     return null;
   }
 

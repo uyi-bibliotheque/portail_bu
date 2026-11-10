@@ -51,7 +51,7 @@ export default function PolitiqueCookies() {
     session: 'Session',
     oneYear: '1 year',
     thirtyDays: '30 days',
-    consent: 'Stores your cookie consent choice',
+    consent: 'Stores your consent choice in this browser (local storage)',
     sessionInfo: 'Session identifier for navigation',
     prefInfo: 'Stores your display preferences',
     analyticsInfo: 'Anonymous analysis of site traffic',
@@ -113,7 +113,7 @@ export default function PolitiqueCookies() {
     session: 'Session',
     oneYear: '1 an',
     thirtyDays: '30 jours',
-    consent: 'Mémorise votre choix de consentement aux cookies',
+    consent: 'Mémorise votre choix dans le stockage local de ce navigateur',
     sessionInfo: 'Identifiant de session pour la navigation',
     prefInfo: 'Stocke vos préférences d\'affichage',
     analyticsInfo: 'Analyse anonyme du trafic du site',
@@ -497,7 +497,7 @@ export default function PolitiqueCookies() {
                       </thead>
                       <tbody>
                         {[
-                          { name: 'cookie_consent', type: t.essentialType, duration: t.oneYear, desc: t.consent },
+                          { name: 'cookieConsent (localStorage)', type: t.essentialType, duration: t.oneYear, desc: t.consent },
                           { name: 'session_id', type: t.essentialType, duration: t.session, desc: t.sessionInfo },
                           { name: 'preferences', type: t.preferences, duration: t.thirtyDays, desc: t.prefInfo },
                           { name: 'analytics', type: t.stats, duration: t.thirtyDays, desc: t.analyticsInfo },

@@ -5,14 +5,14 @@ import { useCookieContext } from '../contexts/CookieContext';
 
 export default function CookiePreferenceManager() {
   const [isHovered, setIsHovered] = useState(false);
-  const { consentGiven } = useCookieContext();
+  const { hasConsentChoice } = useCookieContext();
 
   const openSettings = () => {
     window.dispatchEvent(new CustomEvent('openCookieSettings'));
   };
 
-  // Si l'utilisateur n'a pas encore consenti, ne pas afficher le bouton
-  if (!consentGiven) {
+  // Show the preference control only after a choice has been recorded.
+  if (!hasConsentChoice) {
     return null;
   }
 

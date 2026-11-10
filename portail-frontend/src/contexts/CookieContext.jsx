@@ -6,13 +6,18 @@ const CookieContext = createContext(null);
 
 export function CookieProvider({ children }) {
   const cookieConsent = useCookieConsent();
+  const {
+    hasConsentChoice,
+    preferences,
+    applyCookieSettings,
+  } = cookieConsent;
 
-  // Appliquer les préférences automatiquement au chargement
+  // Apply the stored choice on load; edited preferences take effect only after saving.
   useEffect(() => {
-    if (cookieConsent.consentGiven) {
-      cookieConsent.applyCookieSettings(cookieConsent.preferences);
+    if (hasConsentChoice) {
+      applyCookieSettings(preferences);
     }
-  }, [cookieConsent.consentGiven]);
+  }, [hasConsentChoice]);
 
   return (
     <CookieContext.Provider value={cookieConsent}>

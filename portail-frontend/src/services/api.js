@@ -32,7 +32,8 @@ api.interceptors.response.use(
           return api(original);
         } catch (refreshError) {
           console.error('Erreur refresh token:', refreshError);
-          localStorage.clear();
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
           window.location.href = '/connexion';
         }
       }
