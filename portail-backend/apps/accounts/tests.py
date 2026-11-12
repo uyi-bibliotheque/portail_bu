@@ -16,16 +16,22 @@ from apps.accounts.services import AuthenticationService
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
-def make_student(username="etudiant01", email="etudiant01@test.cm", password="pass1234"):
+def make_student(username="etudiant01", email="etudiant01@test.cm", password=None):
+    if password is None:
+        password = uuid.uuid4().hex
     return PortalUser.objects.create_user(
         username=username, email=email, password=password,
         role=PortalUser.Role.ETUDIANT, auth_source=PortalUser.AuthSource.LOCAL,
     )
 
-def make_admin(username="admin01", email="admin01@test.cm", password="admin1234"):
+def make_admin(username="admin01", email="admin01@test.cm", password=None):
+    if password is None:
+        password = uuid.uuid4().hex
     return PortalUser.objects.create_superuser(username=username, email=email, password=password)
 
-def make_biblio(username="biblio01", email="biblio01@test.cm", password="biblio1234"):
+def make_biblio(username="biblio01", email="biblio01@test.cm", password=None):
+    if password is None:
+        password = uuid.uuid4().hex
     return PortalUser.objects.create_user(
         username=username, email=email, password=password,
         role=PortalUser.Role.BIBLIO, auth_source=PortalUser.AuthSource.LOCAL, is_staff=True,
@@ -69,7 +75,7 @@ class PortalUserModelTest(TestCase):
 
     def test_is_teacher_property(self):
         teacher = PortalUser.objects.create_user(
-            username="prof01", email="prof01@test.cm", password="prof1234",
+            username="prof01", email="prof01@test.cm", password=uuid.uuid4().hex,
             role=PortalUser.Role.ENSEIGNANT,
         )
         self.assertTrue(teacher.is_teacher)
@@ -81,7 +87,7 @@ class PortalUserModelTest(TestCase):
         self.assertEqual(self.student.get_full_name(), "Jean Dupont")
 
     def test_get_full_name_fallback(self):
-        user = PortalUser.objects.create_user(username="orphan01", email="orphan01@test.cm", password="pass1234")
+        user = PortalUser.objects.create_user(username="orphan01", email="orphan01@test.cm", password=uuid.uuid4().hex)
         self.assertEqual(user.get_full_name(), "orphan01")
 
     def test_sync_with_pmb_data(self):
@@ -203,7 +209,7 @@ class StaffUserCreateSerializerTest(TestCase):
 class AuthenticationServiceTest(TestCase):
     def setUp(self):
         self.service = AuthenticationService.__new__(AuthenticationService)
-        self.student = make_student(username="mat_svc", password="svcpass")
+        self.student = make_student(username="mat_svc")
 
     def test_get_user_by_username(self):
         user = self.service.get_user_by_identifier("mat_svc")
@@ -229,19 +235,20 @@ class AuthenticationServiceTest(TestCase):
 class LoginViewTest(APITestCase):
     def setUp(self):
         self.url = reverse("auth_login")
-        self.student = make_student(username="login_student", password="testpass")
+        self.password = uuid.uuid4().hex
+        self.student = make_student(username="login_student", password=self.password)
 
     def _login(self, username, password):
         with patch("apps.accounts.services.PMBAuthService.verifier_identifiants_pmb", return_value=None):
             return self.client.post(self.url, {"username": username, "password": password}, format="json")
 
     def test_valid_local_login(self):
-        r = self._login("login_student", "testpass")
+        r = self._login("login_student", self.password)
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.assertIn("access", r.data)
 
     def test_invalid_credentials(self):
-        r = self._login("login_student", "wrongpass")
+        r = self._login("login_student", uuid.uuid4().hex)
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_missing_fields(self):
@@ -249,7 +256,7 @@ class LoginViewTest(APITestCase):
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_login_by_email(self):
-        r = self._login(self.student.email, "testpass")
+        r = self._login(self.student.email, self.password)
         self.assertEqual(r.status_code, status.HTTP_200_OK)
 
 
@@ -275,7 +282,7 @@ class AideBiblioViewsTest(APITestCase):
         self.user = PortalUser.objects.create_user(
             username="aide_biblio_test",
             email="aide_biblio_test@test.cm",
-            password="testpass",
+            password=None,
             role=PortalUser.Role.AIDE_BIBLIO,
             auth_source=PortalUser.AuthSource.LOCAL,
         )
@@ -414,7 +421,7 @@ class AdminUserListCreateViewTest(APITestCase):
         aide = PortalUser.objects.create_user(
             username="aide_to_biblio",
             email="aide_to_biblio@test.cm",
-            password="testpass",
+            password=uuid.uuid4().hex,
             role=PortalUser.Role.AIDE_BIBLIO,
             is_staff=True,
         )
@@ -539,7 +546,7 @@ class ProfileUpdateViewTest(APITestCase):
 
     def setUp(self):
         self.url = reverse("auth_me")
-        self.user = make_student(username="profil_user", email="profil@test.cm", password="pass1234")
+        self.user = make_student(username="profil_user", email="profil@test.cm")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {jwt(self.user)}")
 
     def test_patch_first_name(self):
@@ -601,50 +608,52 @@ class PasswordChangeViewTest(APITestCase):
 
     def setUp(self):
         self.url = reverse("auth_change_password")
-        self.user = make_student(username="pwd_user", password="OldPass123")
+        self.old_password = f"Old-{uuid.uuid4().hex}9!"
+        self.new_password = f"New-{uuid.uuid4().hex}9!"
+        self.user = make_student(username="pwd_user", password=self.old_password)
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {jwt(self.user)}")
 
     def test_successful_change(self):
         r = self.client.post(self.url, {
-            "old_password": "OldPass123",
-            "new_password": "NewPass456",
-            "confirm_password": "NewPass456",
+            "old_password": self.old_password,
+            "new_password": self.new_password,
+            "confirm_password": self.new_password,
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password("NewPass456"))
+        self.assertTrue(self.user.check_password(self.new_password))
 
     def test_wrong_old_password(self):
         r = self.client.post(self.url, {
-            "old_password": "WrongOld",
-            "new_password": "NewPass456",
-            "confirm_password": "NewPass456",
+            "old_password": f"Wrong-{uuid.uuid4().hex}9!",
+            "new_password": self.new_password,
+            "confirm_password": self.new_password,
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("old_password", r.data.get("errors", {}))
 
     def test_mismatched_confirmation(self):
         r = self.client.post(self.url, {
-            "old_password": "OldPass123",
-            "new_password": "NewPass456",
-            "confirm_password": "Different",
+            "old_password": self.old_password,
+            "new_password": self.new_password,
+            "confirm_password": f"Different-{uuid.uuid4().hex}9!",
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_same_password_rejected(self):
         r = self.client.post(self.url, {
-            "old_password": "OldPass123",
-            "new_password": "OldPass123",
-            "confirm_password": "OldPass123",
+            "old_password": self.old_password,
+            "new_password": self.old_password,
+            "confirm_password": self.old_password,
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_unauthenticated(self):
         self.client.credentials()
         r = self.client.post(self.url, {
-            "old_password": "OldPass123",
-            "new_password": "NewPass456",
-            "confirm_password": "NewPass456",
+            "old_password": self.old_password,
+            "new_password": self.new_password,
+            "confirm_password": self.new_password,
         }, format="json")
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
 

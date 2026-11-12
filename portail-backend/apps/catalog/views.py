@@ -274,6 +274,13 @@ class UserAccountView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+from pydantic import BaseModel, ValidationError, conint, constr
+from typing import Optional
+
+class AddReviewSchema(BaseModel):
+    note: conint(ge=1, le=5)
+    comment: Optional[constr(strip_whitespace=True, min_length=0)] = ''
+
 class AddReviewView(APIView):
     """
     Endpoint pour ajouter un avis sur un document.
@@ -284,34 +291,33 @@ class AddReviewView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, notice_id):
-        # Récupérer les données - supporter plusieurs formats
-        note = request.data.get('note') or request.data.get('rating')
-        comment = request.data.get('comment') or request.data.get('content') or ''
-        
+        # Support legacy/alternate keys
+        data = dict(request.data)
+        if 'note' not in data and 'rating' in data:
+            data['note'] = data['rating']
+        if 'comment' not in data:
+            if 'content' in data:
+                data['comment'] = data['content']
+            else:
+                data['comment'] = ''
+
         # Log pour debug
         logger.info(f"AddReviewView - notice_id: {notice_id}")
-        logger.info(f"AddReviewView - data: {request.data}")
+        logger.info(f"AddReviewView - data: {data}")
         logger.info(f"AddReviewView - user: {request.user}")
-        
-        # Valider la note
-        if note is None:
-            return Response({
-                "success": False,
-                "detail": "La note est requise (1-5)."
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Validate input schema
         try:
-            note = int(note)
-            if not 1 <= note <= 5:
-                return Response({
-                    "success": False,
-                    "detail": "La note doit être comprise entre 1 et 5."
-                }, status=status.HTTP_400_BAD_REQUEST)
-        except ValueError:
+            validated = AddReviewSchema(**data)
+        except ValidationError as e:
             return Response({
                 "success": False,
-                "detail": "La note doit être un nombre."
+                "detail": "Erreur de validation des données.",
+                "errors": e.errors()
             }, status=status.HTTP_400_BAD_REQUEST)
+
+        note = validated.note
+        comment = validated.comment
         
         # Récupérer le session_id
         session_id = getattr(request.user, 'pmb_session_id', None)

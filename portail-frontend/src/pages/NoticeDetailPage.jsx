@@ -539,7 +539,7 @@ export default function NoticeDetailPage() {
         {/* Layout responsive: colonne unique sur mobile */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) minmax(0, 2fr)', 
+          gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) minmax(0, 2fr)',
           gap: gapSize 
         }}>
 
@@ -655,7 +655,7 @@ export default function NoticeDetailPage() {
               {/* Affichage en grille sur mobile, en liste sur desktop */}
               <div style={{ 
                 display: 'grid', 
-                gridTemplateColumns: isMobile ? '1fr 1fr' : '1fr', 
+                gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'minmax(0, 1fr)',
                 gap: isMobile ? 8 : 0 
               }}>
                 {[
@@ -1175,7 +1175,7 @@ export default function NoticeDetailPage() {
                 <h2 style={{ fontSize: isMobile ? 15 : 16, fontWeight: 700, marginBottom: 12 }}>Notices similaires</h2>
                 <div style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(auto-fill, minmax(150px, 1fr))', 
+                  gridTemplateColumns: isMobile ? 'repeat(2, minmax(0, 1fr))' : 'repeat(auto-fill, minmax(150px, 1fr))',
                   gap: isMobile ? 10 : 12 
                 }}>
                   {similarNotices.slice(0, isMobile ? 4 : 4).map((sim, index) => (

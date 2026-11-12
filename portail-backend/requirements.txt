@@ -7,6 +7,7 @@ Django==5.0.4
 djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
+pydantic==2.11.7
 
 # Communications HTTP (Passerelle JSON-RPC vers PMB + reCAPTCHA v3)
 requests==2.31.0

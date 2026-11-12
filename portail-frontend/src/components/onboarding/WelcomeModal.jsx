@@ -122,22 +122,22 @@ function WelcomeModal() {
   const t = (key) => {
     const translations = {
       fr: {
-        badge: 'BIENVENUE À LA BCUYI',
+        badge: 'BIENVENUE À LA BUYI',
         titleLine1: 'Votre porte d\'entrée',
         titleLine2: 'vers le',
         titleHighlight: 'savoir',
-        description: 'La Bibliothèque Centrale de l\'Université de Yaoundé I vous accompagne dans vos recherches. Découvrez en 30 secondes ce que nous vous offrons.',
+        description: 'La Bibliothèque Universitaire de Yaoundé I vous accompagne dans vos recherches. Découvrez en 30 secondes ce que nous vous offrons.',
         skip: 'Passer',
         exploreCatalog: 'Explorer le catalogue',
         startTour: 'Faire la visite guidée',
         close: 'Fermer',
       },
       en: {
-        badge: 'WELCOME TO BCUYI',
+        badge: 'WELCOME TO BUYI',
         titleLine1: 'Your gateway',
         titleLine2: 'to',
         titleHighlight: 'knowledge',
-        description: 'The Central Library of the University of Yaoundé I supports you in your academic and research journey. Discover in 30 seconds what we offer you.',
+        description: 'The University Library of Yaoundé I supports you in your academic and research journey. Discover in 30 seconds what we offer you.',
         skip: 'Skip',
         exploreCatalog: 'Explore the catalog',
         startTour: 'Start the guided tour',

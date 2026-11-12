@@ -22,7 +22,7 @@ class IsAdminOrStaff(permissions.BasePermission):
         return request.user.role in [
             PortalUser.Role.ADMIN, 
             PortalUser.Role.BIBLIO,
-            PortalUser.Role.AIDE_BIBLIO
+            PortalUser.Role.AIDE_BIBLIO 
         ]
 
 

@@ -451,6 +451,12 @@ const responsiveStyles = `
     .grid-2-mobile { grid-template-columns: 1fr !important; }
     .text-sm-center { text-align: center !important; }
   }
+  @media (max-width: 640px) {
+    [style*="minmax(280px, 1fr)"],
+    [style*="minmax(320px, 1fr)"] {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+  }
   @media (max-width: 360px) { .container { padding: 0 8px !important; } }
 `;
 

@@ -602,22 +602,22 @@ export function ArticleDetailPage() {
   const articleSchema = {
     headline: article.title,
     description: article.content?.substring(0, 180).replace(/\s+/g, ' ') || 'Actualité de la Bibliothèque  Universitaire de Yaoundé I.',
-    image: getImageUrl(article) || 'https://bcu-uyi.cm/logo.png',
+    image: getImageUrl(article) || 'http://bcuy1/logo.png',
     datePublished: article.created_at,
     dateModified: article.updated_at || article.created_at,
     author: {
       '@type': 'Organization',
-      name: 'Bibliothèque Centrale Universitaire de Yaoundé I'
+      name: 'Bibliothèque Universitaire de Yaoundé I'
     },
     publisher: {
       '@type': 'Organization',
       name: 'BCU UYI',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://bcu-uyi.cm/logo.png'
+        url: 'http://bcuy1/logo.png'
       }
     },
-    mainEntityOfPage: `https://bcu-uyi.cm/actualites/${article.id}`
+    mainEntityOfPage: `http://bcuy1/actualites/${article.id}`
   };
 
   return (
@@ -627,7 +627,7 @@ export function ArticleDetailPage() {
         path={`/actualites/${article.id}`}
         description={article.content?.substring(0, 155).replace(/\s+/g, ' ') || 'Actualité de la Bibliothèque  Universitaire de Yaoundé I.'}
         keywords={article.category ? `${article.category}, actualités, bibliothèque UYI` : 'actualités bibliothèque UYI'}
-        canonical={`https://bcu-uyi.cm/actualites/${article.id}`}
+        canonical={`http://bcuy1/actualites/${article.id}`}
         articleSchema={articleSchema}
       />
       <Layout>
@@ -992,10 +992,10 @@ export default function ActualitesPage() {
         title={isEnglish ? 'News and events' : 'Actualités et événements'}
         path="/actualites"
         description={isEnglish
-          ? 'Follow the news, events, training and announcements of the Central University Library of Yaoundé I.'
-          : 'Suivez les actualités, événements, formations et annonces de la Bibliothèque Centrale Universitaire de Yaoundé I.'}
+          ? 'Follow the news, events, training and announcements of the University Library of Yaoundé I.'
+          : 'Suivez les actualités, événements, formations et annonces de la Bibliothèque Universitaire de Yaoundé I.'}
         keywords="actualités bibliothèque, événements UYI, annonces bibliothèques, formation documentaire, BCU UYI"
-        canonical="https://bcu-uyi.cm/actualites"
+        canonical="http://bcuy1/actualites"
       />
       <Layout>
         {/* Header */}
@@ -1020,8 +1020,8 @@ export default function ActualitesPage() {
             </h1>
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 'clamp(14px, 1vw, 15px)' }}>
               {isEnglish
-                ? 'All the latest updates from the Central Library of the University of Yaoundé I'
-                : 'Toutes les nouvelles de la Bibliothèque Centrale de l\'Université de Yaoundé I'}
+                ? 'All the latest updates from the University Library of the University of Yaoundé I'
+                : 'Toutes les nouvelles de la Bibliothèque Universitaire de l\'Université de Yaoundé I'}
             </p>
           </div>
         </div>

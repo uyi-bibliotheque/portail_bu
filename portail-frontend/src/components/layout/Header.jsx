@@ -165,7 +165,7 @@ export default function Header({ onSearch }) {
   const [mobileExpand, setMobileExpand] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ] = useState('');
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 1024);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [dropdownTimeout, setDropdownTimeout] = useState(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -197,7 +197,7 @@ export default function Header({ onSearch }) {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 992);
+      setIsMobile(window.innerWidth <= 1024);
     };
 
     checkMobile();
@@ -2281,7 +2281,7 @@ export default function Header({ onSearch }) {
            DESKTOP ≥ 993px
         ===================================================== */
 
-        @media (min-width: 993px) {
+        @media (min-width: 1025px) {
 
           .mobile-burger {
             display: none !important;
@@ -2314,7 +2314,7 @@ export default function Header({ onSearch }) {
            TABLET / MOBILE ≤ 992px
         ===================================================== */
 
-        @media (max-width: 992px) {
+        @media (max-width: 1024px) {
 
           .desktop-nav {
             display: none !important;

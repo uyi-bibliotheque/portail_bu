@@ -21,7 +21,7 @@ const TOUR_STEPS = [
   {
     id: 'welcome',
     selector: null,
-    title: 'Bienvenue à la BCUYI 👋',
+    title: 'Bienvenue à la BUYI 👋',
     text: "Suivez ce guide rapide pour découvrir les fonctionnalités essentielles du portail documentaire. Cliquez sur Suivant pour continuer.",
     position: 'center',
     icon: '🎓',
@@ -148,7 +148,7 @@ const TOUR_STEPS = [
     id: 'hours-widget',
     selector: '.hours-widget',
     title: 'Horaires d\'ouverture',
-    text: 'Vérifiez nos horaires avant de vous déplacer : du lundi au vendredi de 07h30 à 15h30, et le samedi de 08h00 à 13h00.',
+    text: 'Vérifiez nos horaires avant de vous déplacer : du lundi de 12h00 à 22h00, du mardi au vendredi de 9h00 à 22h00, et le samedi de 10h00 à 16h00.',
     position: 'left',
     icon: '🕐',
     pointer: '👈',
